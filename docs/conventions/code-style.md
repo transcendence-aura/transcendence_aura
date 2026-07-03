@@ -23,26 +23,27 @@ npm run typecheck     # TypeScript check without emit
 
 ---
 
+
 ## Naming conventions
 
 Applies to both frontend and backend.
 
-| Element            | Convention        | Example                   |
-|--------------------|-------------------|---------------------------|
-| Files              | kebab-case        | `user-profile.tsx`        |
-| React components   | PascalCase        | `UserProfile`             |
-| Functions          | camelCase         | `getUserById`             |
-| Variables          | camelCase         | `isLoading`               |
-| Constants          | UPPER_SNAKE_CASE  | `MAX_FILE_SIZE`           |
-| DB models          | PascalCase        | `User`, `WishlistItem`    |
-| Hooks              | camelCase + use   | `useAuth`, `useProducts`  |
-| Types / Interfaces | PascalCase        | `UserProfile`, `ApiError` |
-| Enums              | PascalCase        | `UserRole`, `OrderStatus` |
-| NestJS services    | PascalCase + Svc  | `AuthService`             |
-| NestJS controllers | PascalCase + Ctrl | `AuthController`          |
-| NestJS modules     | PascalCase + Mod  | `AuthModule`              |
-| NestJS DTOs        | PascalCase + Dto  | `CreateUserDto`           |
-| NestJS guards      | PascalCase + Guard| `JwtAuthGuard`            |
+| Element            | Convention      | Example                   |
+|--------------------|-----------------|---------------------------|
+| Files              | kebab-case      | `user-profile.tsx`        |
+| React components   | PascalCase      | `UserProfile`             |
+| Functions          | camelCase       | `getUserById`             |
+| Variables          | camelCase       | `isLoading`               |
+| Constants          | UPPER_SNAKE_CASE| `MAX_FILE_SIZE`           |
+| DB models          | PascalCase      | `User`, `WishlistItem`    |
+| Hooks              | use + camelCase | `useAuth`, `useProducts`  |
+| Types / Interfaces | PascalCase      | `UserProfile`, `ApiError` |
+| Enums              | PascalCase      | `UserRole`, `OrderStatus` |
+| NestJS services    | PascalCase      | `AuthService`             |
+| NestJS controllers | PascalCase      | `AuthController`          |
+| NestJS modules     | PascalCase      | `AuthModule`              |
+| NestJS DTOs        | PascalCase      | `CreateUserDto`           |
+| NestJS guards      | PascalCase      | `JwtAuthGuard`            |
 
 ---
 
