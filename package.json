@@ -1,0 +1,18 @@
+{
+  "name": "aura",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run start:dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "build": "npm run build:frontend && npm run build:backend",
+    "install:all": "npm --prefix frontend install && npm --prefix backend install",
+    "clean": "rm -rf frontend/node_modules frontend/.next backend/node_modules backend/dist node_modules",
+    "clean:lock": "rm -f frontend/package-lock.json backend/package-lock.json package-lock.json"
+  }
+}
