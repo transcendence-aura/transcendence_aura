@@ -8,7 +8,7 @@ Read this document before making your first commit.
 
 - Node.js 20+
 - Docker + Docker Compose **or** Podman + Podman Compose
-- npm *(no yarn, no pnpm)*
+- npm _(no yarn, no pnpm)_
 - Git
 
 ## Getting started
@@ -55,30 +55,35 @@ git push origin [your-login]/scope-branch_name
 
 ```markdown
 ## I. Context & Objective
+
 What is the purpose of this PR?
 What problem does it solve or what feature does it introduce?
 Where does it fit in the overall architecture?
 
 ## II. Key Changes & Design Decisions
+
 List the meaningful changes made.
 For each non-obvious decision, explain WHY this approach was chosen
 over alternatives. Focus on intent and trade-offs, not on restating
 what the diff already shows.
 
 Examples of good entries:
-* Chose React Query over useEffect for data fetching — avoids
+
+- Chose React Query over useEffect for data fetching — avoids
   stale closure issues and provides caching out of the box.
-* Validation handled in DTO layer rather than controller — keeps
+- Validation handled in DTO layer rather than controller — keeps
   controllers thin and makes validation reusable across endpoints.
-* Used httpOnly cookie for refresh token — prevents XSS access
+- Used httpOnly cookie for refresh token — prevents XSS access
   to the token from JavaScript.
 
 ## III. Tests Performed
+
 Describe how you verified your changes work correctly.
 Include test output, screenshots, or curl commands where relevant.
 If no automated tests exist yet, explain how to manually verify.
 
 ## IV. Proof of Execution
+
 Screenshot, terminal output, or screen recording showing the
 feature working as expected.
 Backend changes: paste the relevant request/response.
@@ -87,6 +92,7 @@ Frontend changes: attach a screenshot or short video.
 ## V. Checklist
 
 ### General — all PRs
+
 - [ ] Branch created from `dev`
 - [ ] Commits follow `[type/scope] - description [AUR-xx]` format
 - [ ] Linear ticket ID referenced in all commits
@@ -99,6 +105,7 @@ Frontend changes: attach a screenshot or short video.
 - [ ] Branch will be deleted after merge
 
 ### scope: frontend
+
 - [ ] Component works on mobile, tablet and desktop
 - [ ] Loading state handled
 - [ ] Error state handled
@@ -107,30 +114,35 @@ Frontend changes: attach a screenshot or short video.
 - [ ] `"use client"` used only where strictly necessary
 
 ### scope: backend
+
 - [ ] Input validation implemented (DTO + class-validator)
 - [ ] Correct HTTP status codes returned
 - [ ] No stack trace or internal info exposed in error responses
 - [ ] New endpoint documented in `docs/api/` if part of public API
 
 ### scope: security
+
 - [ ] No sensitive data logged
 - [ ] No secrets hardcoded anywhere
 - [ ] Auth guard applied on all protected routes
 - [ ] Input sanitized against XSS and injection
 
 ### scope: database
+
 - [ ] Prisma migration created for schema changes
 - [ ] No breaking changes to existing tables without team validation
 - [ ] Relations and constraints properly defined in Prisma schema
 - [ ] Seed updated if new required data is introduced
 
 ### scope: devops
+
 - [ ] Docker build passes locally (`make build`)
 - [ ] Podman build passes if tested (`make up-podman`)
 - [ ] New environment variables added to `.env.example`
 - [ ] CI pipeline passes on the PR branch
 
 ## VI. Linear ticket
+
 [AUR-xx]
 ```
 

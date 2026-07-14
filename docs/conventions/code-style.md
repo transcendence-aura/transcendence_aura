@@ -2,13 +2,13 @@
 
 ## Tools
 
-| Tool        | Purpose                            | Config location         |
-|-------------|------------------------------------|-------------------------|
-| ESLint      | Static analysis, error detection   | `/.eslintrc.js`         |
-| Prettier    | Automatic formatting               | `/.prettierrc`          |
-| TypeScript  | Type safety (strict mode)          | `tsconfig.json`         |
-| Husky       | Git hooks enforcement              | `/.husky/`              |
-| Commitlint  | Commit message validation          | `/commitlint.config.js` |
+| Tool       | Purpose                          | Config location         |
+| ---------- | -------------------------------- | ----------------------- |
+| ESLint     | Static analysis, error detection | `/.eslintrc.js`         |
+| Prettier   | Automatic formatting             | `/.prettierrc`          |
+| TypeScript | Type safety (strict mode)        | `tsconfig.json`         |
+| Husky      | Git hooks enforcement            | `/.husky/`              |
+| Commitlint | Commit message validation        | `/commitlint.config.js` |
 
 ## Running locally
 
@@ -23,27 +23,26 @@ npm run typecheck     # TypeScript check without emit
 
 ---
 
-
 ## Naming conventions
 
 Applies to both frontend and backend.
 
-| Element            | Convention      | Example                   |
-|--------------------|-----------------|---------------------------|
-| Files              | kebab-case      | `user-profile.tsx`        |
-| React components   | PascalCase      | `UserProfile`             |
-| Functions          | camelCase       | `getUserById`             |
-| Variables          | camelCase       | `isLoading`               |
-| Constants          | UPPER_SNAKE_CASE| `MAX_FILE_SIZE`           |
-| DB models          | PascalCase      | `User`, `WishlistItem`    |
-| Hooks              | use + camelCase | `useAuth`, `useProducts`  |
-| Types / Interfaces | PascalCase      | `UserProfile`, `ApiError` |
-| Enums              | PascalCase      | `UserRole`, `OrderStatus` |
-| NestJS services    | PascalCase      | `AuthService`             |
-| NestJS controllers | PascalCase      | `AuthController`          |
-| NestJS modules     | PascalCase      | `AuthModule`              |
-| NestJS DTOs        | PascalCase      | `CreateUserDto`           |
-| NestJS guards      | PascalCase      | `JwtAuthGuard`            |
+| Element            | Convention       | Example                   |
+| ------------------ | ---------------- | ------------------------- |
+| Files              | kebab-case       | `user-profile.tsx`        |
+| React components   | PascalCase       | `UserProfile`             |
+| Functions          | camelCase        | `getUserById`             |
+| Variables          | camelCase        | `isLoading`               |
+| Constants          | UPPER_SNAKE_CASE | `MAX_FILE_SIZE`           |
+| DB models          | PascalCase       | `User`, `WishlistItem`    |
+| Hooks              | use + camelCase  | `useAuth`, `useProducts`  |
+| Types / Interfaces | PascalCase       | `UserProfile`, `ApiError` |
+| Enums              | PascalCase       | `UserRole`, `OrderStatus` |
+| NestJS services    | PascalCase       | `AuthService`             |
+| NestJS controllers | PascalCase       | `AuthController`          |
+| NestJS modules     | PascalCase       | `AuthModule`              |
+| NestJS DTOs        | PascalCase       | `CreateUserDto`           |
+| NestJS guards      | PascalCase       | `JwtAuthGuard`            |
 
 ---
 
@@ -147,9 +146,9 @@ Enforced automatically by ESLint. Must follow this order:
 
 ### Folder structure
 
-*(To be defined in Phase 2 with the backend team.
+_(To be defined in Phase 2 with the backend team.
 The structure will follow NestJS module conventions
-and will be documented here once validated.)*
+and will be documented here once validated.)_
 
 ---
 
@@ -177,9 +176,9 @@ and will be documented here once validated.)*
 ```typescript
 // Standard error response shape
 {
-  statusCode: number
-  message: string
-  error: string
+  statusCode: number;
+  message: string;
+  error: string;
 }
 ```
 
@@ -196,12 +195,12 @@ Enforced automatically by ESLint. Must follow this order:
 
 ## Database (Prisma)
 
-*(To be defined in Phase 2 — naming conventions for models,
-fields, relations, and migration naming strategy.)*
+_(To be defined in Phase 2 — naming conventions for models,
+fields, relations, and migration naming strategy.)_
 
 ---
 
 ## WebSocket / Real-Time
 
-*(To be defined in Phase 7 — event naming conventions,
-payload structure, and error handling for Socket.io.)*
+_(To be defined in Phase 7 — event naming conventions,
+payload structure, and error handling for Socket.io.)_

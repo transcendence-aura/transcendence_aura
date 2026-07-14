@@ -1,4 +1,5 @@
 # AURA
+
 > Premium D2C Commerce Platform — ft_transcendence
 
 ---
@@ -20,48 +21,52 @@ interface.
 ## Tech Stack
 
 ### Frontend
-| Technology       | Purpose                                      |
-|------------------|----------------------------------------------|
-| Next.js 14+      | React framework with App Router and SSR      |
-| TypeScript       | Type safety across the entire frontend       |
-| Tailwind CSS     | Utility-first styling                        |
-| Zustand          | Lightweight global state management          |
-| React Query      | Server state, caching, and data fetching     |
-| Socket.io Client | Real-time WebSocket communication            |
-| Three.js         | 3D product rendering                         |
-| Zod              | Frontend form and schema validation          |
+
+| Technology       | Purpose                                  |
+| ---------------- | ---------------------------------------- |
+| Next.js 14+      | React framework with App Router and SSR  |
+| TypeScript       | Type safety across the entire frontend   |
+| Tailwind CSS     | Utility-first styling                    |
+| Zustand          | Lightweight global state management      |
+| React Query      | Server state, caching, and data fetching |
+| Socket.io Client | Real-time WebSocket communication        |
+| Three.js         | 3D product rendering                     |
+| Zod              | Frontend form and schema validation      |
 
 ### Backend
-| Technology       | Purpose                                      |
-|------------------|----------------------------------------------|
-| NestJS           | Modular Node.js framework                    |
-| TypeScript       | Type safety across the entire backend        |
-| Prisma           | Type-safe ORM for PostgreSQL                 |
-| PostgreSQL       | Relational database (ACID transactions)      |
-| Redis            | Caching and session management               |
-| Socket.io        | WebSocket server for real-time features      |
-| Passport.js      | OAuth 2.0 authentication strategy            |
-| class-validator  | Backend DTO validation                       |
-| Helmet.js        | HTTP security headers                        |
+
+| Technology      | Purpose                                 |
+| --------------- | --------------------------------------- |
+| NestJS          | Modular Node.js framework               |
+| TypeScript      | Type safety across the entire backend   |
+| Prisma          | Type-safe ORM for PostgreSQL            |
+| PostgreSQL      | Relational database (ACID transactions) |
+| Redis           | Caching and session management          |
+| Socket.io       | WebSocket server for real-time features |
+| Passport.js     | OAuth 2.0 authentication strategy       |
+| class-validator | Backend DTO validation                  |
+| Helmet.js       | HTTP security headers                   |
 
 ### Infrastructure
-| Technology       | Purpose                                      |
-|------------------|----------------------------------------------|
-| Docker           | Containerization — single command launch     |
-| Docker Compose   | Multi-service orchestration                  |
-| Podman           | Rootless container runtime (school fallback) |
-| Nginx            | Reverse proxy and HTTPS termination          |
-| Prometheus       | Metrics collection                           |
-| Grafana          | Metrics visualization and dashboards         |
-| GitHub Actions   | CI/CD — lint, typecheck, build on every PR   |
+
+| Technology     | Purpose                                      |
+| -------------- | -------------------------------------------- |
+| Docker         | Containerization — single command launch     |
+| Docker Compose | Multi-service orchestration                  |
+| Podman         | Rootless container runtime (school fallback) |
+| Nginx          | Reverse proxy and HTTPS termination          |
+| Prometheus     | Metrics collection                           |
+| Grafana        | Metrics visualization and dashboards         |
+| GitHub Actions | CI/CD — lint, typecheck, build on every PR   |
 
 ### Developer Tooling
-| Technology       | Purpose                                      |
-|------------------|----------------------------------------------|
-| ESLint           | Static analysis and error detection          |
-| Prettier         | Automatic code formatting                    |
-| Husky            | Git hooks enforcement                        |
-| Commitlint       | Commit message validation                    |
+
+| Technology | Purpose                             |
+| ---------- | ----------------------------------- |
+| ESLint     | Static analysis and error detection |
+| Prettier   | Automatic code formatting           |
+| Husky      | Git hooks enforcement               |
+| Commitlint | Commit message validation           |
 
 ---
 
@@ -70,17 +75,20 @@ interface.
 Before running the project, make sure you have the following installed:
 
 **Container runtime — one of:**
+
 - [Docker](https://docs.docker.com/get-docker/) 24+ with
   [Docker Compose](https://docs.docker.com/compose/) v2+
 - [Podman](https://podman.io/) 4+ with
   [Podman Compose](https://github.com/containers/podman-compose)
-  *(rootless fallback for school machines)*
+  _(rootless fallback for school machines)_
 
 **For local development without containers:**
+
 - [Node.js](https://nodejs.org/) 20+
-- [npm](https://www.npmjs.com/) 10+ *(no yarn, no pnpm)*
+- [npm](https://www.npmjs.com/) 10+ _(no yarn, no pnpm)_
 
 **Always required:**
+
 - [Git](https://git-scm.com/)
 
 > The project targets OCI-compatible runtimes.
@@ -91,20 +99,22 @@ Before running the project, make sure you have the following installed:
 
 ## Installation
 
-*(To be completed in Phase 1 once Docker Compose is configured.)*
+_(To be completed in Phase 1 once Docker Compose is configured.)_
 
 ---
 
 ## Running the project
 
 ### With Docker
+
 ```bash
 make up
 # or
 docker compose up --build
 ```
 
-### With Podman *(school machines)*
+### With Podman _(school machines)_
+
 ```bash
 make up-podman
 # or
@@ -112,11 +122,12 @@ podman-compose up --build
 ```
 
 ### Stop the project
+
 ```bash
 make down
 ```
 
-*(Full instructions to be completed in Phase 1.)*
+_(Full instructions to be completed in Phase 1.)_
 
 ---
 
@@ -130,13 +141,13 @@ cp .env.example .env
 
 Never commit `.env`. All secrets must stay local.
 
-*(Variables to be documented in Phase 1.)*
+_(Variables to be documented in Phase 1.)_
 
 ---
 
 ## Team
 
-*(To be completed — roles, responsibilities, and contributions per member.)*
+_(To be completed — roles, responsibilities, and contributions per member.)_
 
 ---
 
@@ -154,34 +165,34 @@ Never commit `.env`. All secrets must stay local.
 
 ## Database Schema
 
-*(To be completed in Phase 2 — diagram and table descriptions.)*
+_(To be completed in Phase 2 — diagram and table descriptions.)_
 
 ---
 
 ## Features
 
-*(To be completed in Phase 12.)*
+_(To be completed in Phase 12.)_
 
 ---
 
 ## Modules
 
-*(To be completed in Phase 12 — list, points, and justification per module.)*
+_(To be completed in Phase 12 — list, points, and justification per module.)_
 
 ---
 
 ## Individual Contributions
 
-*(To be completed in Phase 12 — detailed breakdown per team member.)*
+_(To be completed in Phase 12 — detailed breakdown per team member.)_
 
 ---
 
 ## Resources
 
-*(To be completed — official docs, articles, and references used.)*
+_(To be completed — official docs, articles, and references used.)_
 
 ---
 
 ## AI Usage
 
-*(To be completed — description of how AI tools were used during development.)*
+_(To be completed — description of how AI tools were used during development.)_
