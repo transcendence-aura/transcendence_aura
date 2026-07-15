@@ -95,6 +95,31 @@ line, then concise bullets when context is needed.
 
 ---
 
+## Pre-commit hook
+
+Staged files are linted and formatted automatically before each commit. A commit
+with lint errors is rejected; fix them, `git add` again, and re-commit.
+
+Only staged files are processed, so the hook stays fast regardless of repo size.
+
+### Committing from a GUI client
+
+If you use a GUI client (VS Code Source Control, GitHub Desktop, ...) and
+installed Node through a version manager such as nvm, the hook may fail with
+`command not found`. GUI clients do not load your shell startup file, so `node`
+and `npx` are missing from their PATH.
+
+Husky sources `~/.config/husky/init.sh` before every hook. Create it once, on
+your machine (this file is outside the repo, it is not committed):
+
+    # ~/.config/husky/init.sh
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+Committing from the terminal is unaffected.
+
+---
+
 ## PR rules
 
 ### branch → dev
