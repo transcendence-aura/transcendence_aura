@@ -16,9 +16,11 @@
     "clean:lock": "rm -f frontend/package-lock.json backend/package-lock.json package-lock.json",
     "lint": "npm --prefix frontend run lint && npm --prefix backend run lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "prettier": "^3.9.5"
   }
 }

@@ -1,0 +1,39 @@
+# Validate the project commit format:
+#   [type/scope] - description [AUR-xx]
+# The [AUR-xx] reference is optional but expected for non-trivial work.
+
+commit_msg=$(head -n 1 "$1")
+
+types="feat|fix|chore|docs|refactor|test|style"
+scopes="frontend|backend|devops|database|security|design|conventions|setup"
+
+base="^\[($types)/($scopes)\] - .+"
+with_ticket="$base \[AUR-[0-9]+\]$"
+without_ticket="$base$"
+
+if echo "$commit_msg" | grep -qE "$with_ticket"; then
+  exit 0
+fi
+
+# ANSI colors. Only used for terminal feedback in this hook, never in app logs.
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+DIM='\033[2m'
+RESET='\033[0m'
+
+if echo "$commit_msg" | grep -qE "$without_ticket"; then
+  printf "${YELLOW}Note: no [AUR-xx] reference in this commit message.${RESET}\n"
+  printf "${DIM}      Referencing a ticket is expected for anything non-trivial.${RESET}\n"
+  exit 0
+fi
+
+# Format the lists for readability without duplicating their definition.
+display_types=$(echo "$types" | sed 's/|/ | /g')
+display_scopes=$(echo "$scopes" | sed 's/|/ | /g')
+
+printf "${RED}Invalid commit message format.${RESET}\n\n"
+printf "  Expected: [type/scope] - description [AUR-xx]\n"
+printf "  Example:  [chore/devops] - Centralize root Prettier config [AUR-32]\n\n"
+printf "  Allowed types:  [ %s ]\n" "$display_types"
+printf "  Allowed scopes: [ %s ]\n" "$display_scopes"
+exit 1

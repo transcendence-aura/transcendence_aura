@@ -38,6 +38,25 @@ git checkout -b login1/auth-implement-jwt
 [AUR-xx] --> is the ticket ID to be specified from linear
 ```
 
+Example:
+
+    [chore/devops] - Centralize root Prettier config [AUR-32]
+
+The format is enforced by a `commit-msg` Git hook; a message that does not match
+is rejected.
+
+The `[AUR-xx]` ticket reference is optional and the hook only prints a reminder
+when it is missing. It is expected for anything non-trivial - a commit without a
+reference should be the exception (typo, forgotten ignore entry, small doc fix),
+not the habit.
+
+**Types:** `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `style`
+**Scopes:** `frontend`, `backend`, `devops`, `database`, `security`, `design`,
+`conventions`, `setup`
+
+Use `git commit` without `-m` so the editor opens: a subject line, then a blank
+line, then concise bullets when context is needed.
+
 ### Allowed types
 
 | Type       | Usage                                      |
