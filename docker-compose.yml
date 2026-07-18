@@ -1,8 +1,21 @@
 services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - aura
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
-    ports:
-      - '${FRONTEND_PORT}:3000'
     environment:
       NODE_ENV: ${NODE_ENV}
     depends_on:
@@ -13,8 +26,6 @@ services:
 
   backend:
     build: ./backend
-    ports:
-      - '${BACKEND_PORT}:3001'
     environment:
       NODE_ENV: ${NODE_ENV}
       PORT: 3001
