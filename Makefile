@@ -19,8 +19,17 @@ check-env:
 		exit 1; \
 	}
 
+.PHONY: check-certs
+check-certs:
+	@test -f nginx/ssl/server.crt || { \
+		printf "$(RED)Error: SSL certificates are missing.$(END)\n"; \
+		printf "$(YELLOW)Generate them by running:$(END)\n"; \
+		printf "    bash scripts/gen-certs.sh\n"; \
+		exit 1; \
+	}
+
 .PHONY: up
-up: check-env
+up: check-env check-certs
 	@printf "$(YELLOW)Starting the stack...$(END)\n"
 	@$(COMPOSE) up -d
 	@printf "$(GREEN)Stack is up.$(END)\n"
