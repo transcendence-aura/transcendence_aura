@@ -61,3 +61,17 @@ legacy mode - the WSL kernel does not ship the nf_tables modules Docker expects:
 
     sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
     sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+
+## Nginx ports on rootless Podman (school machines)
+
+By default the stack exposes Nginx on ports 80 and 443. On rootless setups such
+as the school machines, binding to ports below 1024 is forbidden and `make up`
+fails with a permission error (`Error 125`, `permission denied`).
+
+Override the host ports in your `.env`:
+
+    HTTP_PORT=8080
+    HTTPS_PORT=8443
+
+The stack is then reachable at `https://localhost:8443`. Nginx still listens on
+80/443 inside its container - only the host mapping changes.

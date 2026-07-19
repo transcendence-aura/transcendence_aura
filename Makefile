@@ -28,8 +28,18 @@ check-certs:
 		exit 1; \
 	}
 
+.PHONY: check-engine
+check-engine:
+	@$(COMPOSE) version > /dev/null 2>&1 || { \
+		printf "$(RED)Error: the container engine is not responding.$(END)\n"; \
+		printf "$(YELLOW)Make sure your container runtime is running.$(END)\n"; \
+		printf "$(YELLOW)On WSL with Docker, you may need:$(END)\n"; \
+		printf "    sudo service docker start\n"; \
+		exit 1; \
+	}
+
 .PHONY: up
-up: check-env check-certs
+up: check-env check-certs check-engine
 	@printf "$(YELLOW)Starting the stack...$(END)\n"
 	@$(COMPOSE) up -d
 	@printf "$(GREEN)Stack is up.$(END)\n"
@@ -41,7 +51,7 @@ down:
 	@printf "$(GREEN)Stack is down.$(END)\n"
 
 .PHONY: build
-build: check-env
+build: check-env check-engine
 	@printf "$(BLUE)Building images...$(END)\n"
 	@$(COMPOSE) build
 	@printf "$(GREEN)Images built.$(END)\n"
