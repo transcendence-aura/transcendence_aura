@@ -2,6 +2,10 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type HealthStatus {
+  status: String!
+}
+
 type Query {
-  ping: String!
+  health: HealthStatus!
 }

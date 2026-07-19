@@ -4,7 +4,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PingResolver } from './graphql/ping.resolver';
+import { HealthResolver } from './graphql/health.resolver';
 
 @Module({
   imports: [
@@ -19,6 +19,6 @@ import { PingResolver } from './graphql/ping.resolver';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, PingResolver],
+  providers: [AppService, HealthResolver],
 })
 export class AppModule {}
