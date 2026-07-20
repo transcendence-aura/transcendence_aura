@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Nginx SSL certificates
 nginx/ssl/
+
+# GraphQL schemamake
+backend/src/schema.gql

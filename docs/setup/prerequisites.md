@@ -4,6 +4,21 @@ What has to be installed on your machine before working on the project. These ar
 system tools: cloning the repository does not install them, the same way it does
 not install Node.
 
+## Base tools
+
+Install these before anything else:
+
+- **git** - to clone the repository.
+- **make** - the entry point for every stack command (`make up`, `make down`).
+
+On most Linux and macOS setups they are already present. If not:
+
+    # Debian / Ubuntu
+    sudo apt install git make
+
+    # Fedora (school machines)
+    sudo dnf install git make
+
 ## Node.js
 
 Managed with [nvm](https://github.com/nvm-sh/nvm) (Node Version Manager). The version is pinned in

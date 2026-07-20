@@ -13,6 +13,9 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "@apollo/client": "^4.2.7",
+    "@apollo/client-integration-nextjs": "^0.14.5",
+    "graphql": "^16.14.2",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4"

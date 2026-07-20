@@ -18,6 +18,7 @@ services:
     build: ./frontend
     environment:
       NODE_ENV: ${NODE_ENV}
+      GRAPHQL_URL: ${GRAPHQL_URL}
     depends_on:
       - backend
     networks:
