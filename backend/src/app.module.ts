@@ -4,6 +4,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthResolver } from './graphql/health.resolver';
+import { ApiModule } from './api/api.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { HealthResolver } from './graphql/health.resolver';
       playground: false,
       graphiql: process.env.NODE_ENV !== 'production',
     }),
+    ApiModule,
   ],
   controllers: [AppController],
   providers: [AppService, HealthResolver],
