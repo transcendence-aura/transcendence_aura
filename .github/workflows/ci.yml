@@ -7,23 +7,47 @@ on:
     branches: ['main', 'dev']
 
 jobs:
-  lint:
+  validate-apps:
+    name: Lint, Typecheck & Build Apps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
-      - run: npm run lint
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
-      - run: npm run typecheck
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
 
-  build:
+      - name: Install dependencies
+        run: HUSKY=0 npm run install:all
+
+      - name: Run Linter
+        run: npm run lint
+
+      - name: Run Typecheck
+        run: npm run typecheck
+
+      - name: Build Frontend
+        run: npm --prefix frontend run build
+
+      - name: Build Backend
+        run: npm --prefix backend run build
+
+  docker:
+    name: Docker Build Validation
+    # Only on pull requests targeting main
+    if: github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
-      - run: npm run build
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Docker Compose needs a .env file to avoid errors.
+      # We use the example file because we only build images, we don't run them.
+      - name: Provide a build-time env file
+        run: cp .env.example .env
+
+      - name: Build images
+        run: docker compose build
