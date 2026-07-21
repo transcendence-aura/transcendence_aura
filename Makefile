@@ -10,6 +10,8 @@ END			= \033[0m
 #   make COMPOSE="podman-compose" up
 COMPOSE ?= docker compose
 
+# Tooling Checks
+
 .PHONY: check-env
 check-env:
 	@test -f .env || { \
@@ -37,6 +39,38 @@ check-engine:
 		printf "    sudo service docker start\n"; \
 		exit 1; \
 	}
+
+# Report which required tools are missing but never installs anything.
+.PHONY: check-tools
+check-tools:
+	@missing=0; \
+	for tool in git make node; do \
+		command -v $$tool >/dev/null 2>&1 \
+			&& printf "$(GREEN)ok$(END)   %s\n" "$$tool" \
+			|| { printf "$(RED)miss$(END) %s\n" "$$tool"; missing=1; }; \
+	done; \
+	if command -v docker >/dev/null 2>&1 || command -v podman >/dev/null 2>&1; then \
+		printf "$(GREEN)ok$(END)   container runtime (docker or podman)\n"; \
+	else \
+		printf "$(RED)miss$(END) container runtime (docker or podman)\n"; missing=1; \
+	fi; \
+	if [ $$missing -eq 1 ]; then \
+		printf "$(YELLOW)Some tools are missing. See docs/setup/prerequisites.md$(END)\n"; \
+		exit 1; \
+	fi; \
+	printf "$(GREEN)All required tools are present.$(END)\n"
+
+
+# Setup & Installation
+
+# Install every project dependency (root, frontend, backend) in one command.
+.PHONY: setup
+setup: check-env
+	@printf "$(BLUE)Installing project dependencies...$(END)\n"
+	@npm run install:all
+	@printf "$(GREEN)Dependencies installed. Run 'make up' to start the stack.$(END)\n"
+
+# Stack main lifecycle command
 
 .PHONY: up
 up: check-env check-certs check-engine
