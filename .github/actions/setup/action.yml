@@ -1,0 +1,16 @@
+name: Setup
+description: Checkout, Node from .nvmrc, and install dependencies (Husky off).
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'npm'
+
+    - name: Install dependencies
+      shell: bash
+      run: HUSKY=0 npm run install:all
