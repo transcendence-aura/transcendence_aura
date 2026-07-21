@@ -6,7 +6,7 @@ Read this document before making your first commit.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 24
 - Docker + Docker Compose **or** Podman + Podman Compose
 - npm _(no yarn, no pnpm)_
 - Git
@@ -118,7 +118,7 @@ Frontend changes: attach a screenshot or short video.
 - [ ] Input validation implemented (DTO + class-validator)
 - [ ] Correct HTTP status codes returned
 - [ ] No stack trace or internal info exposed in error responses
-- [ ] New endpoint documented in `docs/api/` if part of public API
+- [ ] New endpoint documented in `docs/api/` if part of public API (docs/api/ is added with the Public API module)
 
 ### scope: security
 
@@ -137,7 +137,7 @@ Frontend changes: attach a screenshot or short video.
 ### scope: devops
 
 - [ ] Docker build passes locally (`make build`)
-- [ ] Podman build passes if tested (`make up-podman`)
+- [ ] Podman build passes if tested (`make COMPOSE="podman-compose" up`)
 - [ ] New environment variables added to `.env.example`
 - [ ] CI pipeline passes on the PR branch
 

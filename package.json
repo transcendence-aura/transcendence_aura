@@ -11,17 +11,18 @@
     "build:frontend": "npm --prefix frontend run build",
     "build:backend": "npm --prefix backend run build",
     "build": "npm run build:frontend && npm run build:backend",
-    "install:all": "npm --prefix frontend install && npm --prefix backend install",
+    "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
     "clean": "rm -rf frontend/node_modules frontend/.next backend/node_modules backend/dist node_modules",
     "clean:lock": "rm -f frontend/package-lock.json backend/package-lock.json package-lock.json",
     "lint": "npm --prefix frontend run lint && npm --prefix backend run lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "typecheck": "npm --prefix frontend run typecheck && npm --prefix backend run typecheck"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
-    "prettier": "^3.9.5"
+    "prettier": "^3.9.6"
   }
 }

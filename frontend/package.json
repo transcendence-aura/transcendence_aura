@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@apollo/client": "^4.2.7",
