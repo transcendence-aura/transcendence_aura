@@ -146,9 +146,46 @@ Enforced automatically by ESLint. Must follow this order:
 
 ### Folder structure
 
-_(To be defined in Phase 2 with the backend team.
-The structure will follow NestJS module conventions
-and will be documented here once validated.)_
+Organized by feature.
+Each feature module should own everything related to that business capability.
+
+```
+src/
+├── modules/
+│   ├── auth/
+│   ├── chat/
+│   ├── follows/
+│   ├── health/
+│   ├── notifications/
+│   ├── products/
+│   ├── users/
+│   └── wishlist/
+├── common/
+├── config/
+├── prisma/
+├── app.module.ts
+└── main.ts
+```
+
+modules/  # Business features
+common/   # Shared utilities and infrastructure (when needed)
+config/   # Application configuration (when needed)
+prisma/   # Database module and Prisma services (when needed)
+
+Example:
+```
+src/
+└── modules/
+    └── users/
+        ├── dto/
+        │   ├── create-user.dto.ts
+        │   └── update-user.dto.ts
+        ├── users.controller.ts
+        ├── users.service.ts
+        └── users.module.ts
+```
+
+Temporary application-level routes may exist outside of feature modules during initial setup. Once endpoints represent a business capability, they will need to be moved into the corresponding feature module.
 
 ---
 

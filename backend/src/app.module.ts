@@ -3,8 +3,8 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { HealthResolver } from './graphql/health.resolver';
 import { ApiModule } from './api/api.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -18,8 +18,9 @@ import { ApiModule } from './api/api.module';
       graphiql: process.env.NODE_ENV !== 'production',
     }),
     ApiModule,
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, HealthResolver],
+  providers: [AppService],
 })
 export class AppModule {}
