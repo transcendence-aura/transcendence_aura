@@ -162,7 +162,6 @@ src/
 │   └── wishlist/
 ├── common/
 ├── config/
-├── prisma/
 ├── app.module.ts
 └── main.ts
 ```
@@ -170,7 +169,6 @@ src/
 modules/  # Business features
 common/   # Shared utilities and infrastructure (when needed)
 config/   # Application configuration (when needed)
-prisma/   # Database module and Prisma services (when needed)
 
 Example:
 ```
@@ -232,8 +230,103 @@ Enforced automatically by ESLint. Must follow this order:
 
 ## Database (Prisma)
 
-_(To be defined in Phase 2 — naming conventions for models,
-fields, relations, and migration naming strategy.)_
+```
+backend/
+├── prisma/
+│   ├── migrations/
+│   ├── schema.prisma
+│   └── seed.ts
+└── src/
+|   └── modules/
+|       ├── database/
+|       |   ├── database.module.ts
+|       |   └── prisma.service.ts
+|       └── ...
+└── ...
+```
+
+`schema.prisma` will be the single source for:
+ - PostgreSQL datasource configuration
+ - Prisma models
+ - enums
+ - relations
+ - indexes
+ - generator configuration
+
+ **Prisma models** will use singular, PascalCase.
+
+ Examples:
+ ```prisma
+ model User {}
+
+ model Product {}
+
+ model Wishlist {}
+ ```
+**Database tables** are mapped using `@@map`.
+
+Example:
+This creates `users` in PostgreSQL.
+
+ ```prisma
+ model User {
+  id String @id @default(uuid())
+
+  @@map("users")
+ }
+ ```
+
+**Field naming** will be camelCase and should follow TypeScript conventions.
+
+Example:
+```prisma
+  model User {
+    id          String
+    firstName   String
+    lastName    String
+    email       String
+  }
+```
+
+Database tables use an `id` primary key.
+**Primary keys** should be generated using UUIDs.
+
+**Foreign keys** use the relatedEntityId naming convention.
+Foreign keys reference another model's `id` and describe the relationship they represent.
+
+**Relationship** example:
+```prisma
+model Message {
+  id String @id @default(uuid())
+
+  conversationId String
+  senderId String
+
+  conversation Conversation @relation(
+    fields: [conversationId],
+    references: [id]
+  )
+
+  sender User @relation(
+    fields: [senderId]
+    references: [id]
+  )
+
+  createdAt DateTime @default(now())
+
+  @@map("messages")
+}
+```
+
+**Migration naming** should use `verb_description` with lowercase snake_case.
+
+Examples:
+```prisma
+  init
+  add_products
+  add_wishlist
+  create_chat_messages
+```
 
 ---
 
