@@ -1,26 +1,39 @@
 @import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Background */
+  --color-bg-page: #fafaf8;
+  --color-bg-card: #ffffff;
+  --color-bg-surface: #e8f0ec;
+  --color-bg-subtle: #f3f1eb;
+  --color-bg-overlay: rgba(26, 20, 16, 0.5);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Text */
+  --color-text-primary: #2c2420;
+  --color-text-secondary: #4a4540;
+  --color-text-muted: #a09890;
+  --color-text-inverse: #fafaf8;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Brand */
+  --color-brand-dark: #2c2420;
+  --color-brand-accent: #dc9b9b;
+
+  /* Borders */
+  --color-border-default: #dedad4;
+  --color-border-focus: #2c2420;
+
+  /* Footer */
+  --color-footer-bg: #1e1b18;
+  --color-footer-text: #e0dbd4;
+  --color-footer-muted: #c8c0b8;
+  --color-footer-subtle: #786e68;
+
+  /* - Status - */
+  --color-status-online: #3d7a5e;
+  --color-status-error: #c0392b;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
 }
