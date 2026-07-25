@@ -1,6 +1,5 @@
-@import 'tailwindcss';
-
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&family=Noto+Sans+Arabic:wght@300;400;500&display=swap');
+@import 'tailwindcss';
 
 @theme {
   /* Typefaces */
@@ -115,6 +114,18 @@
   --text-ui-lang--line-height: 1;
   --text-ui-lang--letter-spacing: 0.1em;
   --text-ui-lang--font-weight: 500;
+
+  /* Radius */
+  --radius-none: 0;
+  --radius-sm: 0.25rem; /* 4px - inputs */
+  --radius-pill: 1.25rem; /* 20px - role badges, status tags */
+  --radius-full: 9999px; /* avatars, online dots */
+
+  /* Shadow */
+  --shadow-none: none;
+  --shadow-card: 0 1px 4px rgba(44, 36, 32, 0.06);
+  --shadow-card-hover: 0 4px 16px rgba(44, 36, 32, 0.1);
+  --shadow-modal: 0 8px 32px rgba(44, 36, 32, 0.14);
 }
 
 body {
