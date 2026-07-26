@@ -19,7 +19,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typecheck": "tsc --noEmit"
+    "prisma:generate": "POSTGRES_URL=postgresql://prisma:prisma@localhost:5432/prisma prisma generate --schema=./prisma/schema.prisma",
+    "postinstall": "npm run prisma:generate",
+    "typecheck": "npm run prisma:generate && tsc --noEmit"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",
@@ -29,8 +31,11 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/graphql": "^13.4.2",
     "@nestjs/platform-express": "^11.0.1",
+    "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
+    "dotenv": "^17.4.2",
     "graphql": "^16.14.2",
+    "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
