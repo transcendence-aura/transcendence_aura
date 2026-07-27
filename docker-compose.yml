@@ -31,6 +31,10 @@ services:
 
   backend:
     build: ./backend
+    group_add:
+      - '${HOST_GID:-1000}'
+    volumes:
+      - ./backend/prisma:/app/prisma
     environment:
       NODE_ENV: ${NODE_ENV}
       PORT: 3001

@@ -10,6 +10,10 @@ END			= \033[0m
 #   make COMPOSE="podman-compose" up
 COMPOSE ?= docker compose
 
+# Pass primary group ID to Compose
+HOST_GID := $(shell id -g)
+COMPOSE_RUN = HOST_GID=$(HOST_GID) $(COMPOSE)
+
 # Tooling Checks
 
 .PHONY: check-env
@@ -32,7 +36,7 @@ check-certs:
 
 .PHONY: check-engine
 check-engine:
-	@$(COMPOSE) version > /dev/null 2>&1 || { \
+	@$(COMPOSE_RUN) version > /dev/null 2>&1 || { \
 		printf "$(RED)Error: the container engine is not responding.$(END)\n"; \
 		printf "$(YELLOW)Make sure your container runtime is running.$(END)\n"; \
 		printf "$(YELLOW)On WSL with Docker, you may need:$(END)\n"; \
@@ -75,21 +79,21 @@ setup: check-env
 .PHONY: up
 up: check-env check-certs check-engine
 	@printf "$(YELLOW)Starting the stack...$(END)\n"
-	@$(COMPOSE) up -d
+	@$(COMPOSE_RUN) up -d
 	@printf "$(GREEN)Stack is up.$(END)\n"
 
 .PHONY: down
 down:
 	@printf "$(YELLOW)Stopping the stack...$(END)\n"
-	@$(COMPOSE) down
+	@$(COMPOSE_RUN) down
 	@printf "$(GREEN)Stack is down.$(END)\n"
 
 .PHONY: build
 build: check-env check-engine
 	@printf "$(BLUE)Building images...$(END)\n"
-	@$(COMPOSE) build
+	@$(COMPOSE_RUN) build
 	@printf "$(GREEN)Images built.$(END)\n"
 
 .PHONY: logs
 logs:
-	@$(COMPOSE) logs -f
+	@$(COMPOSE_RUN) logs -f
