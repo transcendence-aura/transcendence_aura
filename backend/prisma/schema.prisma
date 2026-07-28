@@ -115,7 +115,6 @@ model Media {
   updatedAt DateTime @updatedAt
 
   @@index([productId, position])
-  @@map("media")
 }
 
 model Collection {

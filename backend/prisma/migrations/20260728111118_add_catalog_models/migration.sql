@@ -1,28 +1,6 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Media` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE "User" DROP CONSTRAINT "User_avatarId_fkey";
-
--- DropTable
-DROP TABLE "Media";
-
--- CreateTable
-CREATE TABLE "media" (
-    "id" UUID NOT NULL,
-    "url" TEXT NOT NULL,
-    "altText" VARCHAR(255),
-    "mimeType" VARCHAR(100),
-    "position" INTEGER NOT NULL DEFAULT 0,
-    "productId" UUID,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "media_pkey" PRIMARY KEY ("id")
-);
+-- AlterTable
+ALTER TABLE "Media" ADD COLUMN     "position" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "productId" UUID;
 
 -- CreateTable
 CREATE TABLE "collections" (
@@ -81,9 +59,6 @@ CREATE TABLE "_CollectionToProduct" (
 );
 
 -- CreateIndex
-CREATE INDEX "media_productId_position_idx" ON "media"("productId", "position");
-
--- CreateIndex
 CREATE UNIQUE INDEX "collections_slug_key" ON "collections"("slug");
 
 -- CreateIndex
@@ -113,11 +88,11 @@ CREATE UNIQUE INDEX "wishlists_userId_productId_key" ON "wishlists"("userId", "p
 -- CreateIndex
 CREATE INDEX "_CollectionToProduct_B_index" ON "_CollectionToProduct"("B");
 
--- AddForeignKey
-ALTER TABLE "User" ADD CONSTRAINT "User_avatarId_fkey" FOREIGN KEY ("avatarId") REFERENCES "media"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- CreateIndex
+CREATE INDEX "Media_productId_position_idx" ON "Media"("productId", "position");
 
 -- AddForeignKey
-ALTER TABLE "media" ADD CONSTRAINT "media_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Media" ADD CONSTRAINT "Media_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
