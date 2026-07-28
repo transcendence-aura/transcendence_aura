@@ -11,6 +11,11 @@ export default defineConfig([
   ...tseslint.configs.recommended,
   ...nextVitals,
   {
+    settings: {
+      react: {
+        version: '19.2',
+      },
+    },
     rules: {
       'no-console': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
