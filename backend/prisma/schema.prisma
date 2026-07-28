@@ -41,6 +41,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  wishlistItems Wishlist[]
+
   @@index([status])
   @@index([role])
 }
@@ -101,8 +103,86 @@ model Media {
   altText  String? @db.VarChar(255)
   mimeType String? @db.VarChar(100)
 
+  // Product gallery display order
+  position Int @default(0)
+
+  productId String?  @db.Uuid
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
   avatarFor User? @relation("UserAvatar")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([productId, position])
+}
+
+model Collection {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @db.VarChar(160)
+  slug        String  @unique @db.VarChar(160)
+  description String? @db.VarChar(1000)
+  isActive    Boolean @default(true)
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("collections")
+}
+
+model Product {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @db.VarChar(160)
+  slug        String  @unique @db.VarChar(160)
+  description String? @db.Text
+  isActive    Boolean @default(true)
+
+  collections Collection[]
+  variants    ProductVariant[]
+  media       Media[]
+  wishlists   Wishlist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("products")
+}
+
+model ProductVariant {
+  id          String  @id @default(uuid()) @db.Uuid
+  label       String  @db.VarChar(50)
+  isAvailable Boolean @default(true)
+
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Prevent duplicate labels for the same product.
+  @@unique([productId, label])
+  @@index([productId, isAvailable])
+  @@map("product_variants")
+}
+
+model Wishlist {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Prevent duplicate wishlist entries for the same user and product
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+  @@index([productId])
+  @@map("wishlists")
 }
