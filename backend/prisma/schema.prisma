@@ -14,6 +14,14 @@ enum UserRole {
 enum UserStatus {
   ACTIVE
   SUSPENDED
+  DELETED
+}
+
+enum NotificationType {
+  FOLLOW
+  MESSAGE
+  WISHLIST
+  SYSTEM
 }
 
 model User {
@@ -38,13 +46,28 @@ model User {
   refreshTokens RefreshToken[]
   apiKeys       ApiKey[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  // Marks a soft-deleted account
+  deletedAt DateTime?
 
   wishlistItems Wishlist[]
 
+  conversationsAsUserOne Conversation[] @relation("ConversationUserOne")
+  conversationsAsUserTwo Conversation[] @relation("ConversationUserTwo")
+  messages               Message[]
+
+  notifications        Notification[] @relation("UserNotifications")
+  actedOnNotifications Notification[] @relation("NotificationActor")
+
+  // Rows where this user is being followed
+  followers Follow[] @relation("FollowedUser")
+  // Rows where this user is following other users
+  following Follow[] @relation("FollowingUser")
+
   @@index([status])
   @@index([role])
+  @@index([deletedAt])
 }
 
 model RefreshToken {
@@ -185,4 +208,84 @@ model Wishlist {
   @@index([userId, createdAt])
   @@index([productId])
   @@map("wishlists")
+}
+
+model Follow {
+  followerId  String @db.Uuid
+  followingId String @db.Uuid
+
+  // The User is following other users.
+  follower  User @relation("FollowingUser", fields: [followerId], references: [id], onDelete: Cascade)
+  // The user is being followed.
+  following User @relation("FollowedUser", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followingId, createdAt])
+  @@index([followerId, createdAt])
+  @@map("follows")
+}
+
+model Conversation {
+  id String @id @default(uuid()) @db.Uuid
+
+  userOneId String @db.Uuid
+  userOne   User   @relation("ConversationUserOne", fields: [userOneId], references: [id], onDelete: Restrict)
+
+  userTwoId String @db.Uuid
+  userTwo   User   @relation("ConversationUserTwo", fields: [userTwoId], references: [id], onDelete: Restrict)
+
+  userOneDeletedAt DateTime?
+  userTwoDeletedAt DateTime?
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([userOneId, userTwoId])
+  @@index([userTwoId])
+  @@map("conversations")
+}
+
+model Message {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Keep the message if the sender is deleted
+  senderId String? @db.Uuid
+  sender   User?   @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  content String @db.Text
+
+  conversationId String       @db.Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+
+  type NotificationType
+
+  userId String @db.Uuid
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  actorId String? @db.Uuid
+  actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  title String? @db.VarChar(160)
+  body  String? @db.VarChar(500)
+
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@index([actorId])
+  @@map("notifications")
 }
