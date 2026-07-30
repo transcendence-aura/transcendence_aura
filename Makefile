@@ -82,6 +82,17 @@ up: check-env check-certs check-engine
 	@$(COMPOSE_RUN) up -d
 	@printf "$(GREEN)Stack is up.$(END)\n"
 
+.PHONY: seed
+seed: check-env check-engine
+	@$(COMPOSE_RUN) ps --status running --services | grep -qx "backend" || { \
+		printf "$(RED)Error: the backend service is not running.$(END)\n"; \
+		printf "$(YELLOW)Start the stack with: make up$(END)\n"; \
+		exit 1; \
+	}
+	@printf "$(YELLOW)Executing database seed script...$(END)\n"
+	@$(COMPOSE_RUN) exec -T backend npm run prisma:seed
+	@printf "$(GREEN)Database seeded successfully.$(END)\n"
+
 .PHONY: down
 down:
 	@printf "$(YELLOW)Stopping the stack...$(END)\n"

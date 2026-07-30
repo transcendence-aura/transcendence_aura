@@ -20,6 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "POSTGRES_URL=postgresql://prisma:prisma@localhost:5432/prisma prisma generate --schema=./prisma/schema.prisma",
+    "prisma:seed": "prisma db seed",
     "postinstall": "npm run prisma:generate",
     "typecheck": "npm run prisma:generate && tsc --noEmit"
   },
