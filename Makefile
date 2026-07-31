@@ -74,10 +74,15 @@ setup: check-env
 	@npm run install:all
 	@printf "$(GREEN)Dependencies installed. Run 'make up' to start the stack.$(END)\n"
 
+# Vault setup
+.PHONY: vault-env
+vault-env:
+	@bash scripts/gen-vault-tokens.sh
+
 # Stack main lifecycle command
 
 .PHONY: up
-up: check-env check-certs check-engine
+up: check-env check-certs check-engine vault-env
 	@printf "$(YELLOW)Starting the stack...$(END)\n"
 	@$(COMPOSE_RUN) up -d
 	@printf "$(GREEN)Stack is up.$(END)\n"
