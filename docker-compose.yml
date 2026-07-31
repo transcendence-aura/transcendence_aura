@@ -39,11 +39,18 @@ services:
       NODE_ENV: ${NODE_ENV}
       PORT: 3001
       POSTGRES_URL: ${POSTGRES_URL}
+      VAULT_ADDR: ${VAULT_ADDR}
+      VAULT_TOKEN: ${VAULT_TOKEN}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      vault:
+        condition: service_healthy
     networks:
       - aura
+      - vault
     restart: unless-stopped
 
   postgres:
@@ -68,9 +75,32 @@ services:
       - aura
     restart: unless-stopped
 
+  vault:
+    image: hashicorp/vault:1.19
+    command:
+      - server
+      - -dev
+      - -dev-root-token-id=${VAULT_DEV_ROOT_TOKEN_ID}
+      - -dev-no-store-token
+    environment:
+      VAULT_DEV_LISTEN_ADDR: 0.0.0.0:8200
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - VAULT_ADDR=http://127.0.0.1:8200 vault status >/dev/null 2>&1
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - vault
+
 volumes:
   postgres_data:
 
 networks:
   aura:
     driver: bridge
+
+  vault:
+    internal: true
