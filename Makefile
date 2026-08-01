@@ -94,6 +94,8 @@ seed: check-env check-engine
 		printf "$(YELLOW)Start the stack with: make up$(END)\n"; \
 		exit 1; \
 	}
+	@printf "$(YELLOW)Running database migrations...$(END)\n"
+	@$(COMPOSE_RUN) exec -T backend npx prisma migrate deploy
 	@printf "$(YELLOW)Executing database seed script...$(END)\n"
 	@$(COMPOSE_RUN) exec -T backend npm run prisma:seed
 	@printf "$(GREEN)Database seeded successfully.$(END)\n"

@@ -1,11 +1,6 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
-import  {
-  NotificationType,
-  PrismaClient,
-  UserRole,
-  UserStatus,
-} from '@prisma/client';
+import { NotificationType, PrismaClient, UserRole, UserStatus } from '@prisma/client';
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
@@ -72,9 +67,20 @@ const ids = {
     system: '60000000-0000-4000-8000-000000000004',
   },
   analytics: {
-    followCreated:'70000000-0000-4000-8000-000000000001',
+    followCreated: '70000000-0000-4000-8000-000000000001',
     messageSent: '70000000-0000-4000-8000-000000000002',
     wishlistAdded: '70000000-0000-4000-8000-000000000003',
+  },
+  media: {
+    cleanser1: '80000000-0000-4000-8000-000000000001',
+    cleanser2: '80000000-0000-4000-8000-000000000002',
+    conditioner1: '80000000-0000-4000-8000-000000000003',
+    faceoil1: '80000000-0000-4000-8000-000000000004',
+    faceoil2: '80000000-0000-4000-8000-000000000005',
+    moisturizer1: '80000000-0000-4000-8000-000000000006',
+    serum1: '80000000-0000-4000-8000-000000000007',
+    serum2: '80000000-0000-4000-8000-000000000008',
+    shampoo1: '80000000-0000-4000-8000-000000000009',
   },
 } as const;
 
@@ -102,7 +108,7 @@ async function seedUsers(passwordHash: string): Promise<void> {
       passwordHash: DEFAULT_PASSWORD,
       role: UserRole.ADMIN,
     },
-        {
+    {
       id: ids.users.clara,
       name: 'Clara L',
       email: 'clara@example.com',
@@ -111,7 +117,7 @@ async function seedUsers(passwordHash: string): Promise<void> {
       passwordHash: DEFAULT_PASSWORD,
       role: UserRole.USER,
     },
-        {
+    {
       id: ids.users.marie,
       name: 'Marie Laurent',
       email: 'marie@example.com',
@@ -120,7 +126,7 @@ async function seedUsers(passwordHash: string): Promise<void> {
       passwordHash: DEFAULT_PASSWORD,
       role: UserRole.USER,
     },
-        {
+    {
       id: ids.users.sophie,
       name: 'Sophie B',
       email: 'sophie@example.com',
@@ -161,15 +167,13 @@ async function seedCollections(): Promise<void> {
       id: ids.collections.skincare,
       name: 'Clean Beauty Skincare',
       slug: 'clean-beauty-skincare',
-      description:
-        'Gentle products designed for your everyday skincare routine.',
+      description: 'Gentle products designed for your everyday skincare routine.',
     },
     {
       id: ids.collections.haircare,
       name: 'Botanical Hair Care',
       slug: 'botanical-hair-care',
-      description:
-        'Clean, botanical hair solutions.',
+      description: 'Clean, botanical hair solutions.',
     },
   ];
 
@@ -270,6 +274,7 @@ async function seedProductVariants(): Promise<void> {
   const variants = [
     {
       id: ids.variants.cleanser100ml,
+      price: 42,
       productId: ids.products.cleanser,
       label: '100 ml',
       isAvailable: true,
@@ -277,36 +282,42 @@ async function seedProductVariants(): Promise<void> {
     {
       id: ids.variants.cleanser200ml,
       productId: ids.products.cleanser,
+      price: 84,
       label: '200 ml',
       isAvailable: true,
     },
     {
       id: ids.variants.conditioner150ml,
       productId: ids.products.conditioner,
+      price: 21,
       label: '150 ml',
       isAvailable: true,
     },
     {
       id: ids.variants.faceoil50ml,
       productId: ids.products.faceoil,
+      price: 21,
       label: '50 ml',
       isAvailable: true,
     },
     {
       id: ids.variants.moisturizer100ml,
       productId: ids.products.moisturizer,
+      price: 30.99,
       label: '100 ml',
       isAvailable: true,
     },
     {
       id: ids.variants.serum30ml,
       productId: ids.products.serum,
+      price: 12.42,
       label: '30 ml',
       isAvailable: true,
     },
     {
       id: ids.variants.shampoo200ml,
       productId: ids.products.shampoo,
+      price: 21.42,
       label: '200 ml',
       isAvailable: true,
     },
@@ -322,8 +333,99 @@ async function seedProductVariants(): Promise<void> {
       },
       update: {
         isAvailable: variant.isAvailable,
+        price: variant.price,
       },
       create: variant,
+    });
+  }
+}
+
+async function seedMedia(): Promise<void> {
+  const mediaItems = [
+    {
+      id: ids.media.cleanser1,
+      productId: ids.products.cleanser,
+      url: 'https://placehold.co/800x800?text=Cleanser+Front',
+      altText: 'Purifying Gel Cleanser - front view',
+      mimeType: 'image/jpeg',
+      position: 0,
+    },
+    {
+      id: ids.media.cleanser2,
+      productId: ids.products.cleanser,
+      url: 'https://placehold.co/800x800?text=Cleanser+Detail',
+      altText: 'Purifying Gel Cleanser - texture detail',
+      mimeType: 'image/jpeg',
+      position: 1,
+    },
+    {
+      id: ids.media.conditioner1,
+      productId: ids.products.conditioner,
+      url: 'https://placehold.co/800x800?text=Conditioner+Front',
+      altText: 'Restorative Hair Conditioner - front view',
+      mimeType: 'image/jpeg',
+      position: 0,
+    },
+    {
+      id: ids.media.faceoil1,
+      productId: ids.products.faceoil,
+      url: 'https://placehold.co/800x800?text=Face+Oil+Front',
+      altText: 'Rosehip Face Oil - front view',
+      mimeType: 'image/jpeg',
+      position: 0,
+    },
+    {
+      id: ids.media.faceoil2,
+      productId: ids.products.faceoil,
+      url: 'https://placehold.co/800x800?text=Face+Oil+Dropper',
+      altText: 'Rosehip Face Oil - dropper detail',
+      mimeType: 'image/jpeg',
+      position: 1,
+    },
+    {
+      id: ids.media.moisturizer1,
+      productId: ids.products.moisturizer,
+      url: 'https://placehold.co/800x800?text=Moisturizer+Front',
+      altText: 'Barrier Repair Cream - front view',
+      mimeType: 'image/jpeg',
+      position: 0,
+    },
+    {
+      id: ids.media.serum1,
+      productId: ids.products.serum,
+      url: 'https://placehold.co/800x800?text=Serum+Front',
+      altText: 'Vitamin C Serum - front view',
+      mimeType: 'image/jpeg',
+      position: 0,
+    },
+    {
+      id: ids.media.serum2,
+      productId: ids.products.serum,
+      url: 'https://placehold.co/800x800?text=Serum+Texture',
+      altText: 'Vitamin C Serum - texture',
+      mimeType: 'image/jpeg',
+      position: 1,
+    },
+    {
+      id: ids.media.shampoo1,
+      productId: ids.products.shampoo,
+      url: 'https://placehold.co/800x800?text=Shampoo+Front',
+      altText: 'Balancing Daily Shampoo - front view',
+      mimeType: 'image/jpeg',
+      position: 0,
+    },
+  ];
+
+  for (const item of mediaItems) {
+    await prisma.media.upsert({
+      where: { id: item.id },
+      update: {
+        url: item.url,
+        altText: item.altText,
+        mimeType: item.mimeType,
+        position: item.position,
+      },
+      create: item,
     });
   }
 }
@@ -597,6 +699,7 @@ async function main(): Promise<void> {
   await seedCollections();
   await seedProducts();
   await seedProductVariants();
+  await seedMedia();
   await seedWishlists();
   await seedFollows();
   await seedConversations();
@@ -609,10 +712,7 @@ async function run(): Promise<void> {
   try {
     await main();
   } catch (error: unknown) {
-    const message =
-      error instanceof Error
-        ? error.stack ?? error.message
-        : String(error);
+    const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
     process.stderr.write(`Database seed failed: ${message}\n`);
     process.exitCode = 1;
   } finally {
@@ -621,4 +721,3 @@ async function run(): Promise<void> {
 }
 
 void run();
-
