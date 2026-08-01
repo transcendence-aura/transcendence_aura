@@ -84,6 +84,12 @@ services:
       - -dev-no-store-token
     environment:
       VAULT_DEV_LISTEN_ADDR: 0.0.0.0:8200
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN_ID}
+    volumes:
+      - type: bind
+        source: ./vault
+        target: /vault/aura
+        read_only: true
     healthcheck:
       test:
         - CMD-SHELL
