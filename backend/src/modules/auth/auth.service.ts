@@ -1,10 +1,11 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 
 const SALT_ROUNDS = 10;
+const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
 
 @Injectable()
 export class AuthService {
@@ -18,13 +19,23 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
-    return this.prisma.user.create({
-      data: {
-        email: dto.email,
-        name: dto.name,
-        handle: dto.handle,
-        passwordHash,
-      },
-    });
+    try {
+      return await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          name: dto.name,
+          handle: dto.handle,
+          passwordHash,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PRISMA_UNIQUE_CONSTRAINT_ERROR
+      ) {
+        throw new ConflictException('USERNAME_TAKEN');
+      }
+      throw error;
+    }
   }
 }
