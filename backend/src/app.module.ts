@@ -8,6 +8,7 @@ import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './database/prisma.module';
 import { ProductsModule } from './modules/products/product.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CollectionsModule } from './modules/collections/collection.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AuthModule } from './modules/auth/auth.module';
     PrismaModule,
     ProductsModule,
     AuthModule,
+    CollectionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

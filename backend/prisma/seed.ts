@@ -167,12 +167,14 @@ async function seedCollections(): Promise<void> {
       id: ids.collections.skincare,
       name: 'Clean Beauty Skincare',
       slug: 'clean-beauty-skincare',
+      heroImageUrl: 'https://placehold.co/1500x200?text=Collection-Skincare',
       description: 'Gentle products designed for your everyday skincare routine.',
     },
     {
       id: ids.collections.haircare,
       name: 'Botanical Hair Care',
       slug: 'botanical-hair-care',
+      heroImageUrl: 'https://placehold.co/1500x200?text=Collection-Haircare',
       description: 'Clean, botanical hair solutions.',
     },
   ];
@@ -183,6 +185,7 @@ async function seedCollections(): Promise<void> {
       update: {
         name: collection.name,
         slug: collection.slug,
+        heroImageUrl: collection.heroImageUrl,
         description: collection.description,
         isActive: true,
       },

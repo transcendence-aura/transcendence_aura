@@ -14,6 +14,8 @@
 **Query Reference**
 
 - [product(slug)](#productslug) — Single product with images and variants
+- [collections](#collections) — List of all active collections
+- [collection(slug)](#collectionslug) — Single collection by slug
 
 ---
 
@@ -206,3 +208,99 @@ curl -k -X POST https://localhost/graphql \
 | Case                               | Message             |
 | ---------------------------------- | ------------------- |
 | Slug not found or product inactive | `PRODUCT_NOT_FOUND` |
+
+---
+
+## `collections`
+
+Returns all active collections. Feeds the catalogue page collection tabs.
+
+**Source:** `backend/src/modules/collections/`
+
+**Query**
+
+```graphql
+query {
+  collections {
+    id
+    slug
+    name
+    description
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ collections { id slug name description } }"}' | jq
+```
+
+**Arguments**
+
+None.
+
+**Response type: `[CollectionsType]`**
+
+| Field         | Type     | Nullable | Description             |
+| ------------- | -------- | -------- | ----------------------- |
+| `id`          | `String` | No       | UUID                    |
+| `slug`        | `String` | No       | URL-friendly identifier |
+| `name`        | `String` | No       | Display name            |
+| `description` | `String` | Yes      | Editorial description   |
+
+**Errors**
+
+None — returns an empty array `[]` when no active collections exist.
+
+---
+
+## `collection(slug)`
+
+Returns a single active collection by slug.
+
+**Source:** `backend/src/modules/collections/`
+
+**Query**
+
+```graphql
+query {
+  collection(slug: "clean-beauty-skincare") {
+    id
+    slug
+    name
+    description
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ collection(slug: \"clean-beauty-skincare\") { id slug name description } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type     | Required | Description                        |
+| -------- | -------- | -------- | ---------------------------------- |
+| `slug`   | `String` | Yes      | URL-friendly collection identifier |
+
+**Response type: `CollectionsType`**
+
+| Field         | Type     | Nullable | Description             |
+| ------------- | -------- | -------- | ----------------------- |
+| `id`          | `String` | No       | UUID                    |
+| `slug`        | `String` | No       | URL-friendly identifier |
+| `name`        | `String` | No       | Display name            |
+| `description` | `String` | Yes      | Editorial description   |
+
+**Errors**
+
+| Case                                  | Message                |
+| ------------------------------------- | ---------------------- |
+| Slug not found or collection inactive | `COLLECTION_NOT_FOUND` |

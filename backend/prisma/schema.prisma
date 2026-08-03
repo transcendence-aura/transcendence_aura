@@ -148,6 +148,7 @@ model Collection {
   slug        String  @unique @db.VarChar(160)
   description String? @db.VarChar(1000)
   isActive    Boolean @default(true)
+  heroImageUrl String @db.VarChar(500)
 
   products Product[]
 
