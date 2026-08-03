@@ -6,7 +6,6 @@ import { AppService } from './app.service';
 import { ApiModule } from './api/api.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './database/prisma.module';
-import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -22,7 +21,6 @@ import { AuthModule } from './modules/auth/auth.module';
     ApiModule,
     HealthModule,
     PrismaModule,
-    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
