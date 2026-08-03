@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { ApiModule } from './api/api.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './database/prisma.module';
+import { ProductsModule } from './modules/products/product.module';
 
 @Module({
   imports: [
@@ -17,10 +18,12 @@ import { PrismaModule } from './database/prisma.module';
       sortSchema: true,
       playground: false,
       graphiql: process.env.NODE_ENV !== 'production',
+      includeStacktraceInErrorResponses: false,
     }),
     ApiModule,
     HealthModule,
     PrismaModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
