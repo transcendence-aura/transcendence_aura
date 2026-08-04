@@ -5,3 +5,4 @@ Dockerfile
 .dockerignore
 npm-debug.log*
 test
+local-secrets/

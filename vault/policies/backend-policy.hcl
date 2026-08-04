@@ -5,25 +5,29 @@
 # It cannot create, modify, rotate, list, or destroy secrets.
 
 path "secret/data/aura/development/jwt" {
-	capabilities = ["read"]
+  capabilities = ["read"]
 }
 
 path "secret/data/aura/development/database" {
-	capabilities = ["read"]
+  capabilities = ["read"]
 }
 
 path "secret/data/aura/development/redis" {
-	capabilities = ["read"]
+  capabilities = ["read"]
 }
 
 path "secret/data/aura/development/oauth" {
-	capabilities = ["read"]
+  capabilities = ["read"]
 }
 
 path "secret/data/aura/development/smtp" {
-	capabilities = ["read"]
+  capabilities = ["read"]
 }
 
 path "secret/data/aura/development/totp" {
-	capabilities = ["read"]
+  capabilities = ["read"]
+}
+
+path "secret/data/aura-backend/development" {
+  capabilities = ["read"]
 }
