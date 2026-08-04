@@ -79,13 +79,33 @@ setup: check-env
 vault-env:
 	@bash scripts/gen-vault-tokens.sh
 
+# Start Vault
+.PHONY: vault-start
+vault-start: vault-env
+	@printf "$(YELLOW)Starting Vault$(END)\n"
+	@$(COMPOSE_RUN) up -d vault
+
+.PHONY: vault-bootstrap
+vault-bootstrap: vault-start
+	@printf "$(YELLOW)Configuring backend Vault access$(END)\n"
+	@COMPOSE_CMD='$(COMPOSE)' \
+		HOST_GID='$(HOST_GID)' \
+		bash scripts/bootstrap-vault-backend.sh
+
 # Stack main lifecycle command
 
 .PHONY: up
-up: check-env check-certs check-engine vault-env
+up: check-env check-certs check-engine
+	@$(MAKE) --no-print-directory vault-bootstrap
 	@printf "$(YELLOW)Starting the stack...$(END)\n"
 	@$(COMPOSE_RUN) up -d
 	@printf "$(GREEN)Stack is up.$(END)\n"
+
+.PHONY: backend-restart
+backend-restart: check-env check-engine
+	@$(MAKE) --no-print-directory vault-bootstrap
+	@printf "$(YELLOW)Restarting backend with a fresh Vault SecretID$(END)\n"
+	@$(COMPOSE_RUN) up -d --force-recreate backend
 
 .PHONY: seed
 seed: check-env check-engine
@@ -104,6 +124,7 @@ seed: check-env check-engine
 down:
 	@printf "$(YELLOW)Stopping the stack...$(END)\n"
 	@$(COMPOSE_RUN) down
+	@rm -f local-secrets/vault-secret-id
 	@printf "$(GREEN)Stack is down.$(END)\n"
 
 .PHONY: build

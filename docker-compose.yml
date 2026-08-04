@@ -40,7 +40,14 @@ services:
       PORT: 3001
       POSTGRES_URL: ${POSTGRES_URL}
       VAULT_ADDR: ${VAULT_ADDR}
-      VAULT_TOKEN: ${VAULT_TOKEN}
+      VAULT_ROLE_ID: ${VAULT_ROLE_ID}
+      VAULT_SECRET_ID_FILE: /run/secrets/vault_secret_id
+      VAULT_SECRET_PATH: aura-backend/development
+      VAULT_KV_MOUNT: secret
+      VAULT_AUTH_PATH: approle
+      VAULT_REQUEST_TIMEOUT_MS: '10000'
+    secrets:
+      - vault_secret_id
     depends_on:
       postgres:
         condition: service_started
@@ -80,10 +87,10 @@ services:
     command:
       - server
       - -dev
+      - -dev-listen-address=0.0.0.0:8200
       - -dev-root-token-id=${VAULT_DEV_ROOT_TOKEN_ID}
       - -dev-no-store-token
     environment:
-      VAULT_DEV_LISTEN_ADDR: 0.0.0.0:8200
       VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN_ID}
     volumes:
       - type: bind
@@ -110,3 +117,7 @@ networks:
 
   vault:
     internal: true
+
+secrets:
+  vault_secret_id:
+    file: ./local-secrets/vault-secret-id
