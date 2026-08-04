@@ -1,6 +1,11 @@
 #!/bin/bash
 set -eu
 
+fail() {
+  printf 'Error: %s\n' "$*" >&2
+  exit 1
+}
+
 ROLE_NAME="aura-backend"
 POLICY_NAME="backend-policy"
 
