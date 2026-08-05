@@ -247,7 +247,7 @@ curl -k -X POST https://localhost/graphql \
 
 ## `collections`
 
-Returns all active collections. Feeds the catalogue page collection tabs.
+Returns all active collections with their categories and product families. Feeds the catalogue page collection tabs and navigation.
 
 **Source:** `backend/src/modules/collections/`
 
@@ -258,8 +258,20 @@ query {
   collections {
     id
     slug
+    heroImageUrl
     name
     description
+    categories {
+      id
+      slug
+      name
+      description
+      productFamilies {
+        id
+        slug
+        name
+      }
+    }
   }
 }
 ```
@@ -269,7 +281,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ collections { id slug name description } }"}' | jq
+  -d '{"query":"{ collections { id slug heroImageUrl name description categories {id slug name description productFamilies { id slug name }} } }"}' | jq
 ```
 
 **Arguments**
@@ -278,12 +290,32 @@ None.
 
 **Response type: `[CollectionsType]`**
 
-| Field         | Type     | Nullable | Description             |
-| ------------- | -------- | -------- | ----------------------- |
-| `id`          | `String` | No       | UUID                    |
-| `slug`        | `String` | No       | URL-friendly identifier |
-| `name`        | `String` | No       | Display name            |
-| `description` | `String` | Yes      | Editorial description   |
+| Field          | Type                       | Nullable | Description                             |
+| -------------- | -------------------------- | -------- | --------------------------------------- |
+| `id`           | `String`                   | No       | UUID                                    |
+| `slug`         | `String`                   | No       | URL-friendly identifier                 |
+| `heroImageUrl` | `String`                   | No       | Banner image URL                        |
+| `name`         | `String`                   | No       | Display name                            |
+| `description`  | `String`                   | Yes      | Editorial description                   |
+| `categories`   | `[CollectionCategoryType]` | No       | Categories belonging to this collection |
+
+**`CollectionCategoryType`**
+
+| Field             | Type                            | Nullable | Description                           |
+| ----------------- | ------------------------------- | -------- | ------------------------------------- |
+| `id`              | `String`                        | No       | UUID                                  |
+| `slug`            | `String`                        | No       | URL-friendly identifier               |
+| `name`            | `String`                        | No       | Display name                          |
+| `description`     | `String`                        | Yes      | Editorial description                 |
+| `productFamilies` | `[CollectionProductFamilyType]` | No       | Product families within this category |
+
+**`CollectionProductFamilyType`**
+
+| Field  | Type     | Nullable | Description             |
+| ------ | -------- | -------- | ----------------------- |
+| `id`   | `String` | No       | UUID                    |
+| `slug` | `String` | No       | URL-friendly identifier |
+| `name` | `String` | No       | Display name            |
 
 **Errors**
 
@@ -293,7 +325,7 @@ None — returns an empty array `[]` when no active collections exist.
 
 ## `collection(slug)`
 
-Returns a single active collection by slug.
+Returns a single active collection by slug, with its categories and product families.
 
 **Source:** `backend/src/modules/collections/`
 
@@ -304,8 +336,20 @@ query {
   collection(slug: "clean-beauty-skincare") {
     id
     slug
+    heroImageUrl
     name
     description
+    categories {
+      id
+      slug
+      name
+      description
+      productFamilies {
+        id
+        slug
+        name
+      }
+    }
   }
 }
 ```
@@ -315,7 +359,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ collection(slug: \"clean-beauty-skincare\") { id slug name description } }"}' | jq
+  -d '{"query":"{ collection(slug: \"clean-beauty-skincare\") { id slug heroImageUrl name description categories { id slug name description productFamilies {id slug name } } } }"}' | jq
 ```
 
 **Arguments**
@@ -326,12 +370,7 @@ curl -k -X POST https://localhost/graphql \
 
 **Response type: `CollectionsType`**
 
-| Field         | Type     | Nullable | Description             |
-| ------------- | -------- | -------- | ----------------------- |
-| `id`          | `String` | No       | UUID                    |
-| `slug`        | `String` | No       | URL-friendly identifier |
-| `name`        | `String` | No       | Display name            |
-| `description` | `String` | Yes      | Editorial description   |
+Same shape as a single item from [`collections`](#collections) — see field tables above.
 
 **Errors**
 
