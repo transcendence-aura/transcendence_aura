@@ -13,7 +13,7 @@
 
 **Query Reference**
 
-- [product(slug)](#productslug) — Single product with images and variants
+- [product(slug)](#productslug) — Single product with images, variants, categories and badges
 - [collections](#collections) — List of all active collections
 - [collection(slug)](#collectionslug) — Single collection by slug
 
@@ -131,7 +131,7 @@ No stack traces are exposed in responses.
 
 ## `product(slug)`
 
-Returns a single product with its image gallery and size/volume variants. Feeds the product detail page.
+Returns a single product with its image gallery, variants, badges, categories and product families. Feeds the product detail page and catalogue cards.
 
 **Source:** `backend/src/modules/products/`
 
@@ -144,6 +144,12 @@ query {
     slug
     name
     description
+    badges
+    primaryImage {
+      id
+      url
+      altText
+    }
     media {
       id
       url
@@ -156,6 +162,21 @@ query {
       isAvailable
       price
     }
+    categories {
+      id
+      slug
+      name
+    }
+    productFamilies {
+      id
+      slug
+      name
+    }
+    collections {
+      id
+      slug
+      name
+    }
   }
 }
 ```
@@ -165,7 +186,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ product(slug: \"purifying-gel-cleanser\") { id name description media { url altText position } variants { id label isAvailable price } } }"}' | jq
+  -d '{"query":"{ product(slug: \"purifying-gel-cleanser\") { id slug name description badges media {id url altText position} variants {id label isAvailable price }  categories { id slug name }  productFamilies { id slug name } collections { id slug name } } }"}' | jq .
 ```
 
 **Arguments**
@@ -176,14 +197,19 @@ curl -k -X POST https://localhost/graphql \
 
 **Response type: `ProductType`**
 
-| Field         | Type                   | Nullable | Description                   |
-| ------------- | ---------------------- | -------- | ----------------------------- |
-| `id`          | `String`               | No       | UUID                          |
-| `slug`        | `String`               | No       | URL-friendly identifier       |
-| `name`        | `String`               | No       | Display name                  |
-| `description` | `String`               | Yes      | Long description              |
-| `media`       | `[ProductMediaType]`   | No       | Ordered image gallery         |
-| `variants`    | `[ProductVariantType]` | No       | Available size/volume options |
+| Field             | Type                      | Nullable | Description                                               |
+| ----------------- | ------------------------- | -------- | --------------------------------------------------------- |
+| `id`              | `String`                  | No       | UUID                                                      |
+| `slug`            | `String`                  | No       | URL-friendly identifier                                   |
+| `name`            | `String`                  | No       | Display name                                              |
+| `description`     | `String`                  | Yes      | Long description                                          |
+| `badges`          | `[String]`                | No       | Marketing badges (e.g. `"new"`, `"sale"`, `"bestseller"`) |
+| `primaryImage`    | `ProductMediaType`        | Yes      | First media item (position 0) — used for catalogue cards  |
+| `media`           | `[ProductMediaType]`      | No       | Full ordered image gallery                                |
+| `variants`        | `[ProductVariantType]`    | No       | Available size/volume options                             |
+| `categories`      | `[ProductCategoryType]`   | No       | Categories this product belongs to (M-N)                  |
+| `productFamilies` | `[ProductFamilyType]`     | No       | Product families this product belongs to (M-N)            |
+| `collections`     | `[ProductCollectionType]` | No       | Collections this product belongs to (M-N)                 |
 
 **`ProductMediaType`**
 
@@ -199,9 +225,17 @@ curl -k -X POST https://localhost/graphql \
 | Field         | Type      | Nullable | Description                     |
 | ------------- | --------- | -------- | ------------------------------- |
 | `id`          | `String`  | No       | UUID                            |
-| `label`       | `String`  | No       | Size/volume label (e.g. "50ml") |
+| `label`       | `String`  | No       | Size/volume label (e.g. `50ml`) |
 | `isAvailable` | `Boolean` | No       | Stock availability              |
 | `price`       | `Float`   | No       | Price in euros                  |
+
+**`ProductCategoryType`** / **`ProductFamilyType`** / **`ProductCollectionType`**
+
+| Field  | Type     | Nullable | Description             |
+| ------ | -------- | -------- | ----------------------- |
+| `id`   | `String` | No       | UUID                    |
+| `slug` | `String` | No       | URL-friendly identifier |
+| `name` | `String` | No       | Display name            |
 
 **Errors**
 
