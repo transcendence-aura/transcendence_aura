@@ -141,7 +141,7 @@ export class AuthService {
         },
       });
     } catch {
-      this.logger.warn('Unable to update lastLoginAt for user ${user.id}');
+      this.logger.warn(`Unable to update lastLoginAt for user ${user.id}`);
     }
 
     return {
