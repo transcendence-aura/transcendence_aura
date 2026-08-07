@@ -11,36 +11,41 @@ export function Navbar() {
   const [locale, setLocale] = useState<(typeof LOCALES)[number]>('FR');
 
   return (
-    <nav className="bg-card border-default flex h-13.5 items-center justify-between border-b px-8">
-      {/* Logo */}
-      <span className="font-display text-text-primary text-[20px] tracking-[0.04em]">Aura</span>
+    <nav className="bg-card border-border-default flex h-16 items-center justify-between border-b px-6 md:px-8">
+      <span className="font-cormorant text-text-primary text-lg tracking-widest">Aura</span>
 
-      {/* Desktop links */}
-      <ul className="hidden gap-7 md:flex">
+      <ul className="hidden gap-8 md:flex">
         {NAV_LINKS.map((link) => (
-          <li key={link} className="text-ui-nav text-text-secondary cursor-pointer uppercase">
+          <li
+            key={link}
+            className="text-ui-nav text-text-secondary cursor-pointer uppercase hover:text-text-primary transition-colors"
+          >
             {link}
           </li>
         ))}
       </ul>
 
-      {/* Right side */}
       <div className="flex items-center gap-4">
-        <Search className="text-text-secondary h-4 w-4 cursor-pointer" aria-label="Search" />
+        <Search
+          className="text-text-secondary h-4 w-4 cursor-pointer hover:text-text-primary transition-colors"
+          aria-label="Search"
+        />
 
         <div className="relative cursor-pointer">
-          <ShoppingBag className="text-text-secondary h-4 w-4" aria-label="Cart" />
-          <span className="bg-brand-accent text-ui-badge text-text-primary absolute -top-1 -right-1 flex h-3.25 w-3.25 items-center justify-center rounded-full">
+          <ShoppingBag
+            className="text-text-secondary h-4 w-4 hover:text-text-primary transition-colors"
+            aria-label="Cart"
+          />
+          <span className="bg-brand-accent text-ui-badge text-text-inverse absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full text-xs font-semibold">
             2
           </span>
         </div>
 
-        <div className="bg-brand-dark text-text-inverse flex h-6.5 w-6.5 items-center justify-center rounded-full text-[9px] leading-none tracking-normal">
+        <div className="bg-brand-dark text-text-inverse flex h-7 w-7 items-center justify-center rounded-full text-ui-label font-medium">
           ML
         </div>
 
-        {/* Language selector */}
-        <div className="border-default flex items-center border-l pl-3.5 rtl:border-l-0 rtl:border-r rtl:pr-3.5 rtl:pl-0">
+        <div className="border-border-default flex items-center border-l pl-4 rtl:border-l-0 rtl:border-r rtl:pr-4 rtl:pl-0">
           {LOCALES.map((code, i) => (
             <span key={code} className="contents">
               <span
@@ -48,8 +53,8 @@ export function Navbar() {
                 tabIndex={0}
                 onClick={() => setLocale(code)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setLocale(code)}
-                className={`text-ui-lang cursor-pointer px-1.5 uppercase ${
-                  locale === code ? 'text-text-primary' : 'text-text-muted'
+                className={`text-ui-lang cursor-pointer px-2 uppercase transition-colors ${
+                  locale === code ? 'text-text-primary' : 'text-text-muted hover:text-text-primary'
                 }`}
               >
                 {code}
@@ -61,9 +66,8 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* Mobile toggle */}
         <button
-          className="text-text-secondary md:hidden"
+          className="text-text-secondary md:hidden hover:text-text-primary transition-colors"
           aria-label="Menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((o) => !o)}
@@ -72,9 +76,8 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile menu */}
       {menuOpen && (
-        <div className="bg-card border-default absolute inset-x-0 top-13.5 flex flex-col gap-4 border-b p-8 md:hidden">
+        <div className="bg-card border-border-default absolute inset-x-0 top-16 flex flex-col gap-4 border-b p-6 md:hidden">
           {NAV_LINKS.map((link) => (
             <span
               key={link}
@@ -82,7 +85,7 @@ export function Navbar() {
               tabIndex={0}
               onClick={() => setMenuOpen(false)}
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setMenuOpen(false)}
-              className="text-ui-nav text-text-secondary cursor-pointer uppercase"
+              className="text-ui-nav text-text-secondary cursor-pointer uppercase hover:text-text-primary transition-colors"
             >
               {link}
             </span>

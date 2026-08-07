@@ -8,12 +8,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     <div className="relative">
       <select
         ref={ref}
-        className={`bg-page text-text-primary text-body-base border-default focus:border-border-focus w-full appearance-none rounded-sm border px-3.5 py-2 leading-none pr-9 outline-none ${className}`}
+        className={`bg-card text-text-primary text-body-base border-border-default focus:border-border-focus w-full appearance-none rounded-sm border px-4 py-3 leading-none pr-10 outline-none ${className}`}
         {...props}
       >
         {children}
       </select>
-      <ChevronDown className="text-text-muted pointer-events-none absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 rtl:right-auto rtl:left-2" />
+      <ChevronDown className="text-text-muted pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 rtl:right-auto rtl:left-3" />
     </div>
   ),
 );

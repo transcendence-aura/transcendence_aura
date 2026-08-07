@@ -42,7 +42,7 @@ export const Tabs = ({ items, activeId, onChange, className = '' }: TabsProps) =
   };
 
   return (
-    <div role="tablist" className={`border-default flex gap-8 border-b-[0.5px] ${className}`}>
+    <div role="tablist" className={`border-border-default flex gap-8 border-b ${className}`}>
       {items.map((tab, index) => {
         const isActive = tab.id === currentId;
 
@@ -56,9 +56,9 @@ export const Tabs = ({ items, activeId, onChange, className = '' }: TabsProps) =
             tabIndex={isActive ? 0 : -1}
             onClick={() => handleSelect(tab.id)}
             onKeyDown={(e) => handleKeyDown(e, index)}
-            className={`cursor-pointer pb-3 text-xs font-medium uppercase tracking-wider transition-colors outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-border-focus ${
+            className={`cursor-pointer pb-3 text-ui-button font-medium uppercase tracking-wider transition-colors outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-border-focus ${
               isActive
-                ? 'border-brand-dark text-text-primary border-b-2 font-semibold'
+                ? 'border-brand-dark text-text-primary border-b-2'
                 : 'text-text-muted hover:text-text-primary border-b-2 border-transparent'
             }`}
           >

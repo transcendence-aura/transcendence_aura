@@ -15,9 +15,9 @@ interface AvatarProps {
 }
 
 const SIZES: Record<AvatarSize, { container: string; text: string; dot: string }> = {
-  sm: { container: 'h-[26px] w-[26px]', text: 'text-[10px]', dot: 'h-2 w-2' },
-  md: { container: 'h-[36px] w-[36px]', text: 'text-xs', dot: 'h-2.5 w-2.5' },
-  lg: { container: 'h-[72px] w-[72px]', text: 'text-xl', dot: 'h-3.5 w-3.5' },
+  sm: { container: 'h-6 w-6', text: 'text-xs', dot: 'h-2 w-2' },
+  md: { container: 'h-9 w-9', text: 'text-sm', dot: 'h-2.5 w-2.5' },
+  lg: { container: 'h-16 w-16', text: 'text-lg', dot: 'h-3 w-3' },
 };
 
 function getInitials(name: string): string {
@@ -44,7 +44,7 @@ export const Avatar = ({
   return (
     <div className={`relative inline-flex shrink-0 ${sizeConfig.container} ${className}`}>
       <div
-        className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-zinc-100 text-zinc-900 border border-black/10 dark:bg-zinc-800 dark:text-zinc-100 dark:border-white/10 ${sizeConfig.text} font-medium select-none`}
+        className={`relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-page text-text-primary border border-border-default ${sizeConfig.text} font-medium select-none`}
       >
         {isImageValid && src ? (
           <Image
@@ -53,7 +53,6 @@ export const Avatar = ({
             fill
             onError={() => setHasError(true)}
             className="object-cover"
-            unoptimized // Optionnel : évite la dépendance à un serveur d'optimisation si URLs externes
           />
         ) : (
           <span>{initials}</span>
@@ -62,7 +61,7 @@ export const Avatar = ({
 
       {showOnlineDot && (
         <span
-          className={`bg-brand-accent absolute bottom-0 right-0 rounded-full ring-2 ring-white dark:ring-black rtl:right-auto rtl:left-0 ${sizeConfig.dot}`}
+          className={`bg-status-online absolute bottom-0 right-0 rounded-full ring-2 ring-card rtl:right-auto rtl:left-0 ${sizeConfig.dot}`}
         />
       )}
     </div>

@@ -76,19 +76,19 @@ export const ToastProvider = ({ children }: ToastProviderProps) => {
 
 const VARIANT_STYLES: Record<ToastVariant, { bg: string; border: string; icon: ReactNode }> = {
   success: {
-    bg: 'bg-white dark:bg-zinc-900',
-    border: 'border-emerald-500',
-    icon: <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />,
+    bg: 'bg-card',
+    border: 'border-status-online',
+    icon: <CheckCircle2 className="h-4 w-4 shrink-0 text-status-online" />,
   },
   error: {
-    bg: 'bg-white dark:bg-zinc-900',
-    border: 'border-rose-500',
-    icon: <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />,
+    bg: 'bg-card',
+    border: 'border-status-error',
+    icon: <AlertCircle className="h-4 w-4 shrink-0 text-status-error" />,
   },
   info: {
-    bg: 'bg-white dark:bg-zinc-900',
-    border: 'border-blue-500',
-    icon: <Info className="h-4 w-4 shrink-0 text-blue-500" />,
+    bg: 'bg-card',
+    border: 'border-brand-dark',
+    icon: <Info className="h-4 w-4 shrink-0 text-brand-dark" />,
   },
 };
 
@@ -103,9 +103,9 @@ const ToastCard = ({ item, onClose }: ToastCardProps) => {
   return (
     <div
       role="status"
-      className={`shadow-modal flex items-center justify-between gap-3 border-l-4 border-y border-r border-default p-4 text-xs font-medium text-text-primary transition-all ${style.bg} ${style.border}`}
+      className={`shadow-card flex items-center justify-between gap-3 border-l-4 border-y border-r border-border-default p-4 text-xs font-medium text-text-primary transition-all ${style.bg} ${style.border}`}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         {style.icon}
         <p className="text-body-base leading-snug">{item.message}</p>
       </div>
@@ -116,7 +116,7 @@ const ToastCard = ({ item, onClose }: ToastCardProps) => {
         className="text-text-muted hover:text-text-primary cursor-pointer transition-colors"
         aria-label="Dismiss toast"
       >
-        <X className="h-3.5 w-3.5" />
+        <X className="h-4 w-4" />
       </button>
     </div>
   );
