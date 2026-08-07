@@ -83,6 +83,12 @@ export class ProductType {
   @Field(() => [String])
   badges!: string[];
 
+  @Field(() => ProductMediaType, { nullable: true })
+  primaryImage?: ProductMediaType;
+
+  @Field(() => Float, { nullable: true })
+  minPrice?: number;
+
   @Field(() => [ProductMediaType])
   media!: ProductMediaType[];
 
@@ -97,4 +103,16 @@ export class ProductType {
 
   @Field(() => [ProductCollectionType])
   collections!: ProductCollectionType[];
+}
+
+@ObjectType()
+export class ProductPageType {
+  @Field(() => [ProductType])
+  items!: ProductType[];
+
+  @Field(() => Int)
+  total!: number;
+
+  @Field()
+  hasNextPage!: boolean;
 }
