@@ -15,8 +15,8 @@ export const Separator = ({
     <div
       role="separator"
       aria-orientation={orientation}
-      className={`border-default ${
-        isHorizontal ? 'w-full border-b-[0.5px]' : 'h-full border-r-[0.5px]'
+      className={`border-border-default ${
+        isHorizontal ? 'w-full border-b' : 'h-full border-r'
       } ${className}`}
       {...props}
     />

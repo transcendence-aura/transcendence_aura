@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef, type HTMLAttributes } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/display/badge';
 
@@ -29,11 +30,12 @@ export const CollectionCard = forwardRef<HTMLDivElement, CollectionCardProps>(
         className={`group cursor-pointer space-y-4 outline-none transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus ${className}`}
         {...props}
       >
-        <div className="relative aspect-square overflow-hidden bg-page-secondary rounded-none">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="relative aspect-square overflow-hidden bg-page rounded-none">
+          <Image
             src={collection.image.url}
             alt={collection.image.altText}
+            width={400}
+            height={400}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
@@ -44,12 +46,14 @@ export const CollectionCard = forwardRef<HTMLDivElement, CollectionCardProps>(
               {collection.name}
             </h3>
             {collection.description && (
-              <p className="text-xs text-text-muted line-clamp-2 mt-1">{collection.description}</p>
+              <p className="text-body-sm text-text-muted line-clamp-2 mt-1">
+                {collection.description}
+              </p>
             )}
           </div>
 
           {collection.productCount && (
-            <p className="text-xs text-text-muted">
+            <p className="text-body-sm text-text-muted">
               {collection.productCount} {collection.productCount === 1 ? 'item' : 'items'}
             </p>
           )}

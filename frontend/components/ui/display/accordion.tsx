@@ -32,7 +32,7 @@ export const AccordionItem = ({
   };
 
   return (
-    <div className={`border-default border-b-[0.5px] ${className}`}>
+    <div className={`border-border-default border-b ${className}`}>
       <button
         type="button"
         id={`accordion-header-${id}`}
@@ -54,7 +54,7 @@ export const AccordionItem = ({
           id={`accordion-panel-${id}`}
           role="region"
           aria-labelledby={`accordion-header-${id}`}
-          className="text-body-base text-text-muted pb-4"
+          className="text-body-base text-text-secondary pb-4"
         >
           {children}
         </div>

@@ -23,7 +23,6 @@ export const Dialog = ({
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
 
-  // Focus trap and focus restoration
   useEffect(() => {
     if (isOpen) {
       triggerRef.current = document.activeElement as HTMLElement;
@@ -45,7 +44,6 @@ export const Dialog = ({
     }
   }, [isOpen]);
 
-  // Keyboard accessibility
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isOpen) return;
@@ -81,7 +79,6 @@ export const Dialog = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -97,14 +94,8 @@ export const Dialog = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop Overlay */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-xs"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
 
-      {/* Dialog Window */}
       <div
         ref={dialogRef}
         role="dialog"
@@ -112,18 +103,18 @@ export const Dialog = ({
         aria-labelledby="dialog-title"
         aria-describedby={description ? 'dialog-description' : undefined}
         tabIndex={-1}
-        className={`shadow-modal border-default relative z-10 w-full max-w-md rounded-none border bg-white p-6 outline-none dark:bg-zinc-900 ${className}`}
+        className={`shadow-modal border-border-default relative z-10 w-full max-w-md rounded-none border bg-card p-6 outline-none ${className}`}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2
               id="dialog-title"
-              className="text-text-primary text-h3 font-semibold uppercase tracking-wider"
+              className="text-text-primary text-display-subtitle font-semibold uppercase"
             >
               {title}
             </h2>
             {description && (
-              <p id="dialog-description" className="text-body-base text-text-muted mt-1.5">
+              <p id="dialog-description" className="text-body-base text-text-muted mt-2">
                 {description}
               </p>
             )}
@@ -131,7 +122,7 @@ export const Dialog = ({
 
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text-primary border-default focus-visible:outline-border-focus flex h-8 w-8 cursor-pointer items-center justify-center border transition-colors focus-visible:outline-2"
+            className="text-text-muted hover:text-text-primary border-border-default focus-visible:outline-border-focus flex h-8 w-8 cursor-pointer items-center justify-center border transition-colors focus-visible:outline-2"
             aria-label="Close dialog"
           >
             <X className="h-4 w-4" />

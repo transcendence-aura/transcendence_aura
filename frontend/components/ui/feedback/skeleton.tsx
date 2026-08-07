@@ -9,7 +9,7 @@ export const Skeleton = ({ className = '', ...props }: SkeletonProps) => {
     <div
       role="status"
       aria-label="Loading..."
-      className={`animate-pulse rounded-none bg-text-muted/10 ${className}`}
+      className={`animate-pulse rounded-none bg-border-default/20 ${className}`}
       {...props}
     />
   );
