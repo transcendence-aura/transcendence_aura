@@ -13,6 +13,9 @@ export class ProductMediaType {
 
   @Field(() => Int)
   position!: number;
+
+  @Field()
+  isPrimary!: boolean;
 }
 
 @ObjectType()

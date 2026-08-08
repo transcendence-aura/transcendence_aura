@@ -1,7 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { ProductPageType, ProductType } from './product.model';
+import { ProductMediaType, ProductPageType, ProductType } from './product.model';
 import { PriceSortOrder, ProductPaginationInput, ProductsFilterInput } from './product.input';
+
+const PLACEHOLDER_IMAGE: ProductMediaType = {
+  id: 'placeholder',
+  url: 'https://placehold.co/800x800?text=No%20image',
+  altText: 'No image available',
+  position: 0,
+  isPrimary: true,
+};
+
+function mapMedia(
+  raw: { id: string; url: string; altText: string | null; position: number }[],
+): ProductMediaType[] {
+  if (raw.length === 0) return [PLACEHOLDER_IMAGE];
+  return raw.map((m, i) => ({ ...m, altText: m.altText ?? undefined, isPrimary: i === 0 }));
+}
 
 @Injectable()
 export class ProductsService {
@@ -22,20 +37,14 @@ export class ProductsService {
       throw new NotFoundException('PRODUCT_NOT_FOUND');
     }
 
-    const media = product.media.map((m) => ({
-      ...m,
-      altText: m.altText ?? undefined,
-    }));
-
-    const variants = product.variants.map((v) => ({
-      ...v,
-      price: v.price.toNumber(),
-    }));
+    const media = mapMedia(product.media);
+    const variants = product.variants.map((v) => ({ ...v, price: v.price.toNumber() }));
 
     return {
       ...product,
       description: product.description ?? undefined,
       media,
+      primaryImage: media[0],
       variants,
       categories: product.categories,
       productFamilies: product.productFamilies,
@@ -87,7 +96,7 @@ export class ProductsService {
     ]);
 
     const mapped = rawItems.map((p) => {
-      const media = p.media.map((m) => ({ ...m, altText: m.altText ?? undefined }));
+      const media = mapMedia(p.media);
       const variants = p.variants.map((v) => ({ ...v, price: v.price.toNumber() }));
       const availablePrices = p.variants
         .filter((v) => v.isAvailable)
