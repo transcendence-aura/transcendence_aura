@@ -14,7 +14,7 @@
 **Query Reference**
 
 - [product(slug)](#productslug) — Single product with images, variants, categories and badges
-- [products(filter, pagination)](#productsfilter-pagination) — Paginated product list with filtering
+- [products(filter, pagination)](#productsfilter-pagination) — Paginated product list with filtering and full-text search
 - [collections](#collections) — List of all active collections
 - [collection(slug)](#collectionslug) — Single collection by slug
 
@@ -252,6 +252,8 @@ curl -k -X POST https://localhost/graphql \
 
 Returns a paginated list of active products. All filter arguments are optional and combinable. Feeds the catalogue page product grid.
 
+Supports free-text search via the `search` field — see [Full-text search](#full-text-search) below.
+
 **Source:** `backend/src/modules/products/`
 
 **Query**
@@ -260,6 +262,7 @@ Returns a paginated list of active products. All filter arguments are optional a
 query {
   products(
     filter: {
+      search: "vitamin c"
       collectionSlug: "clean-beauty-skincare"
       categorySlug: "face-care"
       productFamilySlug: "serum"
@@ -322,7 +325,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ products(filter: { collectionSlug: \"clean-beauty-skincare\", categorySlug: \"face-care\", productFamilySlug: \"serum\", minPrice: 10, maxPrice: 50, badge: \"bestseller\", sortByPrice: ASC }, pagination: { page: 1, limit: 20 }) { total hasNextPage items { id slug name description badges minPrice primaryImage { id url altText isPrimary } media { id url altText position isPrimary } variants { id label isAvailable price } categories { id slug name } productFamilies { id slug name } collections { id slug name } } } }"}'  | jq
+  -d '{"query":"{ products(filter: { search: \"vitamin c\", collectionSlug: \"clean-beauty-skincare\", categorySlug: \"face-care\", productFamilySlug: \"serum\", minPrice: 10, maxPrice: 50, badge: \"bestseller\", sortByPrice: ASC }, pagination: { page: 1, limit: 20 }) { total hasNextPage items { id slug name description badges minPrice primaryImage { id url altText isPrimary } media { id url altText position isPrimary } variants { id label isAvailable price } categories { id slug name } productFamilies { id slug name } collections { id slug name } } } }"}'  | jq
 ```
 
 **curl example — sort by price descending**
@@ -359,24 +362,69 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument     | Type                      | Required | Description                                   |
-| ------------ | ------------------------- | -------- | --------------------------------------------- |
-| `filter`     | `ProductsFilterInput`     | No       | Filter criteria — all fields optional         |
-| `pagination` | `ProductsPaginationInput` | No       | Page and limit — defaults to page 1, limit 20 |
+| Argument     | Type                      | Required | Description                                                     |
+| ------------ | ------------------------- | -------- | --------------------------------------------------------------- |
+| `filter`     | `ProductsFilterInput`     | No       | Filter and search criteria — all fields optional and combinable |
+| `pagination` | `ProductsPaginationInput` | No       | Page and limit — defaults to page 1, limit 20                   |
 
 **`ProductsFilterInput`**
 
-| Field               | Type             | Description                                                                         |
-| ------------------- | ---------------- | ----------------------------------------------------------------------------------- |
-| `collectionSlug`    | `String`         | Keep only products belonging to this collection                                     |
-| `categorySlug`      | `String`         | Keep only products belonging to this category                                       |
-| `productFamilySlug` | `String`         | Keep only products belonging to this product family                                 |
-| `badge`             | `String`         | Keep only products that have this badge (e.g. `"new"`, `"sale"`, `"bestseller"`)    |
-| `minPrice`          | `Float`          | Keep only products with at least one available variant priced ≥ this value          |
-| `maxPrice`          | `Float`          | Keep only products with at least one available variant priced ≤ this value          |
-| `sortByPrice`       | `PriceSortOrder` | Sort results by min price — `ASC` (cheapest first) or `DESC` (most expensive first) |
+| Field               | Type             | Description                                                                                    |
+| ------------------- | ---------------- | ---------------------------------------------------------------------------------------------- |
+| `collectionSlug`    | `String`         | Keep only products belonging to this collection                                                |
+| `categorySlug`      | `String`         | Keep only products belonging to this category                                                  |
+| `productFamilySlug` | `String`         | Keep only products belonging to this product family                                            |
+| `badge`             | `String`         | Keep only products that have this badge (e.g. `"new"`, `"sale"`, `"bestseller"`)               |
+| `minPrice`          | `Float`          | Keep only products with at least one available variant priced ≥ this value                     |
+| `maxPrice`          | `Float`          | Keep only products with at least one available variant priced ≤ this value                     |
+| `sortByPrice`       | `PriceSortOrder` | Sort results by min price — `ASC` (cheapest first) or `DESC` (most expensive first)            |
+| `search`            | `String`         | Free-text search over product name and description — see [Full-text search](#full-text-search) |
 
 All fields are optional and combinable. Omitting `filter` entirely returns all active products.
+
+### Full-text search
+
+The `search` field performs PostgreSQL full-text search over `name` and `description`. It is distinct from the other filter fields: instead of an exact match, it scores documents by relevance and returns results ordered by that score (unless `sortByPrice` is also set, which takes priority).
+
+**Behaviour**
+
+- Matching is case-insensitive and accent-insensitive (`éléphant` matches `elephant`).
+- Each word in the query is treated as a prefix — `sham` matches `shampoo`.
+- Multi-word queries require all words to be present (implicit AND).
+- An empty string (`""`) or absent `search` returns the unfiltered list.
+- No matches returns `{ total: 0, items: [] }` — never an error.
+- `search` is combinable with all other filter fields; they apply as AND conditions on top of the text match.
+- Maximum length: 200 characters.
+
+**Implementation notes**
+
+- Uses `to_tsvector('simple', ...)` and `to_tsquery('simple', 'term:*')` with a GIN-friendly inline index expression.
+- Accent stripping relies on the PostgreSQL `unaccent` extension (enabled via migration `20260808120000_enable_unaccent_extension`).
+- Ranking uses `ts_rank`; results within a page are sorted by relevance. Cross-page rank consistency is not guaranteed when other filters are combined.
+
+**curl example — basic search**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(filter: { search: \"serum\" } pagination: {}) { total items { name } } }"}' | jq
+```
+
+**curl example — partial word**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(filter: { search: \"sham\" } pagination: {}) { total items { name } } }"}' | jq
+```
+
+**curl example — search combined with category filter**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(filter: { search: \"oil\", collectionSlug: \"clean-beauty-skincare\" } pagination: {} ) { total items { name } } }"}' | jq
+```
 
 > **Note on price filtering:** `minPrice`/`maxPrice` filter on variant-level prices. A product appears in results if it has **at least one available variant** in the price range — not all its variants need to be in range.
 
