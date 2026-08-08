@@ -33,6 +33,19 @@ const ids = {
     skincare: '10000000-0000-4000-8000-000000000001',
     haircare: '10000000-0000-4000-8000-000000000002',
   },
+  categories: {
+    faceCare: '11000000-0000-4000-8000-000000000001',
+    bodyCare: '11000000-0000-4000-8000-000000000002',
+    hairTreatment: '11000000-0000-4000-8000-000000000003',
+  },
+  productFamilies: {
+    cleanser: '12000000-0000-4000-8000-000000000001',
+    serum: '12000000-0000-4000-8000-000000000002',
+    moisturizer: '12000000-0000-4000-8000-000000000003',
+    faceOil: '12000000-0000-4000-8000-000000000004',
+    shampoo: '12000000-0000-4000-8000-000000000005',
+    conditioner: '12000000-0000-4000-8000-000000000006',
+  },
   products: {
     cleanser: '20000000-0000-4000-8000-000000000001',
     conditioner: '20000000-0000-4000-8000-000000000002',
@@ -198,6 +211,100 @@ async function seedCollections(): Promise<void> {
   }
 }
 
+async function seedCategories(): Promise<void> {
+  const categories = [
+    {
+      id: ids.categories.faceCare,
+      name: 'Face Care',
+      slug: 'face-care',
+      collectionId: ids.collections.skincare,
+      description: 'Cleansers, serums, oils and moisturizers for your face.',
+    },
+    {
+      id: ids.categories.bodyCare,
+      name: 'Body Care',
+      slug: 'body-care',
+      collectionId: ids.collections.skincare,
+      description: 'Body lotions, oils and treatments.',
+    },
+    {
+      id: ids.categories.hairTreatment,
+      name: 'Hair Treatment',
+      slug: 'hair-treatment',
+      collectionId: ids.collections.haircare,
+      description: 'Shampoos, conditioners and hair masks.',
+    },
+  ];
+
+  for (const category of categories) {
+    await prisma.category.upsert({
+      where: { id: category.id },
+      update: {
+        name: category.name,
+        slug: category.slug,
+        description: category.description,
+        collectionId: category.collectionId,
+        isActive: true,
+      },
+      create: { ...category, isActive: true, createdAt: seedDates.accountCreated },
+    });
+  }
+}
+
+async function seedProductFamilies(): Promise<void> {
+  const families = [
+    {
+      id: ids.productFamilies.cleanser,
+      name: 'Cleanser',
+      slug: 'cleanser',
+      categoryId: ids.categories.faceCare,
+    },
+    {
+      id: ids.productFamilies.serum,
+      name: 'Serum',
+      slug: 'serum',
+      categoryId: ids.categories.faceCare,
+    },
+    {
+      id: ids.productFamilies.moisturizer,
+      name: 'Moisturizer',
+      slug: 'moisturizer',
+      categoryId: ids.categories.faceCare,
+    },
+    {
+      id: ids.productFamilies.faceOil,
+      name: 'Face Oil',
+      slug: 'face-oil',
+      categoryId: ids.categories.faceCare,
+    },
+    {
+      id: ids.productFamilies.shampoo,
+      name: 'Shampoo',
+      slug: 'shampoo',
+      categoryId: ids.categories.hairTreatment,
+    },
+    {
+      id: ids.productFamilies.conditioner,
+      name: 'Conditioner',
+      slug: 'conditioner',
+      categoryId: ids.categories.hairTreatment,
+    },
+  ];
+
+  for (const family of families) {
+    await prisma.productFamily.upsert({
+      where: { id: family.id },
+      update: {
+        name: family.name,
+        slug: family.slug,
+        categoryId: family.categoryId,
+        isActive: true,
+      },
+      create: { ...family, isActive: true, createdAt: seedDates.accountCreated },
+    });
+  }
+}
+
 async function seedProducts(): Promise<void> {
   const products = [
     {
@@ -206,6 +313,9 @@ async function seedProducts(): Promise<void> {
       slug: 'purifying-gel-cleanser',
       description: 'A sulfate-free gel cleanser that gently removes impurities.',
       collectionIds: [ids.collections.skincare],
+      categoryIds: [ids.categories.faceCare, ids.categories.bodyCare],
+      productFamilyIds: [ids.productFamilies.cleanser],
+      badges: ['new', 'bestseller', 'Sold'],
     },
     {
       id: ids.products.conditioner,
@@ -213,6 +323,9 @@ async function seedProducts(): Promise<void> {
       slug: 'restorative-hair-conditioner',
       description: 'A silicone-free conditioner made with botanical oils.',
       collectionIds: [ids.collections.haircare],
+      categoryIds: [ids.categories.hairTreatment],
+      productFamilyIds: [ids.productFamilies.conditioner],
+      badges: [],
     },
     {
       id: ids.products.faceoil,
@@ -220,6 +333,9 @@ async function seedProducts(): Promise<void> {
       slug: 'rosehip-face-oil',
       description: 'An antioxidant rich oil that restores natural glow.',
       collectionIds: [ids.collections.skincare],
+      categoryIds: [ids.categories.faceCare],
+      productFamilyIds: [ids.productFamilies.faceOil],
+      badges: ['bestseller'],
     },
     {
       id: ids.products.moisturizer,
@@ -227,6 +343,9 @@ async function seedProducts(): Promise<void> {
       slug: 'barrier-repair-cream',
       description: 'A ceramide-rich moisturizer formulated to strengthen the skin barrier.',
       collectionIds: [ids.collections.skincare],
+      categoryIds: [ids.categories.faceCare],
+      productFamilyIds: [ids.productFamilies.moisturizer],
+      badges: ['bestseller'],
     },
     {
       id: ids.products.serum,
@@ -234,6 +353,9 @@ async function seedProducts(): Promise<void> {
       slug: 'vitamin-c-serum',
       description: 'A lightweight serum with stabilized Vitamin C and niacinamide.',
       collectionIds: [ids.collections.skincare],
+      categoryIds: [ids.categories.faceCare],
+      productFamilyIds: [ids.productFamilies.serum],
+      badges: ['new', 'sale'],
     },
     {
       id: ids.products.shampoo,
@@ -241,11 +363,16 @@ async function seedProducts(): Promise<void> {
       slug: 'balancing-daily-shampoo',
       description: 'A gentle, sulfate-free shampoo.',
       collectionIds: [ids.collections.haircare],
+      categoryIds: [ids.categories.hairTreatment],
+      productFamilyIds: [ids.productFamilies.shampoo],
+      badges: ['sale'],
     },
   ];
 
   for (const product of products) {
     const collectionConnections = product.collectionIds.map((id) => ({ id }));
+    const categoryConnections = product.categoryIds.map((id) => ({ id }));
+    const familyConnections = product.productFamilyIds.map((id) => ({ id }));
 
     await prisma.product.upsert({
       where: { id: product.id },
@@ -254,9 +381,10 @@ async function seedProducts(): Promise<void> {
         slug: product.slug,
         description: product.description,
         isActive: true,
-        collections: {
-          set: collectionConnections,
-        },
+        badges: product.badges,
+        collections: { set: collectionConnections },
+        categories: { set: categoryConnections },
+        productFamilies: { set: familyConnections },
       },
       create: {
         id: product.id,
@@ -264,10 +392,11 @@ async function seedProducts(): Promise<void> {
         slug: product.slug,
         description: product.description,
         isActive: true,
+        badges: product.badges,
         createdAt: seedDates.accountCreated,
-        collections: {
-          connect: collectionConnections,
-        },
+        collections: { connect: collectionConnections },
+        categories: { connect: categoryConnections },
+        productFamilies: { connect: familyConnections },
       },
     });
   }
@@ -700,6 +829,8 @@ async function main(): Promise<void> {
 
   await seedUsers(passwordHash);
   await seedCollections();
+  await seedCategories();
+  await seedProductFamilies();
   await seedProducts();
   await seedProductVariants();
   await seedMedia();

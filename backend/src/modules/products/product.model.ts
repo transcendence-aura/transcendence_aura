@@ -31,6 +31,42 @@ export class ProductVariantType {
 }
 
 @ObjectType()
+export class ProductCollectionType {
+  @Field()
+  id!: string;
+
+  @Field()
+  slug!: string;
+
+  @Field()
+  name!: string;
+}
+
+@ObjectType()
+export class ProductCategoryType {
+  @Field()
+  id!: string;
+
+  @Field()
+  slug!: string;
+
+  @Field()
+  name!: string;
+}
+
+@ObjectType()
+export class ProductFamilyType {
+  @Field()
+  id!: string;
+
+  @Field()
+  slug!: string;
+
+  @Field()
+  name!: string;
+}
+
+@ObjectType()
 export class ProductType {
   @Field()
   id!: string;
@@ -44,9 +80,39 @@ export class ProductType {
   @Field({ nullable: true })
   description?: string;
 
+  @Field(() => [String])
+  badges!: string[];
+
+  @Field(() => ProductMediaType, { nullable: true })
+  primaryImage?: ProductMediaType;
+
+  @Field(() => Float, { nullable: true })
+  minPrice?: number;
+
   @Field(() => [ProductMediaType])
   media!: ProductMediaType[];
 
   @Field(() => [ProductVariantType])
   variants!: ProductVariantType[];
+
+  @Field(() => [ProductCategoryType])
+  categories!: ProductCategoryType[];
+
+  @Field(() => [ProductFamilyType])
+  productFamilies!: ProductFamilyType[];
+
+  @Field(() => [ProductCollectionType])
+  collections!: ProductCollectionType[];
+}
+
+@ObjectType()
+export class ProductPageType {
+  @Field(() => [ProductType])
+  items!: ProductType[];
+
+  @Field(() => Int)
+  total!: number;
+
+  @Field()
+  hasNextPage!: boolean;
 }

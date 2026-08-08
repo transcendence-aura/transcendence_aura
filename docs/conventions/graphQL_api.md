@@ -13,7 +13,8 @@
 
 **Query Reference**
 
-- [product(slug)](#productslug) — Single product with images and variants
+- [product(slug)](#productslug) — Single product with images, variants, categories and badges
+- [products(filter, pagination)](#productsfilter-pagination) — Paginated product list with filtering
 - [collections](#collections) — List of all active collections
 - [collection(slug)](#collectionslug) — Single collection by slug
 
@@ -131,7 +132,7 @@ No stack traces are exposed in responses.
 
 ## `product(slug)`
 
-Returns a single product with its image gallery and size/volume variants. Feeds the product detail page.
+Returns a single product with its image gallery, variants (sorted by price ascendant), badges, categories and product families. Feeds the product detail page and catalogue cards.
 
 **Source:** `backend/src/modules/products/`
 
@@ -144,6 +145,12 @@ query {
     slug
     name
     description
+    badges
+    primaryImage {
+      id
+      url
+      altText
+    }
     media {
       id
       url
@@ -156,6 +163,21 @@ query {
       isAvailable
       price
     }
+    categories {
+      id
+      slug
+      name
+    }
+    productFamilies {
+      id
+      slug
+      name
+    }
+    collections {
+      id
+      slug
+      name
+    }
   }
 }
 ```
@@ -165,7 +187,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ product(slug: \"purifying-gel-cleanser\") { id name description media { url altText position } variants { id label isAvailable price } } }"}' | jq
+  -d '{"query":"{ product(slug: \"purifying-gel-cleanser\") { id slug name description badges media {id url altText position} variants {id label isAvailable price }  categories { id slug name }  productFamilies { id slug name } collections { id slug name } } }"}' | jq .
 ```
 
 **Arguments**
@@ -176,14 +198,19 @@ curl -k -X POST https://localhost/graphql \
 
 **Response type: `ProductType`**
 
-| Field         | Type                   | Nullable | Description                   |
-| ------------- | ---------------------- | -------- | ----------------------------- |
-| `id`          | `String`               | No       | UUID                          |
-| `slug`        | `String`               | No       | URL-friendly identifier       |
-| `name`        | `String`               | No       | Display name                  |
-| `description` | `String`               | Yes      | Long description              |
-| `media`       | `[ProductMediaType]`   | No       | Ordered image gallery         |
-| `variants`    | `[ProductVariantType]` | No       | Available size/volume options |
+| Field             | Type                      | Nullable | Description                                               |
+| ----------------- | ------------------------- | -------- | --------------------------------------------------------- |
+| `id`              | `String`                  | No       | UUID                                                      |
+| `slug`            | `String`                  | No       | URL-friendly identifier                                   |
+| `name`            | `String`                  | No       | Display name                                              |
+| `description`     | `String`                  | Yes      | Long description                                          |
+| `badges`          | `[String]`                | No       | Marketing badges (e.g. `"new"`, `"sale"`, `"bestseller"`) |
+| `primaryImage`    | `ProductMediaType`        | Yes      | First media item (position 0) — used for catalogue cards  |
+| `media`           | `[ProductMediaType]`      | No       | Full ordered image gallery                                |
+| `variants`        | `[ProductVariantType]`    | No       | Available size/volume options                             |
+| `categories`      | `[ProductCategoryType]`   | No       | Categories this product belongs to (M-N)                  |
+| `productFamilies` | `[ProductFamilyType]`     | No       | Product families this product belongs to (M-N)            |
+| `collections`     | `[ProductCollectionType]` | No       | Collections this product belongs to (M-N)                 |
 
 **`ProductMediaType`**
 
@@ -199,9 +226,17 @@ curl -k -X POST https://localhost/graphql \
 | Field         | Type      | Nullable | Description                     |
 | ------------- | --------- | -------- | ------------------------------- |
 | `id`          | `String`  | No       | UUID                            |
-| `label`       | `String`  | No       | Size/volume label (e.g. "50ml") |
+| `label`       | `String`  | No       | Size/volume label (e.g. `50ml`) |
 | `isAvailable` | `Boolean` | No       | Stock availability              |
 | `price`       | `Float`   | No       | Price in euros                  |
+
+**`ProductCategoryType`** / **`ProductFamilyType`** / **`ProductCollectionType`**
+
+| Field  | Type     | Nullable | Description             |
+| ------ | -------- | -------- | ----------------------- |
+| `id`   | `String` | No       | UUID                    |
+| `slug` | `String` | No       | URL-friendly identifier |
+| `name` | `String` | No       | Display name            |
 
 **Errors**
 
@@ -211,9 +246,204 @@ curl -k -X POST https://localhost/graphql \
 
 ---
 
+## `products(filter, pagination)`
+
+Returns a paginated list of active products. All filter arguments are optional and combinable. Feeds the catalogue page product grid.
+
+**Source:** `backend/src/modules/products/`
+
+**Query**
+
+```graphql
+query {
+  products(
+    filter: {
+      collectionSlug: "clean-beauty-skincare"
+      categorySlug: "face-care"
+      productFamilySlug: "serum"
+      minPrice: 10
+      maxPrice: 50
+      badge: "bestseller"
+      sortByPrice: ASC
+    }
+    pagination: { page: 1, limit: 20 }
+  ) {
+    total
+    hasNextPage
+    items {
+      id
+      slug
+      name
+      description
+      badges
+      minPrice
+      primaryImage {
+        id
+        url
+        altText
+      }
+      media {
+        id
+        url
+        altText
+        position
+      }
+      variants {
+        id
+        label
+        isAvailable
+        price
+      }
+      categories {
+        id
+        slug
+        name
+      }
+      productFamilies {
+        id
+        slug
+        name
+      }
+      collections {
+        id
+        slug
+        name
+      }
+    }
+  }
+}
+```
+
+**curl example — all filters combined**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(filter: { collectionSlug: \"clean-beauty-skincare\", categorySlug: \"face-care\", productFamilySlug: \"serum\", minPrice: 10, maxPrice: 50, badge: \"bestseller\", sortByPrice: ASC }, pagination: { page: 1, limit: 20 }) { total hasNextPage items { id slug name description badges minPrice primaryImage { id url altText } media { id url altText position } variants { id label isAvailable price } categories { id slug name } productFamilies { id slug name } collections { id slug name } } } }"}' | jq
+```
+
+**curl example — sort by price descending**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(filter: { sortByPrice: DESC }, pagination: { page: 1, limit: 10 }) { total items { name minPrice } } }"}' | jq
+```
+
+**curl example — filter by badge**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(filter: { badge: \"bestseller\" }, pagination: { page: 1, limit: 10 }) { total items { name badges } } }"}' | jq
+```
+
+**curl example — no filter, first page**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(pagination: { page: 1, limit: 10 }) { total hasNextPage items { id slug name badges minPrice primaryImage { url } } } }"}' | jq
+```
+
+**curl example — price range only**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(filter: { minPrice: 20, maxPrice: 50 }, pagination: { page: 1, limit: 10 }) { total items { name minPrice variants { label price isAvailable } } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument     | Type                      | Required | Description                                   |
+| ------------ | ------------------------- | -------- | --------------------------------------------- |
+| `filter`     | `ProductsFilterInput`     | No       | Filter criteria — all fields optional         |
+| `pagination` | `ProductsPaginationInput` | No       | Page and limit — defaults to page 1, limit 20 |
+
+**`ProductsFilterInput`**
+
+| Field               | Type             | Description                                                                         |
+| ------------------- | ---------------- | ----------------------------------------------------------------------------------- |
+| `collectionSlug`    | `String`         | Keep only products belonging to this collection                                     |
+| `categorySlug`      | `String`         | Keep only products belonging to this category                                       |
+| `productFamilySlug` | `String`         | Keep only products belonging to this product family                                 |
+| `badge`             | `String`         | Keep only products that have this badge (e.g. `"new"`, `"sale"`, `"bestseller"`)    |
+| `minPrice`          | `Float`          | Keep only products with at least one available variant priced ≥ this value          |
+| `maxPrice`          | `Float`          | Keep only products with at least one available variant priced ≤ this value          |
+| `sortByPrice`       | `PriceSortOrder` | Sort results by min price — `ASC` (cheapest first) or `DESC` (most expensive first) |
+
+All fields are optional and combinable. Omitting `filter` entirely returns all active products.
+
+> **Note on price filtering:** `minPrice`/`maxPrice` filter on variant-level prices. A product appears in results if it has **at least one available variant** in the price range — not all its variants need to be in range.
+
+**`ProductsPaginationInput`**
+
+| Field   | Type  | Default | Description                  |
+| ------- | ----- | ------- | ---------------------------- |
+| `page`  | `Int` | `1`     | Page number (1-based, min 1) |
+| `limit` | `Int` | `20`    | Items per page (min 1)       |
+
+**Response type: `ProductPageType`**
+
+| Field         | Type            | Nullable | Description                                       |
+| ------------- | --------------- | -------- | ------------------------------------------------- |
+| `total`       | `Int`           | No       | Total number of products matching the filter      |
+| `hasNextPage` | `Boolean`       | No       | `true` if more pages exist beyond the current one |
+| `items`       | `[ProductType]` | No       | Products for the current page                     |
+
+**`ProductType`** (each item in `items`)
+
+| Field             | Type                      | Nullable | Description                                               |
+| ----------------- | ------------------------- | -------- | --------------------------------------------------------- |
+| `id`              | `String`                  | No       | UUID                                                      |
+| `slug`            | `String`                  | No       | URL-friendly identifier                                   |
+| `name`            | `String`                  | No       | Display name                                              |
+| `description`     | `String`                  | Yes      | Long description                                          |
+| `badges`          | `[String]`                | No       | Marketing badges (e.g. `"new"`, `"sale"`, `"bestseller"`) |
+| `minPrice`        | `Float`                   | Yes      | Lowest price across available variants                    |
+| `primaryImage`    | `ProductMediaType`        | Yes      | First media item (position 0) — used for catalogue cards  |
+| `media`           | `[ProductMediaType]`      | No       | Full ordered image gallery                                |
+| `variants`        | `[ProductVariantType]`    | No       | All size/volume options                                   |
+| `categories`      | `[ProductCategoryType]`   | No       | Categories this product belongs to (M-N)                  |
+| `productFamilies` | `[ProductFamilyType]`     | No       | Product families this product belongs to (M-N)            |
+| `collections`     | `[ProductCollectionType]` | No       | Collections this product belongs to (M-N)                 |
+
+**`ProductMediaType`**
+
+| Field      | Type     | Nullable | Description                       |
+| ---------- | -------- | -------- | --------------------------------- |
+| `id`       | `String` | No       | UUID                              |
+| `url`      | `String` | No       | Image URL                         |
+| `altText`  | `String` | Yes      | Accessibility label               |
+| `position` | `Int`    | No       | Gallery display order (ascending) |
+
+**`ProductVariantType`**
+
+| Field         | Type      | Nullable | Description                     |
+| ------------- | --------- | -------- | ------------------------------- |
+| `id`          | `String`  | No       | UUID                            |
+| `label`       | `String`  | No       | Size/volume label (e.g. `50ml`) |
+| `isAvailable` | `Boolean` | No       | Stock availability              |
+| `price`       | `Float`   | No       | Price in euros                  |
+
+**`ProductCategoryType`** / **`ProductFamilyType`** / **`ProductCollectionType`**
+
+| Field  | Type     | Nullable | Description             |
+| ------ | -------- | -------- | ----------------------- |
+| `id`   | `String` | No       | UUID                    |
+| `slug` | `String` | No       | URL-friendly identifier |
+| `name` | `String` | No       | Display name            |
+
+**Errors**
+
+None — returns `{ total: 0, hasNextPage: false, items: [] }` when no products match.
+
+---
+
 ## `collections`
 
-Returns all active collections. Feeds the catalogue page collection tabs.
+Returns all active collections with their categories and product families. Feeds the catalogue page collection tabs and navigation.
 
 **Source:** `backend/src/modules/collections/`
 
@@ -224,8 +454,20 @@ query {
   collections {
     id
     slug
+    heroImageUrl
     name
     description
+    categories {
+      id
+      slug
+      name
+      description
+      productFamilies {
+        id
+        slug
+        name
+      }
+    }
   }
 }
 ```
@@ -235,7 +477,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ collections { id slug name description } }"}' | jq
+  -d '{"query":"{ collections { id slug heroImageUrl name description categories {id slug name description productFamilies { id slug name }} } }"}' | jq
 ```
 
 **Arguments**
@@ -244,12 +486,32 @@ None.
 
 **Response type: `[CollectionsType]`**
 
-| Field         | Type     | Nullable | Description             |
-| ------------- | -------- | -------- | ----------------------- |
-| `id`          | `String` | No       | UUID                    |
-| `slug`        | `String` | No       | URL-friendly identifier |
-| `name`        | `String` | No       | Display name            |
-| `description` | `String` | Yes      | Editorial description   |
+| Field          | Type                       | Nullable | Description                             |
+| -------------- | -------------------------- | -------- | --------------------------------------- |
+| `id`           | `String`                   | No       | UUID                                    |
+| `slug`         | `String`                   | No       | URL-friendly identifier                 |
+| `heroImageUrl` | `String`                   | No       | Banner image URL                        |
+| `name`         | `String`                   | No       | Display name                            |
+| `description`  | `String`                   | Yes      | Editorial description                   |
+| `categories`   | `[CollectionCategoryType]` | No       | Categories belonging to this collection |
+
+**`CollectionCategoryType`**
+
+| Field             | Type                            | Nullable | Description                           |
+| ----------------- | ------------------------------- | -------- | ------------------------------------- |
+| `id`              | `String`                        | No       | UUID                                  |
+| `slug`            | `String`                        | No       | URL-friendly identifier               |
+| `name`            | `String`                        | No       | Display name                          |
+| `description`     | `String`                        | Yes      | Editorial description                 |
+| `productFamilies` | `[CollectionProductFamilyType]` | No       | Product families within this category |
+
+**`CollectionProductFamilyType`**
+
+| Field  | Type     | Nullable | Description             |
+| ------ | -------- | -------- | ----------------------- |
+| `id`   | `String` | No       | UUID                    |
+| `slug` | `String` | No       | URL-friendly identifier |
+| `name` | `String` | No       | Display name            |
 
 **Errors**
 
@@ -259,7 +521,7 @@ None — returns an empty array `[]` when no active collections exist.
 
 ## `collection(slug)`
 
-Returns a single active collection by slug.
+Returns a single active collection by slug, with its categories and product families.
 
 **Source:** `backend/src/modules/collections/`
 
@@ -270,8 +532,20 @@ query {
   collection(slug: "clean-beauty-skincare") {
     id
     slug
+    heroImageUrl
     name
     description
+    categories {
+      id
+      slug
+      name
+      description
+      productFamilies {
+        id
+        slug
+        name
+      }
+    }
   }
 }
 ```
@@ -281,7 +555,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ collection(slug: \"clean-beauty-skincare\") { id slug name description } }"}' | jq
+  -d '{"query":"{ collection(slug: \"clean-beauty-skincare\") { id slug heroImageUrl name description categories { id slug name description productFamilies {id slug name } } } }"}' | jq
 ```
 
 **Arguments**
@@ -292,12 +566,7 @@ curl -k -X POST https://localhost/graphql \
 
 **Response type: `CollectionsType`**
 
-| Field         | Type     | Nullable | Description             |
-| ------------- | -------- | -------- | ----------------------- |
-| `id`          | `String` | No       | UUID                    |
-| `slug`        | `String` | No       | URL-friendly identifier |
-| `name`        | `String` | No       | Display name            |
-| `description` | `String` | Yes      | Editorial description   |
+Same shape as a single item from [`collections`](#collections) — see field tables above.
 
 **Errors**
 
