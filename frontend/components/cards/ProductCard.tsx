@@ -11,6 +11,7 @@ interface ProductMedia {
   url: string;
   altText?: string;
   position: number;
+  isPrimary: boolean;
 }
 
 interface ProductVariant {
@@ -18,6 +19,7 @@ interface ProductVariant {
   label: string;
   isAvailable: boolean;
   price: number;
+  discountPercentage?: number;
 }
 
 interface ProductCardProps extends HTMLAttributes<HTMLDivElement> {
@@ -28,13 +30,17 @@ interface ProductCardProps extends HTMLAttributes<HTMLDivElement> {
     description?: string;
     media: ProductMedia[];
     variants: ProductVariant[];
+    primaryImage?: ProductMedia;
+    minPrice?: number;
+    badges?: string[];
   };
   href?: string;
 }
 
 export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
   ({ product, href = `/products/${product.slug}`, className = '', ...props }, ref) => {
-    const primaryImage = product.media.find((m) => m.position === 0) || product.media[0];
+    const primaryImage =
+      product.primaryImage || product.media.find((m) => m.isPrimary) || product.media[0];
 
     const lowestPriceVariant = product.variants.reduce((lowest, current) =>
       current.price < lowest.price ? current : lowest,
@@ -67,7 +73,10 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
         )}
 
         <div className="pt-2">
-          <PriceDisplay price={lowestPriceVariant.price} />
+          <PriceDisplay
+            price={lowestPriceVariant.price}
+            discountPercentage={lowestPriceVariant.discountPercentage}
+          />
           {product.variants.length > 1 && (
             <p className="text-body-sm text-text-muted mt-1">
               {product.variants.length} sizes available
