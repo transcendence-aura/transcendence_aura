@@ -35,28 +35,87 @@ export class ProductsService {
     return terms.map((w) => `${w}:*`).join(' & ');
   }
 
-  private buildOrmWhere(filter: ProductsFilterInput, extraIds?: string[]) {
-    return {
-      isActive: true,
-      ...(extraIds && { id: { in: extraIds } }),
-      ...(filter.collectionSlug && { collections: { some: { slug: filter.collectionSlug } } }),
-      ...(filter.categorySlug && { categories: { some: { slug: filter.categorySlug } } }),
-      ...(filter.productFamilySlug && {
-        productFamilies: { some: { slug: filter.productFamilySlug } },
-      }),
-      ...(filter.badge && { badges: { has: filter.badge } }),
-      ...((filter.minPrice !== undefined || filter.maxPrice !== undefined) && {
-        variants: {
-          some: {
-            isAvailable: true,
-            price: {
-              ...(filter.minPrice !== undefined && { gte: filter.minPrice }),
-              ...(filter.maxPrice !== undefined && { lte: filter.maxPrice }),
-            },
-          },
-        },
-      }),
-    };
+  // Builds the SQL WHERE clauses shared by every product listing query:
+  // active products, optional full-text search match, and all other filters.
+  private buildSearchFilterClauses(
+    filter: ProductsFilterInput,
+    tsQuery: string | null,
+  ): Prisma.Sql[] {
+    const clauses: Prisma.Sql[] = [Prisma.sql`p."isActive" = true`];
+
+    if (tsQuery) {
+      clauses.push(Prisma.sql`
+        (
+          setweight(to_tsvector('simple', unaccent(coalesce(p.name, ''))), 'A') ||
+          setweight(to_tsvector('simple', unaccent(coalesce(p.description, ''))), 'B')
+        ) @@ to_tsquery('simple', ${tsQuery})
+      `);
+    }
+
+    if (filter.collectionSlug) {
+      clauses.push(Prisma.sql`
+        EXISTS (
+          SELECT 1
+          FROM "_CollectionToProduct" cp
+          JOIN "collections" c ON c.id = cp."A"
+          WHERE cp."B" = p.id
+            AND c.slug = ${filter.collectionSlug}
+        )
+      `);
+    }
+
+    if (filter.categorySlug) {
+      clauses.push(Prisma.sql`
+        EXISTS (
+          SELECT 1
+          FROM "_CategoryToProduct" cp
+          JOIN "categories" c ON c.id = cp."A"
+          WHERE cp."B" = p.id
+            AND c.slug = ${filter.categorySlug}
+        )
+      `);
+    }
+
+    if (filter.productFamilySlug) {
+      clauses.push(Prisma.sql`
+        EXISTS (
+          SELECT 1
+          FROM "_ProductToProductFamily" pf
+          JOIN "product_families" f ON f.id = pf."B"
+          WHERE pf."A" = p.id
+            AND f.slug = ${filter.productFamilySlug}
+        )
+      `);
+    }
+
+    if (filter.badge) {
+      clauses.push(Prisma.sql`p.badges @> ARRAY[${filter.badge}]::text[]`);
+    }
+
+    if (filter.minPrice !== undefined || filter.maxPrice !== undefined) {
+      const variantPriceClauses: Prisma.Sql[] = [
+        Prisma.sql`pv."productId" = p.id`,
+        Prisma.sql`pv."isAvailable" = true`,
+      ];
+
+      if (filter.minPrice !== undefined) {
+        variantPriceClauses.push(Prisma.sql`pv.price >= ${filter.minPrice}`);
+      }
+
+      if (filter.maxPrice !== undefined) {
+        variantPriceClauses.push(Prisma.sql`pv.price <= ${filter.maxPrice}`);
+      }
+
+      clauses.push(Prisma.sql`
+        EXISTS (
+          SELECT 1
+          FROM "product_variants" pv
+          WHERE ${Prisma.join(variantPriceClauses, ' AND ')}
+        )
+      `);
+    }
+
+    return clauses;
   }
 
   private mapProduct(p: {
@@ -135,65 +194,92 @@ export class ProductsService {
     const skip = (pagination.page - 1) * pagination.limit;
     const tsQuery = filter.search?.trim() ? this.buildTsQuery(filter.search) : null;
 
-    let rankedIds: string[] | undefined;
-    if (tsQuery) {
-      // Prisma.sql tagged template — parameterized, no SQL injection possible
-      const ftsRows = await this.prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
-        SELECT id
-        FROM products
-        WHERE "isActive" = true
-          AND to_tsvector('simple',
-                unaccent(coalesce(name, '')) || ' ' || unaccent(coalesce(description, '')))
-              @@ to_tsquery('simple', ${tsQuery})
-        ORDER BY ts_rank(
-          to_tsvector('simple', unaccent(coalesce(name, '')) || ' ' || unaccent(coalesce(description, ''))),
-          to_tsquery('simple', ${tsQuery})
-        ) DESC
-      `);
+    const whereClauses = this.buildSearchFilterClauses(filter, tsQuery);
 
-      rankedIds = ftsRows.map((r) => r.id);
-      if (rankedIds.length === 0) {
-        return { items: [], total: 0, hasNextPage: false };
-      }
+    const rankExpr = tsQuery
+      ? Prisma.sql`
+          ts_rank(
+            setweight(to_tsvector('simple', unaccent(coalesce(p.name, ''))), 'A') ||
+            setweight(to_tsvector('simple', unaccent(coalesce(p.description, ''))), 'B'),
+            to_tsquery('simple', ${tsQuery})
+          )
+        `
+      : Prisma.sql`0`;
+
+    // price sort takes priority; otherwise sort by search relevance; otherwise a stable default order.
+    const orderByExpr = filter.sortByPrice
+      ? Prisma.sql`min_price ${filter.sortByPrice === PriceSortOrder.ASC ? Prisma.sql`ASC` : Prisma.sql`DESC`} NULLS LAST`
+      : tsQuery
+        ? Prisma.sql`search_rank DESC`
+        : Prisma.sql`"createdAt" ASC, id ASC`;
+
+    // Single query: search (optional) -> filters -> sort -> paginate over the whole catalog.
+    // Prisma.sql tagged template — parameterized, no SQL injection possible.
+    const pageRows = await this.prisma.$queryRaw<
+      { ids: string[]; total_count: bigint | number }[]
+    >(Prisma.sql`
+      WITH filtered AS (
+        SELECT
+          p.id,
+          p."createdAt",
+          price.min_price,
+          ${rankExpr} AS search_rank
+        FROM "products" p
+        LEFT JOIN LATERAL (
+          SELECT MIN(pv.price) AS min_price
+          FROM "product_variants" pv
+          WHERE pv."productId" = p.id
+            AND pv."isAvailable" = true
+        ) price ON true
+        WHERE ${Prisma.join(whereClauses, ' AND ')}
+      ),
+      total_cte AS (
+        SELECT COUNT(*) AS total_count FROM filtered
+      ),
+      paged AS (
+        SELECT id
+        FROM filtered
+        ORDER BY ${orderByExpr}
+        OFFSET ${skip}
+        LIMIT ${pagination.limit}
+      )
+      SELECT
+        COALESCE(array_agg(paged.id), ARRAY[]::uuid[])::text[] AS ids,
+        total_cte.total_count
+      FROM paged
+      CROSS JOIN total_cte
+      GROUP BY total_cte.total_count
+    `);
+
+    const firstRow = pageRows[0];
+    const totalMatches = firstRow ? Number(firstRow.total_count) : 0;
+    const pageIds = firstRow?.ids ?? [];
+
+    if (pageIds.length === 0) {
+      return { items: [], total: 0, hasNextPage: false };
     }
 
-    const where = this.buildOrmWhere(filter, rankedIds);
+    const rawItems = await this.prisma.product.findMany({
+      where: { id: { in: pageIds } },
+      include: {
+        media: { orderBy: { position: 'asc' } },
+        variants: { orderBy: { price: 'asc' } },
+        categories: true,
+        productFamilies: true,
+        collections: true,
+      },
+    });
 
-    const [rawItems, total] = await Promise.all([
-      this.prisma.product.findMany({
-        where,
-        skip,
-        take: pagination.limit,
-        include: {
-          media: { orderBy: { position: 'asc' } },
-          variants: { orderBy: { price: 'asc' } },
-          categories: true,
-          productFamilies: true,
-          collections: true,
-        },
-      }),
-      this.prisma.product.count({ where }),
-    ]);
-
-    const mapped = rawItems.map((p) => this.mapProduct(p));
-
-    const rankMap = rankedIds ? new Map(rankedIds.map((id, i) => [id, i])) : null;
-
-    // price sort takes priority; otherwise respect ts_rank order when searching
-    const items = filter.sortByPrice
-      ? mapped.sort((a, b) => {
-          const aPrice = a.minPrice ?? Infinity;
-          const bPrice = b.minPrice ?? Infinity;
-          return filter.sortByPrice === PriceSortOrder.ASC ? aPrice - bPrice : bPrice - aPrice;
-        })
-      : rankMap
-        ? mapped.sort((a, b) => (rankMap.get(a.id) ?? 0) - (rankMap.get(b.id) ?? 0))
-        : mapped;
+    // `id IN (...)` does not preserve array order, so we re-apply the page order explicitly.
+    const pageOrderMap = new Map(pageIds.map((id, i) => [id, i]));
+    const items = rawItems
+      .map((p) => this.mapProduct(p))
+      .sort((a, b) => (pageOrderMap.get(a.id) ?? 0) - (pageOrderMap.get(b.id) ?? 0));
 
     return {
       items,
-      total,
-      hasNextPage: skip + items.length < total,
+      total: items.length,
+      hasNextPage: skip + items.length < totalMatches,
     };
   }
 }
