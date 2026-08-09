@@ -156,6 +156,7 @@ query {
       url
       altText
       position
+      isPrimary
     }
     variants {
       id
@@ -187,7 +188,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ product(slug: \"purifying-gel-cleanser\") { id slug name description badges media {id url altText position} variants {id label isAvailable price }  categories { id slug name }  productFamilies { id slug name } collections { id slug name } } }"}' | jq .
+  -d '{"query":"{ product(slug: \"purifying-gel-cleanser\") { id slug name description badges primaryImage { id url altText isPrimary } media { id url altText position isPrimary } variants { id label isAvailable price } categories { id slug name } productFamilies { id slug name } collections { id slug name } } }"}'  | jq .
 ```
 
 **Arguments**
@@ -214,12 +215,13 @@ curl -k -X POST https://localhost/graphql \
 
 **`ProductMediaType`**
 
-| Field      | Type     | Nullable | Description                       |
-| ---------- | -------- | -------- | --------------------------------- |
-| `id`       | `String` | No       | UUID                              |
-| `url`      | `String` | No       | Image URL                         |
-| `altText`  | `String` | Yes      | Accessibility label               |
-| `position` | `Int`    | No       | Gallery display order (ascending) |
+| Field       | Type      | Nullable | Description                                        |
+| ----------- | --------- | -------- | -------------------------------------------------- |
+| `id`        | `String`  | No       | UUID                                               |
+| `url`       | `String`  | No       | Image URL                                          |
+| `altText`   | `String`  | Yes      | Accessibility label                                |
+| `position`  | `Int`     | No       | Gallery display order (ascending)                  |
+| `isPrimary` | `Boolean` | No       | `true` for the first image — used for cards/thumbs |
 
 **`ProductVariantType`**
 
@@ -287,6 +289,7 @@ query {
         url
         altText
         position
+        isPrimary
       }
       variants {
         id
@@ -319,7 +322,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ products(filter: { collectionSlug: \"clean-beauty-skincare\", categorySlug: \"face-care\", productFamilySlug: \"serum\", minPrice: 10, maxPrice: 50, badge: \"bestseller\", sortByPrice: ASC }, pagination: { page: 1, limit: 20 }) { total hasNextPage items { id slug name description badges minPrice primaryImage { id url altText } media { id url altText position } variants { id label isAvailable price } categories { id slug name } productFamilies { id slug name } collections { id slug name } } } }"}' | jq
+  -d '{"query":"{ products(filter: { collectionSlug: \"clean-beauty-skincare\", categorySlug: \"face-care\", productFamilySlug: \"serum\", minPrice: 10, maxPrice: 50, badge: \"bestseller\", sortByPrice: ASC }, pagination: { page: 1, limit: 20 }) { total hasNextPage items { id slug name description badges minPrice primaryImage { id url altText isPrimary } media { id url altText position isPrimary } variants { id label isAvailable price } categories { id slug name } productFamilies { id slug name } collections { id slug name } } } }"}'  | jq
 ```
 
 **curl example — sort by price descending**
@@ -343,7 +346,7 @@ curl -k -X POST https://localhost/graphql \
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ products(pagination: { page: 1, limit: 10 }) { total hasNextPage items { id slug name badges minPrice primaryImage { url } } } }"}' | jq
+  -d '{"query":"{ products(pagination: { page: 1, limit: 10 }) { total hasNextPage items { id slug name badges minPrice primaryImage { url isPrimary } } } }"}'  | jq
 ```
 
 **curl example — price range only**
@@ -411,12 +414,13 @@ All fields are optional and combinable. Omitting `filter` entirely returns all a
 
 **`ProductMediaType`**
 
-| Field      | Type     | Nullable | Description                       |
-| ---------- | -------- | -------- | --------------------------------- |
-| `id`       | `String` | No       | UUID                              |
-| `url`      | `String` | No       | Image URL                         |
-| `altText`  | `String` | Yes      | Accessibility label               |
-| `position` | `Int`    | No       | Gallery display order (ascending) |
+| Field       | Type      | Nullable | Description                                        |
+| ----------- | --------- | -------- | -------------------------------------------------- |
+| `id`        | `String`  | No       | UUID                                               |
+| `url`       | `String`  | No       | Image URL                                          |
+| `altText`   | `String`  | Yes      | Accessibility label                                |
+| `position`  | `Int`     | No       | Gallery display order (ascending)                  |
+| `isPrimary` | `Boolean` | No       | `true` for the first image — used for cards/thumbs |
 
 **`ProductVariantType`**
 
