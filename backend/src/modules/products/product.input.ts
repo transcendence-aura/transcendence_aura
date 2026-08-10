@@ -1,5 +1,5 @@
 import { InputType, Field, Float, Int, registerEnumType } from '@nestjs/graphql';
-import { IsInt, IsOptional, Min, Max, IsEnum } from 'class-validator';
+import { IsInt, IsOptional, IsString, MaxLength, Min, Max, IsEnum } from 'class-validator';
 
 export enum PriceSortOrder {
   ASC = 'asc',
@@ -11,14 +11,17 @@ registerEnumType(PriceSortOrder, { name: 'PriceSortOrder' });
 @InputType()
 export class ProductsFilterInput {
   @IsOptional()
+  @MaxLength(200)
   @Field({ nullable: true })
   collectionSlug?: string;
 
   @IsOptional()
+  @MaxLength(200)
   @Field({ nullable: true })
   categorySlug?: string;
 
   @IsOptional()
+  @MaxLength(200)
   @Field({ nullable: true })
   productFamilySlug?: string;
 
@@ -33,6 +36,7 @@ export class ProductsFilterInput {
   maxPrice?: number;
 
   @IsOptional()
+  @MaxLength(200)
   @Field({ nullable: true })
   badge?: string;
 
@@ -40,6 +44,12 @@ export class ProductsFilterInput {
   @IsEnum(PriceSortOrder)
   @Field(() => PriceSortOrder, { nullable: true })
   sortByPrice?: PriceSortOrder;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  @Field({ nullable: true })
+  search?: string;
 }
 
 @InputType()
