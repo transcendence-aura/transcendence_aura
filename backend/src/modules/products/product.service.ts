@@ -133,6 +133,8 @@ export class ProductsService {
       label: string;
       isAvailable: boolean;
       price: { toNumber(): number };
+      isOnSale: boolean;
+      discountPercentage: { toNumber(): number };
       productId: string;
       createdAt: Date;
       updatedAt: Date;
@@ -142,7 +144,11 @@ export class ProductsService {
     collections: { id: string; name: string; slug: string }[];
   }) {
     const media = mapMedia(p.media);
-    const variants = p.variants.map((v) => ({ ...v, price: v.price.toNumber() }));
+    const variants = p.variants.map((v) => ({
+      ...v,
+      price: v.price.toNumber(),
+      discountPercentage: v.discountPercentage.toNumber(),
+    }));
     const availablePrices = p.variants.filter((v) => v.isAvailable).map((v) => v.price.toNumber());
     return {
       ...p,
@@ -173,7 +179,11 @@ export class ProductsService {
     }
 
     const media = mapMedia(product.media);
-    const variants = product.variants.map((v) => ({ ...v, price: v.price.toNumber() }));
+    const variants = product.variants.map((v) => ({
+      ...v,
+      price: v.price.toNumber(),
+      discountPercentage: v.discountPercentage.toNumber(),
+    }));
 
     return {
       ...product,
