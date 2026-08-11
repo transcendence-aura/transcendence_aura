@@ -42,6 +42,16 @@ export class TokenService {
     });
   }
 
+  verifyAccessToken(token: string): Promise<AccessTokenPayload> {
+    const jwt = this.configService.get('jwt', { infer: true });
+
+    return this.jwtService.verifyAsync<AccessTokenPayload>(token, {
+      secret: jwt.accessSecret,
+      issuer: jwt.issuer,
+      audience: jwt.accessAudience,
+    });
+  }
+
   issueMfaPendingToken(userId: string): Promise<string> {
     const jwt = this.configService.get('jwt', { infer: true });
 
