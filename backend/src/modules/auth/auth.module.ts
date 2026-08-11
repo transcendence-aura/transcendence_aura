@@ -10,6 +10,6 @@ import { TokenService } from './token.service';
   imports: [PrismaModule, JwtModule.register({})],
   controllers: [AuthController],
   providers: [AuthResolver, AuthService, TokenService],
-  exports: [AuthService],
+  exports: [AuthService, TokenService],
 })
 export class AuthModule {}
