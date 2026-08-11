@@ -11,7 +11,7 @@ interface ProductMedia {
   url: string;
   altText?: string;
   position: number;
-  isPrimary: boolean;
+  //isPrimary: boolean;
 }
 
 interface ProductVariant {
@@ -39,8 +39,7 @@ interface ProductCardProps extends HTMLAttributes<HTMLDivElement> {
 
 export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
   ({ product, href = `/products/${product.slug}`, className = '', ...props }, ref) => {
-    const primaryImage =
-      product.primaryImage || product.media.find((m) => m.isPrimary) || product.media[0];
+    const primaryImage = product.media.find((m) => m.position === 0) || product.media[0];
 
     const lowestPriceVariant = product.variants.reduce((lowest, current) =>
       current.price < lowest.price ? current : lowest,
