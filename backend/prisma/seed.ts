@@ -540,6 +540,8 @@ async function seedProductVariants(): Promise<void> {
       productId: ids.products.cleanser,
       label: '100 ml',
       isAvailable: true,
+      isOnSale: true,
+      discountPercentage: 50,
     },
     {
       id: ids.variants.cleanser200ml,
@@ -554,6 +556,8 @@ async function seedProductVariants(): Promise<void> {
       price: 21,
       label: '150 ml',
       isAvailable: true,
+      isOnSale: true,
+      discountPercentage: 35,
     },
     {
       id: ids.variants.faceoil50ml,
@@ -561,6 +565,8 @@ async function seedProductVariants(): Promise<void> {
       price: 21,
       label: '50 ml',
       isAvailable: true,
+      isOnSale: true,
+      discountPercentage: 100,
     },
     {
       id: ids.variants.moisturizer100ml,
@@ -736,6 +742,8 @@ async function seedProductVariants(): Promise<void> {
       update: {
         isAvailable: variant.isAvailable,
         price: variant.price,
+        isOnSale: variant.isOnSale ?? false,
+        discountPercentage: variant.discountPercentage ?? 0,
       },
       create: variant,
     });

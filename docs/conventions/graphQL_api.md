@@ -225,12 +225,14 @@ curl -k -X POST https://localhost/graphql \
 
 **`ProductVariantType`**
 
-| Field         | Type      | Nullable | Description                     |
-| ------------- | --------- | -------- | ------------------------------- |
-| `id`          | `String`  | No       | UUID                            |
-| `label`       | `String`  | No       | Size/volume label (e.g. `50ml`) |
-| `isAvailable` | `Boolean` | No       | Stock availability              |
-| `price`       | `Float`   | No       | Price in euros                  |
+| Field                | Type      | Nullable | Description                                                                                                                |
+| -------------------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | `String`  | No       | UUID                                                                                                                       |
+| `label`              | `String`  | No       | Size/volume label (e.g. `50ml`)                                                                                            |
+| `isAvailable`        | `Boolean` | No       | Stock availability                                                                                                         |
+| `price`              | `Float`   | No       | Base price in euros (before any discount)                                                                                  |
+| `isOnSale`           | `Boolean` | No       | Whether this variant is currently on sale                                                                                  |
+| `discountPercentage` | `Float`   | No       | Discount rate (0–100, two decimal places). The frontend computes the final price: `price * (1 - discountPercentage / 100)` |
 
 **`ProductCategoryType`** / **`ProductFamilyType`** / **`ProductCollectionType`**
 
@@ -472,12 +474,14 @@ curl -k -X POST https://localhost/graphql \
 
 **`ProductVariantType`**
 
-| Field         | Type      | Nullable | Description                     |
-| ------------- | --------- | -------- | ------------------------------- |
-| `id`          | `String`  | No       | UUID                            |
-| `label`       | `String`  | No       | Size/volume label (e.g. `50ml`) |
-| `isAvailable` | `Boolean` | No       | Stock availability              |
-| `price`       | `Float`   | No       | Price in euros                  |
+| Field                | Type      | Nullable | Description                                                                                                                |
+| -------------------- | --------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | `String`  | No       | UUID                                                                                                                       |
+| `label`              | `String`  | No       | Size/volume label (e.g. `50ml`)                                                                                            |
+| `isAvailable`        | `Boolean` | No       | Stock availability                                                                                                         |
+| `price`              | `Float`   | No       | Base price in euros (before any discount)                                                                                  |
+| `isOnSale`           | `Boolean` | No       | Whether this variant is currently on sale                                                                                  |
+| `discountPercentage` | `Float`   | No       | Discount rate (0–100, two decimal places). The frontend computes the final price: `price * (1 - discountPercentage / 100)` |
 
 **`ProductCategoryType`** / **`ProductFamilyType`** / **`ProductCollectionType`**
 

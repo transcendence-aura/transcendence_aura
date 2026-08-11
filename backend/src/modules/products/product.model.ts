@@ -31,6 +31,12 @@ export class ProductVariantType {
 
   @Field(() => Float)
   price!: number;
+
+  @Field()
+  isOnSale!: boolean;
+
+  @Field(() => Float)
+  discountPercentage!: number; // Decimal(5,2) — two decimal places, same precision as price
 }
 
 @ObjectType()
