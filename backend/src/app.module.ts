@@ -10,6 +10,7 @@ import { PrismaModule } from './database/prisma.module';
 import { ProductsModule } from './modules/products/product.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CollectionsModule } from './modules/collections/collection.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
 
@@ -40,6 +41,7 @@ export class AppModule {
         ProductsModule,
         AuthModule,
         CollectionsModule,
+        RealtimeModule,
       ],
       controllers: [AppController],
       providers: [AppService],
