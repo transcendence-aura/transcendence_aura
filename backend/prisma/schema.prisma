@@ -210,6 +210,7 @@ model Product {
   description String? @db.Text
   isActive    Boolean @default(true)
   badges      String[]
+  popularityScore Float @default(0)
 
   categories      Category[]
   productFamilies ProductFamily[]
@@ -223,6 +224,7 @@ model Product {
   updatedAt DateTime @updatedAt
 
   @@index([isActive])
+  @@index([popularityScore])
   @@map("products")
 }
 

@@ -98,6 +98,9 @@ export class ProductType {
   @Field(() => Float, { nullable: true })
   minPrice?: number;
 
+  @Field(() => Float)
+  popularityScore!: number;
+
   @Field(() => [ProductMediaType])
   media!: ProductMediaType[];
 

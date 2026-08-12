@@ -79,11 +79,12 @@ curl -k -X POST https://localhost/graphql \
 
 ## Error Handling
 
-| Situation                 | Behavior                                            |
-| ------------------------- | --------------------------------------------------- |
-| Resource not found        | `NotFoundException` → clean GraphQL error, no crash |
-| Invalid argument type     | GraphQL validation error (automatic)                |
-| Missing required argument | GraphQL validation error (automatic)                |
+| Situation                 | Behavior                                                                            |
+| ------------------------- | ----------------------------------------------------------------------------------- |
+| Resource not found        | `NotFoundException` → clean GraphQL error, no crash                                 |
+| Invalid argument type     | GraphQL validation error (automatic)                                                |
+| Missing required argument | GraphQL validation error (automatic)                                                |
+| `minPrice` > `maxPrice`   | `BadRequestException` → `BAD_REQUEST`, message: `minPrice must not exceed maxPrice` |
 
 GraphQL always returns **HTTP 200**, even for errors. The frontend must check the `errors` array in the response body, not the HTTP status code.
 
@@ -270,8 +271,9 @@ query {
       productFamilySlug: "serum"
       minPrice: 10
       maxPrice: 50
+      onlyAvailable: true
       badge: "bestseller"
-      sortByPrice: ASC
+      sort: PRICE_ASC
     }
     pagination: { page: 1, limit: 20 }
   ) {
@@ -327,7 +329,7 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ products(filter: { search: \"vitamin c\", collectionSlug: \"clean-beauty-skincare\", categorySlug: \"face-care\", productFamilySlug: \"serum\", minPrice: 10, maxPrice: 50, badge: \"bestseller\", sortByPrice: ASC }, pagination: { page: 1, limit: 20 }) { total hasNextPage items { id slug name description badges minPrice primaryImage { id url altText isPrimary } media { id url altText position isPrimary } variants { id label isAvailable price } categories { id slug name } productFamilies { id slug name } collections { id slug name } } } }"}'  | jq
+  -d '{"query":"{ products(filter: { search: \"vitamin c\", collectionSlug: \"clean-beauty-skincare\", categorySlug: \"face-care\", productFamilySlug: \"serum\", minPrice: 10, maxPrice: 50, onlyAvailable: true, badge: \"bestseller\", sort: PRICE_ASC }, pagination: { page: 1, limit: 20 }) { total hasNextPage items { id slug name description badges minPrice popularityScore primaryImage { id url altText isPrimary } media { id url altText position isPrimary } variants { id label isAvailable price } categories { id slug name } productFamilies { id slug name } collections { id slug name } } } }"}'  | jq
 ```
 
 **curl example — sort by price descending**
@@ -335,7 +337,15 @@ curl -k -X POST https://localhost/graphql \
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ products(filter: { sortByPrice: DESC }, pagination: { page: 1, limit: 10 }) { total items { name minPrice } } }"}' | jq
+  -d '{"query":"{ products(filter: { sort: PRICE_DESC }, pagination: { page: 1, limit: 10 }) { total items { name minPrice } } }"}' | jq
+```
+
+**curl example — sort by popularity**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ products(filter: { sort: POPULARITY }, pagination: { page: 1, limit: 10 }) { total items { name popularityScore } } }"}' | jq
 ```
 
 **curl example — filter by badge**
@@ -371,18 +381,28 @@ curl -k -X POST https://localhost/graphql \
 
 **`ProductsFilterInput`**
 
-| Field               | Type             | Description                                                                                    |
-| ------------------- | ---------------- | ---------------------------------------------------------------------------------------------- |
-| `collectionSlug`    | `String`         | Keep only products belonging to this collection                                                |
-| `categorySlug`      | `String`         | Keep only products belonging to this category                                                  |
-| `productFamilySlug` | `String`         | Keep only products belonging to this product family                                            |
-| `badge`             | `String`         | Keep only products that have this badge (e.g. `"new"`, `"sale"`, `"bestseller"`)               |
-| `minPrice`          | `Float`          | Keep only products with at least one available variant priced ≥ this value                     |
-| `maxPrice`          | `Float`          | Keep only products with at least one available variant priced ≤ this value                     |
-| `sortByPrice`       | `PriceSortOrder` | Sort results by min price — `ASC` (cheapest first) or `DESC` (most expensive first)            |
-| `search`            | `String`         | Free-text search over product name and description — see [Full-text search](#full-text-search) |
+| Field               | Type               | Description                                                                                                                                |
+| ------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `collectionSlug`    | `String`           | Keep only products belonging to this collection                                                                                            |
+| `categorySlug`      | `String`           | Keep only products belonging to this category                                                                                              |
+| `productFamilySlug` | `String`           | Keep only products belonging to this product family                                                                                        |
+| `badge`             | `String`           | Keep only products that have this badge (e.g. `"new"`, `"sale"`, `"bestseller"`)                                                           |
+| `minPrice`          | `Float`            | Keep only products with at least one available variant priced ≥ this value                                                                 |
+| `maxPrice`          | `Float`            | Keep only products with at least one available variant priced ≤ this value. Must be ≥ `minPrice` — see [Errors](#errors-1) below           |
+| `onlyAvailable`     | `Boolean`          | When `true`, keep only products that have at least one available variant — regardless of price                                             |
+| `sort`              | `ProductSortOrder` | Sort order — see [`ProductSortOrder`](#productsortorder) below. Defaults to relevance rank when `search` is set, insertion order otherwise |
+| `search`            | `String`           | Free-text search over product name and description — see [Full-text search](#full-text-search)                                             |
 
 All fields are optional and combinable. Omitting `filter` entirely returns all active products.
+
+### `ProductSortOrder`
+
+| Value        | Description                                                            |
+| ------------ | ---------------------------------------------------------------------- |
+| `PRICE_ASC`  | Cheapest first (based on the lowest available variant price)           |
+| `PRICE_DESC` | Most expensive first (based on the lowest available variant price)     |
+| `NEWEST`     | Most recently created first                                            |
+| `POPULARITY` | Highest `popularityScore` first — score maintained by a background job |
 
 ### Full-text search
 
@@ -439,28 +459,29 @@ curl -k -X POST https://localhost/graphql \
 
 **Response type: `ProductPageType`**
 
-| Field         | Type            | Nullable | Description                                       |
-| ------------- | --------------- | -------- | ------------------------------------------------- |
-| `total`       | `Int`           | No       | Total number of products matching the filter      |
-| `hasNextPage` | `Boolean`       | No       | `true` if more pages exist beyond the current one |
-| `items`       | `[ProductType]` | No       | Products for the current page                     |
+| Field         | Type            | Nullable | Description                                                   |
+| ------------- | --------------- | -------- | ------------------------------------------------------------- |
+| `total`       | `Int`           | No       | Total number of products matching the filter across all pages |
+| `hasNextPage` | `Boolean`       | No       | `true` if more pages exist beyond the current one             |
+| `items`       | `[ProductType]` | No       | Products for the current page                                 |
 
 **`ProductType`** (each item in `items`)
 
-| Field             | Type                      | Nullable | Description                                               |
-| ----------------- | ------------------------- | -------- | --------------------------------------------------------- |
-| `id`              | `String`                  | No       | UUID                                                      |
-| `slug`            | `String`                  | No       | URL-friendly identifier                                   |
-| `name`            | `String`                  | No       | Display name                                              |
-| `description`     | `String`                  | Yes      | Long description                                          |
-| `badges`          | `[String]`                | No       | Marketing badges (e.g. `"new"`, `"sale"`, `"bestseller"`) |
-| `minPrice`        | `Float`                   | Yes      | Lowest price across available variants                    |
-| `primaryImage`    | `ProductMediaType`        | Yes      | First media item (position 0) — used for catalogue cards  |
-| `media`           | `[ProductMediaType]`      | No       | Full ordered image gallery                                |
-| `variants`        | `[ProductVariantType]`    | No       | All size/volume options                                   |
-| `categories`      | `[ProductCategoryType]`   | No       | Categories this product belongs to (M-N)                  |
-| `productFamilies` | `[ProductFamilyType]`     | No       | Product families this product belongs to (M-N)            |
-| `collections`     | `[ProductCollectionType]` | No       | Collections this product belongs to (M-N)                 |
+| Field             | Type                      | Nullable | Description                                                                 |
+| ----------------- | ------------------------- | -------- | --------------------------------------------------------------------------- |
+| `id`              | `String`                  | No       | UUID                                                                        |
+| `slug`            | `String`                  | No       | URL-friendly identifier                                                     |
+| `name`            | `String`                  | No       | Display name                                                                |
+| `description`     | `String`                  | Yes      | Long description                                                            |
+| `badges`          | `[String]`                | No       | Marketing badges (e.g. `"new"`, `"sale"`, `"bestseller"`)                   |
+| `minPrice`        | `Float`                   | Yes      | Lowest price across available variants                                      |
+| `popularityScore` | `Float`                   | No       | Denormalised score updated by a background job — used for `POPULARITY` sort |
+| `primaryImage`    | `ProductMediaType`        | Yes      | First media item (position 0) — used for catalogue cards                    |
+| `media`           | `[ProductMediaType]`      | No       | Full ordered image gallery                                                  |
+| `variants`        | `[ProductVariantType]`    | No       | All size/volume options                                                     |
+| `categories`      | `[ProductCategoryType]`   | No       | Categories this product belongs to (M-N)                                    |
+| `productFamilies` | `[ProductFamilyType]`     | No       | Product families this product belongs to (M-N)                              |
+| `collections`     | `[ProductCollectionType]` | No       | Collections this product belongs to (M-N)                                   |
 
 **`ProductMediaType`**
 
@@ -493,7 +514,10 @@ curl -k -X POST https://localhost/graphql \
 
 **Errors**
 
-None — returns `{ total: 0, hasNextPage: false, items: [] }` when no products match.
+| Case                    | Message / behavior                                                     |
+| ----------------------- | ---------------------------------------------------------------------- |
+| No products match       | Returns `{ total: 0, hasNextPage: false, items: [] }` — never an error |
+| `minPrice` > `maxPrice` | `BAD_REQUEST` — `minPrice must not exceed maxPrice`                    |
 
 ---
 
