@@ -1,13 +1,28 @@
 import { Logger } from '@nestjs/common';
-import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway } from '@nestjs/websockets';
+import {
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  WebSocketGateway,
+} from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import { TokenService } from '../auth/token.service';
+import { PrismaService } from '../../database/prisma.service';
+
+interface JoinConversationPayload {
+  conversationId: string;
+}
 
 @WebSocketGateway()
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(RealtimeGateway.name);
 
-  constructor(private readonly tokenService: TokenService) {}
+  constructor(
+    private readonly tokenService: TokenService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async handleConnection(client: Socket): Promise<void> {
     const token = client.handshake.auth.token as string | undefined;
@@ -30,5 +45,37 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   handleDisconnect(client: Socket): void {
     this.logger.log(`Client disconnected: ${client.id}`);
+  }
+
+  @SubscribeMessage('joinConversation')
+  async handleJoinConversation(
+    @MessageBody() data: JoinConversationPayload,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const userId = client.data.userId as string;
+
+    let conversation: { userOneId: string; userTwoId: string } | null = null;
+    try {
+      conversation = await this.prisma.conversation.findUnique({
+        where: { id: data.conversationId },
+        select: { userOneId: true, userTwoId: true },
+      });
+    } catch {
+      conversation = null;
+    }
+
+    const isParticipant =
+      conversation !== null &&
+      (conversation.userOneId === userId || conversation.userTwoId === userId);
+
+    if (!isParticipant) {
+      this.logger.warn(
+        `Rejected room join: user ${userId} is not a participant of conversation ${data.conversationId}`,
+      );
+      client.emit('error', { message: 'FORBIDDEN' });
+      return;
+    }
+
+    await client.join(`conversation:${data.conversationId}`);
   }
 }
