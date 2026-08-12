@@ -21,6 +21,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     try {
       const payload = await this.tokenService.verifyAccessToken(token);
       client.data.userId = payload.sub;
+      await client.join(`user:${payload.sub}`);
     } catch {
       this.logger.warn(`Connection rejected: invalid token (${client.id})`);
       client.disconnect();
