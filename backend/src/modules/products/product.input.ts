@@ -1,12 +1,23 @@
 import { InputType, Field, Float, Int, registerEnumType } from '@nestjs/graphql';
-import { IsInt, IsOptional, IsString, MaxLength, Min, Max, IsEnum } from 'class-validator';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  Max,
+  IsEnum,
+} from 'class-validator';
 
-export enum PriceSortOrder {
-  ASC = 'asc',
-  DESC = 'desc',
+export enum ProductSortOrder {
+  PRICE_ASC = 'PRICE_ASC',
+  PRICE_DESC = 'PRICE_DESC',
+  NEWEST = 'NEWEST',
+  POPULARITY = 'POPULARITY',
 }
 
-registerEnumType(PriceSortOrder, { name: 'PriceSortOrder' });
+registerEnumType(ProductSortOrder, { name: 'ProductSortOrder' });
 
 @InputType()
 export class ProductsFilterInput {
@@ -36,14 +47,19 @@ export class ProductsFilterInput {
   maxPrice?: number;
 
   @IsOptional()
+  @IsBoolean()
+  @Field({ nullable: true })
+  onlyAvailable?: boolean;
+
+  @IsOptional()
   @MaxLength(200)
   @Field({ nullable: true })
   badge?: string;
 
   @IsOptional()
-  @IsEnum(PriceSortOrder)
-  @Field(() => PriceSortOrder, { nullable: true })
-  sortByPrice?: PriceSortOrder;
+  @IsEnum(ProductSortOrder)
+  @Field(() => ProductSortOrder, { nullable: true })
+  sort?: ProductSortOrder;
 
   @IsOptional()
   @IsString()
@@ -54,11 +70,13 @@ export class ProductsFilterInput {
 
 @InputType()
 export class ProductPaginationInput {
+  @IsOptional()
   @Field(() => Int, { defaultValue: 1 })
   @IsInt()
   @Min(1)
   page!: number;
 
+  @IsOptional()
   @Field(() => Int, { defaultValue: 20 })
   @IsInt()
   @Min(1)

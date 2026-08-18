@@ -346,6 +346,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare, ids.categories.bodyCare],
       productFamilyIds: [ids.productFamilies.cleanser],
       badges: ['new', 'bestseller', 'Sold'],
+      popularityScore: 75,
     },
     {
       id: ids.products.conditioner,
@@ -356,6 +357,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.hairTreatment],
       productFamilyIds: [ids.productFamilies.conditioner],
       badges: [],
+      popularityScore: 25,
     },
     {
       id: ids.products.faceoil,
@@ -366,6 +368,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.faceOil],
       badges: ['bestseller'],
+      popularityScore: 92,
     },
     {
       id: ids.products.moisturizer,
@@ -376,6 +379,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.moisturizer],
       badges: ['bestseller'],
+      popularityScore: 88,
     },
     {
       id: ids.products.serum,
@@ -386,6 +390,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.serum],
       badges: ['new', 'sale'],
+      popularityScore: 85,
     },
     {
       id: ids.products.shampoo,
@@ -396,6 +401,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.hairTreatment],
       productFamilyIds: [ids.productFamilies.shampoo],
       badges: ['sale'],
+      popularityScore: 58,
     },
     {
       id: ids.products.hydratingCleanser,
@@ -406,6 +412,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.cleanser],
       badges: ['new'],
+      popularityScore: 55,
     },
     {
       id: ids.products.oatCleanser,
@@ -416,6 +423,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.cleanser],
       badges: ['bestseller'],
+      popularityScore: 82,
     },
     {
       id: ids.products.peptideSerum,
@@ -426,6 +434,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.serum],
       badges: ['new'],
+      popularityScore: 62,
     },
     {
       id: ids.products.niacinamideSerum,
@@ -436,6 +445,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.serum],
       badges: ['sale'],
+      popularityScore: 65,
     },
     {
       id: ids.products.ceramideNightCream,
@@ -446,6 +456,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.moisturizer],
       badges: ['bestseller'],
+      popularityScore: 80,
     },
     {
       id: ids.products.aloeBodyLotion,
@@ -456,6 +467,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.bodyCare],
       productFamilyIds: [ids.productFamilies.moisturizer],
       badges: [],
+      popularityScore: 30,
     },
     {
       id: ids.products.hairMask,
@@ -466,6 +478,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.hairTreatment],
       productFamilyIds: [ids.productFamilies.conditioner],
       badges: ['bestseller'],
+      popularityScore: 78,
     },
     {
       id: ids.products.scalpShampoo,
@@ -476,6 +489,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.hairTreatment],
       productFamilyIds: [ids.productFamilies.shampoo],
       badges: ['new'],
+      popularityScore: 50,
     },
     {
       id: ids.products.lightweightFaceOil,
@@ -486,6 +500,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.faceCare],
       productFamilyIds: [ids.productFamilies.faceOil],
       badges: [],
+      popularityScore: 20,
     },
     {
       id: ids.products.antiFrizzConditioner,
@@ -496,6 +511,7 @@ async function seedProducts(): Promise<void> {
       categoryIds: [ids.categories.hairTreatment],
       productFamilyIds: [ids.productFamilies.conditioner],
       badges: ['sale'],
+      popularityScore: 45,
     },
   ];
 
@@ -512,6 +528,7 @@ async function seedProducts(): Promise<void> {
         description: product.description,
         isActive: true,
         badges: product.badges,
+        popularityScore: product.popularityScore,
         collections: { set: collectionConnections },
         categories: { set: categoryConnections },
         productFamilies: { set: familyConnections },
@@ -523,6 +540,7 @@ async function seedProducts(): Promise<void> {
         description: product.description,
         isActive: true,
         badges: product.badges,
+        popularityScore: product.popularityScore,
         createdAt: seedDates.accountCreated,
         collections: { connect: collectionConnections },
         categories: { connect: categoryConnections },

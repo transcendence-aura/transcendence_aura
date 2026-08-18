@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { ProductMediaType, ProductPageType, ProductType } from './product.model';
-import { PriceSortOrder, ProductPaginationInput, ProductsFilterInput } from './product.input';
+import { ProductSortOrder, ProductPaginationInput, ProductsFilterInput } from './product.input';
 
 const PLACEHOLDER_IMAGE: ProductMediaType = {
   id: 'placeholder',
@@ -92,6 +92,17 @@ export class ProductsService {
       clauses.push(Prisma.sql`p.badges @> ARRAY[${filter.badge}]::text[]`);
     }
 
+    if (filter.onlyAvailable) {
+      clauses.push(Prisma.sql`
+        EXISTS (
+          SELECT 1
+          FROM "product_variants" pv
+          WHERE pv."productId" = p.id
+            AND pv."isAvailable" = true
+        )
+      `);
+    }
+
     if (filter.minPrice !== undefined || filter.maxPrice !== undefined) {
       const variantPriceClauses: Prisma.Sql[] = [
         Prisma.sql`pv."productId" = p.id`,
@@ -125,6 +136,7 @@ export class ProductsService {
     description: string | null;
     isActive: boolean;
     badges: string[];
+    popularityScore: number;
     createdAt: Date;
     updatedAt: Date;
     media: { id: string; url: string; altText: string | null; position: number }[];
@@ -201,6 +213,14 @@ export class ProductsService {
     filter: ProductsFilterInput,
     pagination: ProductPaginationInput,
   ): Promise<ProductPageType> {
+    if (
+      filter.minPrice !== undefined &&
+      filter.maxPrice !== undefined &&
+      filter.minPrice > filter.maxPrice
+    ) {
+      throw new BadRequestException('minPrice must not exceed maxPrice');
+    }
+
     const skip = (pagination.page - 1) * pagination.limit;
     const tsQuery = filter.search?.trim() ? this.buildTsQuery(filter.search) : null;
 
@@ -216,12 +236,20 @@ export class ProductsService {
         `
       : Prisma.sql`0`;
 
-    // price sort takes priority; otherwise sort by search relevance; otherwise a stable default order.
-    const orderByExpr = filter.sortByPrice
-      ? Prisma.sql`min_price ${filter.sortByPrice === PriceSortOrder.ASC ? Prisma.sql`ASC` : Prisma.sql`DESC`} NULLS LAST`
-      : tsQuery
-        ? Prisma.sql`search_rank DESC`
-        : Prisma.sql`"createdAt" ASC, id ASC`;
+    const orderByExpr = (() => {
+      switch (filter.sort) {
+        case ProductSortOrder.PRICE_ASC:
+          return Prisma.sql`min_price ASC NULLS LAST`;
+        case ProductSortOrder.PRICE_DESC:
+          return Prisma.sql`min_price DESC NULLS LAST`;
+        case ProductSortOrder.NEWEST:
+          return Prisma.sql`"createdAt" DESC, id DESC`;
+        case ProductSortOrder.POPULARITY:
+          return Prisma.sql`popularity_score DESC, "createdAt" DESC`;
+        default:
+          return tsQuery ? Prisma.sql`search_rank DESC` : Prisma.sql`"createdAt" ASC, id ASC`;
+      }
+    })();
 
     // Single query: search (optional) -> filters -> sort -> paginate over the whole catalog.
     // Prisma.sql tagged template — parameterized, no SQL injection possible.
@@ -232,6 +260,7 @@ export class ProductsService {
         SELECT
           p.id,
           p."createdAt",
+          p."popularityScore" AS popularity_score,
           price.min_price,
           ${rankExpr} AS search_rank
         FROM "products" p
@@ -288,7 +317,7 @@ export class ProductsService {
 
     return {
       items,
-      total: items.length,
+      total: totalMatches,
       hasNextPage: skip + items.length < totalMatches,
     };
   }
