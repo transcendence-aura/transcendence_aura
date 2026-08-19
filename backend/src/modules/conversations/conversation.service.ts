@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Message } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { ConversationType, MessageType } from './conversation.model';
@@ -20,6 +25,20 @@ export class ConversationService {
   async findOrCreateConversation(userId: string, otherUserId: string): Promise<ConversationType> {
     if (userId === otherUserId) {
       throw new BadRequestException('CANNOT_MESSAGE_SELF');
+    }
+
+    let otherUser: { id: string } | null = null;
+    try {
+      otherUser = await this.prisma.user.findUnique({
+        where: { id: otherUserId },
+        select: { id: true },
+      });
+    } catch {
+      otherUser = null;
+    }
+
+    if (!otherUser) {
+      throw new NotFoundException('USER_NOT_FOUND');
     }
 
     const [userOneId, userTwoId] = [userId, otherUserId].sort();
