@@ -10,6 +10,7 @@ import { PrismaModule } from './database/prisma.module';
 import { ProductsModule } from './modules/products/product.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CollectionsModule } from './modules/collections/collection.module';
+import { CommonModule } from './common/common.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
 
@@ -33,6 +34,9 @@ export class AppModule {
           playground: false,
           graphiql: process.env.NODE_ENV !== 'production',
           includeStacktraceInErrorResponses: false,
+          // Exposes the raw HTTP request in resolver context so guards can
+          // read the Authorization header (RolesGuard relies on this).
+          context: ({ req }: { req: unknown }) => ({ req }),
         }),
         ApiModule,
         HealthModule,
@@ -40,6 +44,7 @@ export class AppModule {
         ProductsModule,
         AuthModule,
         CollectionsModule,
+        CommonModule,
       ],
       controllers: [AppController],
       providers: [AppService],
