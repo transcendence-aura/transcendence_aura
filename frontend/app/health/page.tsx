@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { query } from '@/lib/apollo-client';
+import { apolloClient } from '@/lib/apollo-client';
 
 // This page queries a live backend; render it per request, not at build time.
 export const dynamic = 'force-dynamic';
@@ -17,7 +17,7 @@ const HEALTH_QUERY = gql`
 `;
 
 export default async function HealthPage() {
-  const { data } = await query<HealthQueryData>({ query: HEALTH_QUERY });
+  const { data } = await apolloClient.query<HealthQueryData>({ query: HEALTH_QUERY });
 
   return (
     <main>
