@@ -11,6 +11,7 @@ import { ProductsModule } from './modules/products/product.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CollectionsModule } from './modules/collections/collection.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
+import { ConversationModule } from './modules/conversations/conversation.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
 
@@ -42,6 +43,7 @@ export class AppModule {
         AuthModule,
         CollectionsModule,
         RealtimeModule,
+        ConversationModule,
       ],
       controllers: [AppController],
       providers: [AppService],
