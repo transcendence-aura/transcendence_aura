@@ -40,12 +40,13 @@ listUsers() {
 1. Extracts the `Bearer <token>` from the `Authorization` header
    (works for both REST and GraphQL requests — it detects the
    execution context type and reads `req` accordingly).
-2. Verifies the JWT (signature, expiry, issuer, audience) — unless an
-   upstream guard already ran and attached `request.user.id` (see
+2. Verifies the token via `TokenService.verifyAccessToken` (the same
+   method `GqlAuthGuard` and the WebSocket gateway use) — unless an
+   upstream guard already ran and attached `request.userId` (see
    [Composing with an upstream auth guard](#composing-with-an-upstream-auth-guard)).
 3. **Re-reads the role from the database** using the token's `sub`
-   (or the pre-attached id) — the role is never taken from the token
-   payload or trusted from the client. This means a role change
+   (or the pre-attached `userId`) — the role is never taken from the
+   token payload or trusted from the client. This means a role change
    (e.g. revoking admin) takes effect on the very next request, not
    only once the old token expires.
 4. Also rejects suspended or soft-deleted accounts (`status !==
@@ -69,29 +70,44 @@ clean rejection, nothing else.
 ## Composing with an upstream auth guard
 
 If another guard already authenticated the request and attached
-`request.user = { id }` before `RolesGuard` runs (e.g.
-`@UseGuards(SomeAuthGuard, RolesGuard)`), `RolesGuard` trusts that id
-and skips re-verifying the token — only the database role lookup
-still happens. This is safe because `request.user` can only be set
+`request.userId` before `RolesGuard` runs (this is exactly what
+`GqlAuthGuard` does on GraphQL resolvers), `RolesGuard` trusts that
+id and skips re-verifying the token — only the database role lookup
+still happens. This is safe because `request.userId` can only be set
 by server-side guard code, never by the client.
 
-This lets a future authentication-only guard be composed in front of
-`RolesGuard` without double-verifying the same JWT twice.
+This lets `GqlAuthGuard` (authentication-only, GraphQL-only) be
+composed in front of `RolesGuard` without double-verifying the same
+JWT twice — e.g. an admin resolver could use
+`@UseGuards(GqlAuthGuard, RolesGuard) @Roles(UserRole.ADMIN)`. On
+REST, or any GraphQL resolver where only `RolesGuard` is applied,
+`RolesGuard` still authenticates the token itself — nothing else
+does it there.
 
 ## Reading the current user in a handler
 
-`RolesGuard` attaches `request.user: { id, role }`. There is
-currently no `@CurrentUser()` decorator in this codebase — read
-`request.user` from the REST `@Req()` request or the GraphQL
-context until one exists.
+`RolesGuard` always sets both `request.userId` (string) and
+`request.user: { id, role }`, whether it authenticated the token
+itself or trusted an upstream guard. Because `request.userId` is the
+same field `GqlAuthGuard` sets, the existing `@CurrentUser()`
+decorator (`modules/auth/current-user.decorator.ts`) works on any
+GraphQL resolver protected by `RolesGuard` too — no need for a
+separate decorator. On REST, read `request.userId` via `@Req()`.
+
+This is how a resolver/controller identifies "which user" for
+ownership checks (e.g. a wishlist query scoping to `userId:
+request.userId`, or verifying a mutation's target belongs to the
+caller) — `RolesGuard` only enforces role membership, not per-resource
+ownership; the handler still has to compare `request.userId` against
+the resource's owner itself.
 
 ## Testing
 
 `backend/src/common/guards/roles.guard.spec.ts` covers every branch
 above (missing/invalid/foreign-typed token, suspended/deleted
-account, role mismatch, role match, no `@Roles()`, pre-attached id
-from an upstream guard, stale/forged role claim on the token being
-ignored). Run with:
+account, role mismatch, role match, no `@Roles()`, pre-attached
+`userId` from an upstream guard, stale/forged role claim on the token
+being ignored). Run with:
 
 ```bash
 npm test -- roles.guard

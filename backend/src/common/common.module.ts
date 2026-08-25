@@ -1,12 +1,12 @@
 import { Global, Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { AuthModule } from '../modules/auth/auth.module';
 import { RolesGuard } from './guards/roles.guard';
 
 // Global so RolesGuard is injectable from any feature module without each
-// one re-importing JwtModule just to protect a route or resolver.
+// one re-importing AuthModule just to protect a route or resolver.
 @Global()
 @Module({
-  imports: [JwtModule.register({})],
+  imports: [AuthModule],
   providers: [RolesGuard],
   exports: [RolesGuard],
 })

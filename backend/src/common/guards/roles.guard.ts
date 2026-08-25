@@ -5,15 +5,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
-import { JwtService } from '@nestjs/jwt';
 import { UserRole, UserStatus } from '@prisma/client';
 
-import { AppConfiguration } from '../../config/configuration';
 import { PrismaService } from '../../database/prisma.service';
-import { AccessTokenPayload } from '../../modules/auth/token.service';
+import { AccessTokenPayload, TokenService } from '../../modules/auth/token.service';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { AuthenticatedRequest } from '../types/authenticated-request';
 
@@ -21,8 +18,7 @@ import { AuthenticatedRequest } from '../types/authenticated-request';
 export class RolesGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService<AppConfiguration, true>,
+    private readonly tokenService: TokenService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -30,11 +26,11 @@ export class RolesGuard implements CanActivate {
     const request = this.getRequest(context);
 
     // An upstream authentication guard may already have resolved and
-    // attached the caller's id (e.g. a GraphQL-specific auth guard running
-    // earlier in the same @UseGuards() chain). That's trusted because it can
-    // only be set by server-side guard code, never by the client - so the
-    // token itself doesn't need re-verifying, only the role still does.
-    const userId = request.user?.id ?? (await this.authenticate(request));
+    // attached the caller's id (GqlAuthGuard sets req.userId on GraphQL
+    // resolvers). That's trusted because it can only be set by server-side
+    // guard code, never by the client - so the token itself doesn't need
+    // re-verifying here, only the role still does.
+    const userId = request.userId ?? (await this.authenticate(request));
 
     // The role is always re-read from the database rather than trusted from
     // the token payload: a role change (e.g. revoking admin) must take effect
@@ -48,6 +44,9 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
+    // Set on every successful check (not just the upstream-guard fast path)
+    // so @CurrentUser() also works on routes protected only by RolesGuard.
+    request.userId = user.id;
     request.user = { id: user.id, role: user.role };
 
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[] | undefined>(ROLES_KEY, [
@@ -73,17 +72,10 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const jwtConfig = this.configService.get('jwt', { infer: true });
-
     let payload: AccessTokenPayload;
 
     try {
-      payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token, {
-        secret: jwtConfig.accessSecret,
-        algorithms: ['HS256'],
-        issuer: jwtConfig.issuer,
-        audience: jwtConfig.accessAudience,
-      });
+      payload = await this.tokenService.verifyAccessToken(token);
     } catch {
       throw new UnauthorizedException();
     }

@@ -4,14 +4,7 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 import { RolesGuard } from './roles.guard';
 
 describe('RolesGuard', () => {
-  const jwtConfig = {
-    accessSecret: 'test-secret',
-    issuer: 'aura-backend',
-    accessAudience: 'aura-web',
-  };
-
-  const configService = { get: jest.fn().mockReturnValue(jwtConfig) };
-  const jwtService = { verifyAsync: jest.fn() };
+  const tokenService = { verifyAccessToken: jest.fn() };
   const prisma = { user: { findUnique: jest.fn() } };
   const reflector = { getAllAndOverride: jest.fn() };
 
@@ -19,13 +12,7 @@ describe('RolesGuard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    configService.get.mockReturnValue(jwtConfig);
-    guard = new RolesGuard(
-      reflector as never,
-      jwtService as never,
-      configService as never,
-      prisma as never,
-    );
+    guard = new RolesGuard(reflector as never, tokenService as never, prisma as never);
   });
 
   function createHttpContext(authorization?: string, request?: Record<string, unknown>) {
@@ -44,25 +31,25 @@ describe('RolesGuard', () => {
     const context = createHttpContext(undefined);
 
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
-    expect(jwtService.verifyAsync).not.toHaveBeenCalled();
+    expect(tokenService.verifyAccessToken).not.toHaveBeenCalled();
   });
 
   it('denies when the token fails verification', async () => {
-    jwtService.verifyAsync.mockRejectedValue(new Error('invalid signature'));
+    tokenService.verifyAccessToken.mockRejectedValue(new Error('invalid signature'));
     const context = createHttpContext('Bearer bad-token');
 
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('denies non-access tokens (e.g. an MFA-pending token)', async () => {
-    jwtService.verifyAsync.mockResolvedValue({ sub: 'user-1', tokenType: 'mfaPending' });
+    tokenService.verifyAccessToken.mockResolvedValue({ sub: 'user-1', tokenType: 'mfaPending' });
     const context = createHttpContext('Bearer mfa-token');
 
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('denies when the user no longer exists in the database', async () => {
-    jwtService.verifyAsync.mockResolvedValue({
+    tokenService.verifyAccessToken.mockResolvedValue({
       sub: 'user-1',
       tokenType: 'access',
       permissions: [],
@@ -74,7 +61,7 @@ describe('RolesGuard', () => {
   });
 
   it('denies when the user account is suspended or soft-deleted', async () => {
-    jwtService.verifyAsync.mockResolvedValue({
+    tokenService.verifyAccessToken.mockResolvedValue({
       sub: 'user-1',
       tokenType: 'access',
       permissions: [],
@@ -91,7 +78,7 @@ describe('RolesGuard', () => {
   });
 
   it('denies with 403 when the fresh database role does not match the required roles', async () => {
-    jwtService.verifyAsync.mockResolvedValue({
+    tokenService.verifyAccessToken.mockResolvedValue({
       sub: 'user-1',
       tokenType: 'access',
       permissions: [],
@@ -109,7 +96,7 @@ describe('RolesGuard', () => {
   });
 
   it('allows and attaches the fresh database role to the request when it matches', async () => {
-    jwtService.verifyAsync.mockResolvedValue({
+    tokenService.verifyAccessToken.mockResolvedValue({
       sub: 'user-1',
       tokenType: 'access',
       permissions: [],
@@ -122,20 +109,21 @@ describe('RolesGuard', () => {
     });
     reflector.getAllAndOverride.mockReturnValue([UserRole.ADMIN]);
 
-    const request: { headers: Record<string, string>; user?: unknown } = {
+    const request: { headers: Record<string, string>; userId?: string; user?: unknown } = {
       headers: { authorization: 'Bearer valid-token' },
     };
     const context = createHttpContext(undefined, request);
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
     expect(request.user).toEqual({ id: 'user-1', role: UserRole.ADMIN });
+    expect(request.userId).toBe('user-1');
   });
 
   it('ignores any role claim on the token itself - only the database role is used', async () => {
     // Simulates a stale token issued before an admin demotion: even though
     // nothing in this payload claims a role, a compromised/forged claim
     // would still be ignored since the guard never reads role from the token.
-    jwtService.verifyAsync.mockResolvedValue({
+    tokenService.verifyAccessToken.mockResolvedValue({
       sub: 'user-1',
       tokenType: 'access',
       permissions: ['users:manage'],
@@ -153,7 +141,7 @@ describe('RolesGuard', () => {
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(ForbiddenException);
   });
 
-  it('trusts an id already attached by an upstream auth guard and skips token verification', async () => {
+  it('trusts a userId already attached by an upstream auth guard (e.g. GqlAuthGuard) and skips token verification', async () => {
     prisma.user.findUnique.mockResolvedValue({
       id: 'user-1',
       role: UserRole.ADMIN,
@@ -162,11 +150,14 @@ describe('RolesGuard', () => {
     });
     reflector.getAllAndOverride.mockReturnValue([UserRole.ADMIN]);
 
-    const request = { headers: {}, user: { id: 'user-1' } };
+    const request: { headers: Record<string, string>; userId?: string; user?: unknown } = {
+      headers: {},
+      userId: 'user-1',
+    };
     const context = createHttpContext(undefined, request);
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
-    expect(jwtService.verifyAsync).not.toHaveBeenCalled();
+    expect(tokenService.verifyAccessToken).not.toHaveBeenCalled();
     expect(prisma.user.findUnique).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       select: { id: true, role: true, status: true, deletedAt: true },
@@ -174,7 +165,7 @@ describe('RolesGuard', () => {
     expect(request.user).toEqual({ id: 'user-1', role: UserRole.ADMIN });
   });
 
-  it('still denies when a pre-attached id no longer maps to an active account', async () => {
+  it('still denies when a pre-attached userId no longer maps to an active account', async () => {
     prisma.user.findUnique.mockResolvedValue({
       id: 'user-1',
       role: UserRole.USER,
@@ -182,15 +173,39 @@ describe('RolesGuard', () => {
       deletedAt: null,
     });
 
-    const request = { headers: {}, user: { id: 'user-1' } };
+    const request = { headers: {}, userId: 'user-1' };
     const context = createHttpContext(undefined, request);
 
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
-    expect(jwtService.verifyAsync).not.toHaveBeenCalled();
+    expect(tokenService.verifyAccessToken).not.toHaveBeenCalled();
+  });
+
+  it('sets request.userId even when authenticating itself, so @CurrentUser() works without an upstream guard', async () => {
+    tokenService.verifyAccessToken.mockResolvedValue({
+      sub: 'user-1',
+      tokenType: 'access',
+      permissions: [],
+    });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'user-1',
+      role: UserRole.USER,
+      status: UserStatus.ACTIVE,
+      deletedAt: null,
+    });
+    reflector.getAllAndOverride.mockReturnValue(undefined);
+
+    const request: { headers: Record<string, string>; userId?: string } = {
+      headers: { authorization: 'Bearer valid-token' },
+    };
+    const context = createHttpContext(undefined, request);
+
+    await guard.canActivate(context);
+
+    expect(request.userId).toBe('user-1');
   });
 
   it('allows any authenticated user when no @Roles() is declared', async () => {
-    jwtService.verifyAsync.mockResolvedValue({
+    tokenService.verifyAccessToken.mockResolvedValue({
       sub: 'user-1',
       tokenType: 'access',
       permissions: [],
@@ -208,7 +223,7 @@ describe('RolesGuard', () => {
   });
 
   it('reads required roles from the ROLES_KEY metadata via Reflector', async () => {
-    jwtService.verifyAsync.mockResolvedValue({
+    tokenService.verifyAccessToken.mockResolvedValue({
       sub: 'user-1',
       tokenType: 'access',
       permissions: [],
