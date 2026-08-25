@@ -41,6 +41,7 @@ export class ConversationService {
       throw new NotFoundException('USER_NOT_FOUND');
     }
 
+    // TODO(AUR-94): check the follow relationship between userId and otherUserId before creating a conversation, once the backend
     const [userOneId, userTwoId] = [userId, otherUserId].sort();
 
     const conversation = await this.prisma.conversation.upsert({
