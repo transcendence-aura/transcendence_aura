@@ -9,9 +9,8 @@ import { Badge } from '@/components/ui/display/badge';
 interface ProductMedia {
   id: string;
   url: string;
-  altText?: string;
+  altText?: string | null;
   position: number;
-  //isPrimary: boolean;
 }
 
 interface ProductVariant {
@@ -19,7 +18,8 @@ interface ProductVariant {
   label: string;
   isAvailable: boolean;
   price: number;
-  discountPercentage?: number;
+  isOnSale: boolean;
+  discountPercentage: number;
 }
 
 interface ProductCardProps extends HTMLAttributes<HTMLDivElement> {
@@ -27,7 +27,7 @@ interface ProductCardProps extends HTMLAttributes<HTMLDivElement> {
     id: string;
     slug: string;
     name: string;
-    description?: string;
+    description?: string | null;
     media: ProductMedia[];
     variants: ProductVariant[];
     primaryImage?: ProductMedia;

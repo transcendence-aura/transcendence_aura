@@ -8,28 +8,29 @@ interface PriceDisplayProps extends HTMLAttributes<HTMLDivElement> {
 
 export const PriceDisplay = ({
   price,
-  discountPercentage,
+  discountPercentage = 0,
   className = '',
   ...props
 }: PriceDisplayProps) => {
-  const hasDiscount = discountPercentage && discountPercentage > 0;
-  const discountedPrice = hasDiscount ? price * (1 - discountPercentage / 100) : price;
-  const displayDiscount = Math.round(discountPercentage || 0);
+  if (!discountPercentage || discountPercentage <= 0) {
+    return (
+      <div className={`flex items-baseline gap-2 ${className}`} {...props}>
+        <span className="text-body-base font-medium text-text-primary">€{price.toFixed(2)}</span>
+      </div>
+    );
+  }
+
+  const discountedPrice = price * (1 - discountPercentage / 100);
 
   return (
     <div className={`flex items-baseline gap-2 ${className}`} {...props}>
       <span className="text-body-base font-medium text-text-primary">
         €{discountedPrice.toFixed(2)}
       </span>
-
-      {hasDiscount && (
-        <>
-          <span className="text-body-sm text-text-muted line-through">€{price.toFixed(2)}</span>
-          <span className="text-body-sm text-brand-accent font-medium">
-            Save {displayDiscount}%
-          </span>
-        </>
-      )}
+      <span className="text-body-sm text-text-muted line-through">€{price.toFixed(2)}</span>
+      <span className="text-body-sm text-brand-accent font-medium">
+        Save {Math.round(discountPercentage)}%
+      </span>
     </div>
   );
 };
