@@ -1,0 +1,10 @@
+import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { WishlistResolver } from './wishlist.resolver';
+import { WishlistService } from './wishlist.service';
+
+@Module({
+  imports: [AuthModule],
+  providers: [WishlistResolver, WishlistService],
+})
+export class WishlistModule {}
