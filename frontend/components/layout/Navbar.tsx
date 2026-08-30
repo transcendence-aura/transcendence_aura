@@ -2,8 +2,14 @@
 
 import { useState } from 'react';
 import { Search, ShoppingBag, Menu, X } from 'lucide-react';
+import Link from 'next/link';
 
-const NAV_LINKS = ['Shop', 'Ritual', 'Journal', 'About'];
+const NAV_LINKS = [
+  { label: 'Shop', href: '/catalogue' },
+  { label: 'Ritual', href: '#' },
+  { label: 'Journal', href: '#' },
+  { label: 'About', href: '#' },
+];
 const LOCALES = ['FR', 'EN', 'AR'] as const;
 
 export function Navbar() {
@@ -12,15 +18,19 @@ export function Navbar() {
 
   return (
     <nav className="bg-card border-border-default flex h-16 items-center justify-between border-b px-6 md:px-8">
-      <span className="font-cormorant text-text-primary text-lg tracking-widest">Aura</span>
+      <Link href="/" className="font-cormorant text-text-primary text-lg tracking-widest">
+        Aura
+      </Link>
 
       <ul className="hidden gap-8 md:flex">
-        {NAV_LINKS.map((link) => (
-          <li
-            key={link}
-            className="text-ui-nav text-text-secondary cursor-pointer uppercase hover:text-text-primary transition-colors"
-          >
-            {link}
+        {NAV_LINKS.map((link, index) => (
+          <li key={index}>
+            <Link
+              href={link.href}
+              className="text-ui-nav text-text-secondary cursor-pointer uppercase hover:text-text-primary transition-colors"
+            >
+              {link.label}
+            </Link>
           </li>
         ))}
       </ul>
@@ -78,17 +88,15 @@ export function Navbar() {
 
       {menuOpen && (
         <div className="bg-card border-border-default absolute inset-x-0 top-16 flex flex-col gap-4 border-b p-6 md:hidden">
-          {NAV_LINKS.map((link) => (
-            <span
-              key={link}
-              role="button"
-              tabIndex={0}
+          {NAV_LINKS.map((link, index) => (
+            <Link
+              key={index}
+              href={link.href}
               onClick={() => setMenuOpen(false)}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setMenuOpen(false)}
               className="text-ui-nav text-text-secondary cursor-pointer uppercase hover:text-text-primary transition-colors"
             >
-              {link}
-            </span>
+              {link.label}
+            </Link>
           ))}
         </div>
       )}
