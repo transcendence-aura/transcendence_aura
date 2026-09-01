@@ -6,10 +6,12 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { TokenService } from '../auth/token.service';
 import { PrismaService } from '../../database/prisma.service';
+import { MessageType } from '../conversations/conversation.model';
 
 interface JoinConversationPayload {
   conversationId: string;
@@ -19,10 +21,17 @@ interface JoinConversationPayload {
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(RealtimeGateway.name);
 
+  @WebSocketServer()
+  private readonly server!: Server;
+
   constructor(
     private readonly tokenService: TokenService,
     private readonly prisma: PrismaService,
   ) {}
+
+  emitNewMessage(conversationId: string, message: MessageType): void {
+    this.server.to(`conversation:${conversationId}`).emit('newMessage', message);
+  }
 
   async handleConnection(client: Socket): Promise<void> {
     const token = client.handshake.auth.token as string | undefined;

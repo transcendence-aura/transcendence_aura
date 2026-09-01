@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Message } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { ConversationType, MessageType } from './conversation.model';
 import { SendMessageInput } from './conversation.input';
 
@@ -20,7 +21,10 @@ function mapMessage(message: Message): MessageType {
 
 @Injectable()
 export class ConversationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtimeGateway: RealtimeGateway,
+  ) {}
 
   async findOrCreateConversation(userId: string, otherUserId: string): Promise<ConversationType> {
     if (userId === otherUserId) {
@@ -76,7 +80,10 @@ export class ConversationService {
       },
     });
 
-    return mapMessage(message);
+    const mapped = mapMessage(message);
+    this.realtimeGateway.emitNewMessage(input.conversationId, mapped);
+
+    return mapped;
   }
 
   private async assertParticipant(userId: string, conversationId: string): Promise<void> {
