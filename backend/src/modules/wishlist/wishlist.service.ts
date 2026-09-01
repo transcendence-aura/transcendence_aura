@@ -1,10 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { ProductsService } from '../products/product.service';
+import { ProductType } from '../products/product.model';
 import { WishlistItemType } from './wishlist.model';
 
 @Injectable()
 export class WishlistService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly productsService: ProductsService,
+  ) {}
+
+  async getWishlist(userId: string): Promise<ProductType[]> {
+    const entries = await this.prisma.wishlist.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: { productId: true },
+    });
+
+    return this.productsService.findByIds(entries.map((entry) => entry.productId));
+  }
 
   async addItem(userId: string, productId: string): Promise<WishlistItemType> {
     await this.assertProductExists(productId);

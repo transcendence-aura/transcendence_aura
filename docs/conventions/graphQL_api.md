@@ -18,6 +18,7 @@
 - [products(filter, pagination)](#productsfilter-pagination) — Paginated product list with filtering and full-text search
 - [collections](#collections) — List of all active collections
 - [collection(slug)](#collectionslug) — Single collection by slug
+- [wishlist](#wishlist) — Authenticated user's wishlist as full product cards
 
 **Mutation Reference**
 
@@ -126,13 +127,13 @@ No stack traces are exposed in responses.
 
 ## Authentication
 
-Every query documented above is public. Mutations that act on a specific user's data (the wishlist mutations below, and any future one following the same pattern) require a valid access token on every request:
+Most queries above (catalogue browsing) are public. Operations that act on a specific user's data — the `wishlist` query and the wishlist mutations below, and any future one following the same pattern — require a valid access token on every request:
 
 ```
 Authorization: Bearer <accessToken>
 ```
 
-Obtain a token via the `login` mutation (`backend/src/modules/auth/`). These mutations are protected by `RolesGuard`, which verifies the token and re-reads the caller's role/status from the database on every call — see [authorization.md](./authorization.md) for the full guard behavior.
+Obtain a token via the `login` mutation (`backend/src/modules/auth/`). These are protected by `RolesGuard`, which verifies the token and re-reads the caller's role/status from the database on every call — see [authorization.md](./authorization.md) for the full guard behavior.
 
 | Situation                                 | Result             |
 | ----------------------------------------- | ------------------ |
@@ -676,6 +677,90 @@ Same shape as a single item from [`collections`](#collections) — see field tab
 | Case                                  | Message                |
 | ------------------------------------- | ---------------------- |
 | Slug not found or collection inactive | `COLLECTION_NOT_FOUND` |
+
+---
+
+## `wishlist`
+
+Returns the authenticated user's wishlist as full product cards — the same `ProductType` shape as [`product(slug)`](#productslug), directly renderable by `ProductCard` on the frontend without transformation. Scoped strictly to the caller, ordered most-recently-added first. Returns an empty list (never an error) when the wishlist is empty. Products that have since been deactivated or deleted are silently dropped from the result rather than causing an error.
+
+**Source:** `backend/src/modules/wishlist/`
+
+**Requires authentication** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  wishlist {
+    id
+    slug
+    name
+    badges
+    minPrice
+    primaryImage {
+      id
+      url
+      altText
+      isPrimary
+    }
+    media {
+      id
+      url
+      altText
+      position
+      isPrimary
+    }
+    variants {
+      id
+      label
+      isAvailable
+      price
+      isOnSale
+      discountPercentage
+    }
+    categories {
+      id
+      slug
+      name
+    }
+    productFamilies {
+      id
+      slug
+      name
+    }
+    collections {
+      id
+      slug
+      name
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ wishlist { id slug name badges minPrice primaryImage { id url altText isPrimary } media { id url altText position isPrimary } variants { id label isAvailable price isOnSale discountPercentage } categories { id slug name } productFamilies { id slug name } collections { id slug name } } }"}' | jq
+```
+
+**Arguments**
+
+None — always scoped to the caller identified by the access token.
+
+**Response type: `[ProductType]`**
+
+Same shape as a single item returned by [`product(slug)`](#productslug) — see the field tables there.
+
+**Errors**
+
+| Case                              | Message / behavior            |
+| --------------------------------- | ----------------------------- |
+| Missing, invalid or expired token | `401 Unauthorized`            |
+| Wishlist is empty                 | Returns `[]` — never an error |
 
 ---
 

@@ -154,7 +154,7 @@ export class ProductsService {
     categories: { id: string; name: string; slug: string }[];
     productFamilies: { id: string; name: string; slug: string }[];
     collections: { id: string; name: string; slug: string }[];
-  }) {
+  }): ProductType {
     const media = mapMedia(p.media);
     const variants = p.variants.map((v) => ({
       ...v,
@@ -209,6 +209,26 @@ export class ProductsService {
     };
   }
 
+  async findByIds(productIds: string[]): Promise<ProductType[]> {
+    if (productIds.length === 0) return [];
+
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds }, isActive: true },
+      include: {
+        media: { orderBy: { position: 'asc' } },
+        variants: { orderBy: { price: 'asc' } },
+        categories: true,
+        productFamilies: true,
+        collections: true,
+      },
+    });
+
+    const byId = new Map(products.map((p) => [p.id, this.mapProduct(p)]));
+    return productIds
+      .map((id) => byId.get(id))
+      .filter((product): product is ProductType => product !== undefined);
+  }
+
   async findMany(
     filter: ProductsFilterInput,
     pagination: ProductPaginationInput,
@@ -251,8 +271,6 @@ export class ProductsService {
       }
     })();
 
-    // Single query: search (optional) -> filters -> sort -> paginate over the whole catalog.
-    // Prisma.sql tagged template — parameterized, no SQL injection possible.
     const pageRows = await this.prisma.$queryRaw<
       { ids: string[]; total_count: bigint | number }[]
     >(Prisma.sql`
