@@ -4,13 +4,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Message } from '@prisma/client';
+import { Message, NotificationType as NotificationTypeEnum } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { NotificationService } from '../notifications/notification.service';
 import { ConversationType, MessageType } from './conversation.model';
 import { SendMessageInput } from './conversation.input';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEventType, AnalyticsTargetType } from '../analytics/analytics-event-type.enum';
+
+interface ConversationParticipants {
+  userOneId: string;
+  userTwoId: string;
+}
 
 function mapMessage(message: Message): MessageType {
   return {
@@ -27,6 +33,7 @@ export class ConversationService {
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
     private readonly analyticsService: AnalyticsService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async findOrCreateConversation(userId: string, otherUserId: string): Promise<ConversationType> {
@@ -73,7 +80,7 @@ export class ConversationService {
   }
 
   async sendMessage(userId: string, input: SendMessageInput): Promise<MessageType> {
-    await this.assertParticipant(userId, input.conversationId);
+    const conversation = await this.assertParticipant(userId, input.conversationId);
 
     const message = await this.prisma.message.create({
       data: {
@@ -91,11 +98,24 @@ export class ConversationService {
     const mapped = mapMessage(message);
     this.realtimeGateway.emitNewMessage(input.conversationId, mapped);
 
+    const recipientId =
+      conversation.userOneId === userId ? conversation.userTwoId : conversation.userOneId;
+
+    await this.notificationService.create({
+      userId: recipientId,
+      type: NotificationTypeEnum.MESSAGE,
+      actorId: userId,
+      body: input.content,
+    });
+
     return mapped;
   }
 
-  private async assertParticipant(userId: string, conversationId: string): Promise<void> {
-    let conversation: { userOneId: string; userTwoId: string } | null = null;
+  private async assertParticipant(
+    userId: string,
+    conversationId: string,
+  ): Promise<ConversationParticipants> {
+    let conversation: ConversationParticipants | null = null;
 
     try {
       conversation = await this.prisma.conversation.findUnique({
@@ -110,8 +130,10 @@ export class ConversationService {
       conversation !== null &&
       (conversation.userOneId === userId || conversation.userTwoId === userId);
 
-    if (!isParticipant) {
+    if (!isParticipant || conversation === null) {
       throw new ForbiddenException('NOT_A_PARTICIPANT');
     }
+
+    return conversation;
   }
 }
