@@ -9,6 +9,7 @@
 - [Architecture](#architecture)
 - [Development Tools](#development-tools)
 - [Error Handling](#error-handling)
+- [Authentication](#authentication)
 - [Adding a New Query](#adding-a-new-query)
 
 **Query Reference**
@@ -17,6 +18,12 @@
 - [products(filter, pagination)](#productsfilter-pagination) — Paginated product list with filtering and full-text search
 - [collections](#collections) — List of all active collections
 - [collection(slug)](#collectionslug) — Single collection by slug
+- [wishlist](#wishlist) — Authenticated user's wishlist as full product cards
+
+**Mutation Reference**
+
+- [addWishlistItem(input)](#addwishlistiteminput) — Add a product to the authenticated user's wishlist (idempotent)
+- [removeWishlistItem(input)](#removewishlistiteminput) — Remove a product from the authenticated user's wishlist (idempotent)
 
 ---
 
@@ -118,12 +125,29 @@ No stack traces are exposed in responses.
 
 ---
 
+## Authentication
+
+Most queries above (catalogue browsing) are public. Operations that act on a specific user's data — the `wishlist` query and the wishlist mutations below, and any future one following the same pattern — require a valid access token on every request:
+
+```
+Authorization: Bearer <accessToken>
+```
+
+Obtain a token via the `login` mutation (`backend/src/modules/auth/`). These are protected by `RolesGuard`, which verifies the token and re-reads the caller's role/status from the database on every call — see [authorization.md](./authorization.md) for the full guard behavior.
+
+| Situation                                 | Result             |
+| ----------------------------------------- | ------------------ |
+| Missing, invalid or expired token         | `401 Unauthorized` |
+| Valid token, account suspended or deleted | `401 Unauthorized` |
+
+---
+
 ## Adding a New Query
 
 1. Create `backend/src/modules/<feature>/` with the 4-file structure.
 2. Define `@ObjectType` classes in `<feature>.model.ts`.
 3. Implement business logic in `<feature>.service.ts`.
-4. Expose the query with `@Query()` in `<feature>.resolver.ts`.
+4. Expose the query with `@Query()` (or `@Mutation()` for a write operation) in `<feature>.resolver.ts`.
 5. Register the module in `app.module.ts`.
 6. Rebuild the backend container so NestJS regenerates the schema.
 
@@ -653,3 +677,189 @@ Same shape as a single item from [`collections`](#collections) — see field tab
 | Case                                  | Message                |
 | ------------------------------------- | ---------------------- |
 | Slug not found or collection inactive | `COLLECTION_NOT_FOUND` |
+
+---
+
+## `wishlist`
+
+Returns the authenticated user's wishlist as full product cards — the same `ProductType` shape as [`product(slug)`](#productslug), directly renderable by `ProductCard` on the frontend without transformation. Scoped strictly to the caller, ordered most-recently-added first. Returns an empty list (never an error) when the wishlist is empty. Products that have since been deactivated or deleted are silently dropped from the result rather than causing an error.
+
+**Source:** `backend/src/modules/wishlist/`
+
+**Requires authentication** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  wishlist {
+    id
+    slug
+    name
+    badges
+    minPrice
+    primaryImage {
+      id
+      url
+      altText
+      isPrimary
+    }
+    media {
+      id
+      url
+      altText
+      position
+      isPrimary
+    }
+    variants {
+      id
+      label
+      isAvailable
+      price
+      isOnSale
+      discountPercentage
+    }
+    categories {
+      id
+      slug
+      name
+    }
+    productFamilies {
+      id
+      slug
+      name
+    }
+    collections {
+      id
+      slug
+      name
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ wishlist { id slug name badges minPrice primaryImage { id url altText isPrimary } media { id url altText position isPrimary } variants { id label isAvailable price isOnSale discountPercentage } categories { id slug name } productFamilies { id slug name } collections { id slug name } } }"}' | jq
+```
+
+**Arguments**
+
+None — always scoped to the caller identified by the access token.
+
+**Response type: `[ProductType]`**
+
+Same shape as a single item returned by [`product(slug)`](#productslug) — see the field tables there.
+
+**Errors**
+
+| Case                              | Message / behavior            |
+| --------------------------------- | ----------------------------- |
+| Missing, invalid or expired token | `401 Unauthorized`            |
+| Wishlist is empty                 | Returns `[]` — never an error |
+
+---
+
+# Mutation Reference
+
+> All mutations below require an `Authorization: Bearer <accessToken>` header — see [Authentication](#authentication).
+
+## `addWishlistItem(input)`
+
+Adds a product to the authenticated user's wishlist. Scoped strictly to the caller — the target user is always the one identified by the access token, never a client-supplied id. Idempotent: adding an already-wishlisted product is a no-op that returns the existing entry instead of creating a duplicate or erroring.
+
+**Source:** `backend/src/modules/wishlist/`
+
+**Mutation**
+
+```graphql
+mutation {
+  addWishlistItem(input: { productId: "20000000-0000-4000-8000-000000000005" }) {
+    id
+    productId
+    createdAt
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { addWishlistItem(input: { productId: \"20000000-0000-4000-8000-000000000005\" }) { id productId createdAt } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type                | Required | Description |
+| -------- | ------------------- | -------- | ----------- |
+| `input`  | `WishlistItemInput` | Yes      | See below   |
+
+**`WishlistItemInput`**
+
+| Field       | Type            | Required | Description              |
+| ----------- | --------------- | -------- | ------------------------ |
+| `productId` | `String` (UUID) | Yes      | Id of the product to add |
+
+**Response type: `WishlistItemType`**
+
+| Field       | Type       | Nullable | Description                                                  |
+| ----------- | ---------- | -------- | ------------------------------------------------------------ |
+| `id`        | `String`   | No       | UUID of the wishlist entry                                   |
+| `productId` | `String`   | No       | Id of the wishlisted product                                 |
+| `createdAt` | `DateTime` | No       | When the product was first added — unchanged on repeat calls |
+
+**Errors**
+
+| Case                                               | Message                              |
+| -------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                  | `401 Unauthorized`                   |
+| `productId` does not reference an existing product | `PRODUCT_NOT_FOUND`                  |
+| `productId` is not a valid UUID                    | GraphQL validation error (automatic) |
+
+---
+
+## `removeWishlistItem(input)`
+
+Removes a product from the authenticated user's wishlist. Scoped strictly to the caller, same as `addWishlistItem`. Idempotent: removing a product that isn't currently wishlisted is also a no-op — it still returns `true`, since the desired end state ("not in the wishlist") is already satisfied.
+
+**Source:** `backend/src/modules/wishlist/`
+
+**Mutation**
+
+```graphql
+mutation {
+  removeWishlistItem(input: { productId: "20000000-0000-4000-8000-000000000005" })
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { removeWishlistItem(input: { productId: \"20000000-0000-4000-8000-000000000005\" }) }"}' | jq
+```
+
+**Arguments**
+
+Same `WishlistItemInput` as [`addWishlistItem`](#addwishlistiteminput).
+
+**Response type: `Boolean`**
+
+Always `true` once the call succeeds, whether the entry existed beforehand or not.
+
+**Errors**
+
+| Case                                               | Message                              |
+| -------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                  | `401 Unauthorized`                   |
+| `productId` does not reference an existing product | `PRODUCT_NOT_FOUND`                  |
+| `productId` is not a valid UUID                    | GraphQL validation error (automatic) |
