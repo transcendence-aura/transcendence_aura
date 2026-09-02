@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { loadSecrets } from './infrastructure/vault/vault-load-secrets';
 import { RequiredSecrets } from './config/required-secrets';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
@@ -38,6 +39,7 @@ async function bootstrap(): Promise<void> {
 
     const port = parsePort(process.env.PORT);
 
+    app.use(cookieParser());
     await app.listen(port);
 
     logger.log(`Backend listening on port ${port}`);

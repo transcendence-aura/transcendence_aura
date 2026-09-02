@@ -6,11 +6,12 @@ import { PrismaModule } from '../../database/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { TokenService } from './token.service';
 import { GqlAuthGuard } from './gql-auth.guard';
+import { RefreshTokenService } from './refresh/refresh-token.service';
 
 @Module({
   imports: [PrismaModule, JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthResolver, AuthService, TokenService, GqlAuthGuard],
+  providers: [AuthResolver, AuthService, TokenService, GqlAuthGuard, RefreshTokenService],
   exports: [AuthService, TokenService, GqlAuthGuard],
 })
 export class AuthModule {}

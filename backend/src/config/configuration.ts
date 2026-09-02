@@ -6,12 +6,14 @@ export interface AppConfiguration {
   };
   jwt: {
     accessSecret: string;
-    refreshSecret: string;
     accessTokenTtl: number;
     mfaPendingTokenTtl: number;
     issuer: string;
     accessAudience: string;
     mfaPendingAudience: string;
+  };
+  auth: {
+    refreshTokenTtl: number;
   };
   redis: {
     url: string;
@@ -29,12 +31,14 @@ export function createAppConfig(secrets: RequiredSecrets): AppConfiguration {
     },
     jwt: {
       accessSecret: secrets.JWT_ACCESS_SECRET,
-      refreshSecret: secrets.JWT_REFRESH_SECRET,
       accessTokenTtl: 15 * 60,
       mfaPendingTokenTtl: 5 * 60,
       issuer: 'aura-backend',
       accessAudience: 'aura-web',
       mfaPendingAudience: 'aura-mfa',
+    },
+    auth: {
+      refreshTokenTtl: 7 * 24 * 60 * 60,
     },
     redis: {
       url: secrets.REDIS_URL,

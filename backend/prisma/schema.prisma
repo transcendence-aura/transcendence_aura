@@ -24,6 +24,15 @@ enum NotificationType {
   SYSTEM
 }
 
+enum TokenRevocationReason {
+  ROTATED
+  REUSE_DETECTED
+  EXPIRED
+  LOGOUT
+  ADMIN_REVOKED
+  INACTIVE_USER
+}
+
 model User {
   id String @id @default(uuid()) @db.Uuid
 
@@ -81,9 +90,10 @@ model RefreshToken {
   // Identifies all rotated tokens belonging to one login session.
   familyId String @db.Uuid
 
-  isRevoked Boolean   @default(false)
-  revokedAt DateTime?
-  expiresAt DateTime
+  isRevoked        Boolean                @default(false)
+  revokedAt        DateTime?
+  revocationReason TokenRevocationReason?
+  expiresAt        DateTime
 
   userId String @db.Uuid
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -92,6 +102,7 @@ model RefreshToken {
 
   @@index([familyId])
   @@index([userId, familyId])
+  @@index([familyId, isRevoked])
   @@index([expiresAt])
 }
 
@@ -204,13 +215,13 @@ model ProductFamily {
 }
 
 model Product {
-  id          String  @id @default(uuid()) @db.Uuid
-  name        String  @db.VarChar(160)
-  slug        String  @unique @db.VarChar(160)
-  description String? @db.Text
-  isActive    Boolean @default(true)
-  badges      String[]
-  popularityScore Float @default(0)
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @db.VarChar(160)
+  slug            String   @unique @db.VarChar(160)
+  description     String?  @db.Text
+  isActive        Boolean  @default(true)
+  badges          String[]
+  popularityScore Float    @default(0)
 
   categories      Category[]
   productFamilies ProductFamily[]
@@ -229,12 +240,12 @@ model Product {
 }
 
 model ProductVariant {
-  id          String  @id @default(uuid()) @db.Uuid
-  label       String  @db.VarChar(50)
+  id                 String  @id @default(uuid()) @db.Uuid
+  label              String  @db.VarChar(50)
   isAvailable        Boolean @default(true)
-  price              Decimal @db.Decimal(10,2)
+  price              Decimal @db.Decimal(10, 2)
   isOnSale           Boolean @default(false)
-  discountPercentage Decimal @default(0) @db.Decimal(5,2)
+  discountPercentage Decimal @default(0) @db.Decimal(5, 2)
 
   productId String  @db.Uuid
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
