@@ -5,6 +5,8 @@ export type LoginResult =
       requiresMfa: false;
       accessToken: string;
       expiresIn: number;
+      refreshToken: string;
+      refreshExpiresInMs: number;
     }
   | {
       requiresMfa: true;

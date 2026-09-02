@@ -11,6 +11,7 @@ import { PERMISSIONS } from './auth.permissions';
 import { LoginDto } from './dto/login.dto';
 import { TokenService } from './token.service';
 import { LoginResult } from './dto/login-response.model';
+import { RefreshTokenService } from './refresh/refresh-token.service';
 
 const SALT_ROUNDS = 10;
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
@@ -31,6 +32,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
+    private readonly refreshTokenService: RefreshTokenService,
     private readonly configService: ConfigService<AppConfiguration, true>,
   ) {}
 
@@ -131,6 +133,10 @@ export class AuthService {
 
     const accessToken = await this.tokenService.issueAccessToken(user.id, permissions);
 
+    const { refreshToken, refreshExpiresInMs } = await this.refreshTokenService.createSession(
+      user.id,
+    );
+
     try {
       await this.prisma.user.update({
         where: {
@@ -147,6 +153,8 @@ export class AuthService {
     return {
       requiresMfa: false,
       accessToken,
+      refreshToken,
+      refreshExpiresInMs,
       expiresIn: jwtConfig.accessTokenTtl,
     };
   }
