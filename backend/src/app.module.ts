@@ -14,6 +14,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ConversationModule } from './modules/conversations/conversation.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { AdminUserModule } from './modules/admin-user/admin-user.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { CommonModule } from './common/common.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
@@ -52,6 +53,7 @@ export class AppModule {
         ConversationModule,
         WishlistModule,
         AdminUserModule,
+        AnalyticsModule,
         CommonModule,
       ],
       controllers: [AppController],

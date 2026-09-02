@@ -9,6 +9,8 @@ import { PrismaService } from '../../database/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { ConversationType, MessageType } from './conversation.model';
 import { SendMessageInput } from './conversation.input';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsEventType, AnalyticsTargetType } from '../analytics/analytics-event-type.enum';
 
 function mapMessage(message: Message): MessageType {
   return {
@@ -24,6 +26,7 @@ export class ConversationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly realtimeGateway: RealtimeGateway,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async findOrCreateConversation(userId: string, otherUserId: string): Promise<ConversationType> {
@@ -78,6 +81,11 @@ export class ConversationService {
         senderId: userId,
         content: input.content,
       },
+    });
+
+    await this.analyticsService.record(AnalyticsEventType.MESSAGE_SENT, userId, {
+      type: AnalyticsTargetType.MESSAGE,
+      id: message.id,
     });
 
     const mapped = mapMessage(message);

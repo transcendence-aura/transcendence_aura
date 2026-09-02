@@ -12,6 +12,8 @@ import { LoginDto } from './dto/login.dto';
 import { TokenService } from './token.service';
 import { LoginResult } from './dto/login-response.model';
 import { RefreshTokenService } from './refresh/refresh-token.service';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsEventType } from '../analytics/analytics-event-type.enum';
 
 const SALT_ROUNDS = 10;
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
@@ -34,6 +36,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly configService: ConfigService<AppConfiguration, true>,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async register(dto: RegisterDto): Promise<RegisteredUser> {
@@ -58,7 +61,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
     try {
-      return await this.prisma.user.create({
+      const user = await this.prisma.user.create({
         data: {
           email: normalizedEmail,
           name: dto.name.trim(),
@@ -75,6 +78,10 @@ export class AuthService {
           createdAt: true,
         },
       });
+
+      await this.analyticsService.record(AnalyticsEventType.USER_REGISTERED, user.id);
+
+      return user;
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -149,6 +156,8 @@ export class AuthService {
     } catch {
       this.logger.warn(`Unable to update lastLoginAt for user ${user.id}`);
     }
+
+    await this.analyticsService.record(AnalyticsEventType.USER_LOGGED_IN, user.id);
 
     return {
       requiresMfa: false,
