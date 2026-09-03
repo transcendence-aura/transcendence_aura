@@ -19,6 +19,8 @@
 - [collections](#collections) — List of all active collections
 - [collection(slug)](#collectionslug) — Single collection by slug
 - [wishlist](#wishlist) — Authenticated user's wishlist as full product cards
+- [adminUsers(filter, pagination)](#adminusersfilter-pagination) — Paginated user list for the admin management table, filterable/sortable by role and status. Admin-only
+- [adminUser(id)](#adminuserid) — Single user detail view. Admin-only
 
 **Mutation Reference**
 
@@ -135,10 +137,13 @@ Authorization: Bearer <accessToken>
 
 Obtain a token via the `login` mutation (`backend/src/modules/auth/`). These are protected by `RolesGuard`, which verifies the token and re-reads the caller's role/status from the database on every call — see [authorization.md](./authorization.md) for the full guard behavior.
 
-| Situation                                 | Result             |
-| ----------------------------------------- | ------------------ |
-| Missing, invalid or expired token         | `401 Unauthorized` |
-| Valid token, account suspended or deleted | `401 Unauthorized` |
+Some queries additionally restrict by role: `adminUsers` and `adminUser` below are **admin-only** — the caller's account must have `role: ADMIN`, enforced with `@Roles(UserRole.ADMIN)` on top of `RolesGuard`. A valid token belonging to a non-admin account is rejected with `403`, not `401`.
+
+| Situation                                              | Result             |
+| -------------------------------------------------------| ------------------ |
+| Missing, invalid or expired token                      | `401 Unauthorized` |
+| Valid token, account suspended or deleted              | `401 Unauthorized` |
+| Valid token, role not allowed for an admin-only query  | `403 Forbidden`    |
 
 ---
 
@@ -761,6 +766,182 @@ Same shape as a single item returned by [`product(slug)`](#productslug) — see 
 | --------------------------------- | ----------------------------- |
 | Missing, invalid or expired token | `401 Unauthorized`            |
 | Wishlist is empty                 | Returns `[]` — never an error |
+
+---
+
+## `adminUsers(filter, pagination)`
+
+Returns a paginated list of users for the admin management table: identity (`id`, `name`, `email`, `handle`), `role`, `status` and join date. Excludes every sensitive field — no password hash, no tokens. **Admin-only.**
+
+**Source:** `backend/src/modules/admin-user/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  adminUsers(
+    filter: { role: ADMIN, status: ACTIVE, sort: JOINED_AT_DESC }
+    pagination: { page: 1, limit: 20 }
+  ) {
+    total
+    hasNextPage
+    items {
+      id
+      name
+      email
+      handle
+      role
+      status
+      joinedAt
+    }
+  }
+}
+```
+
+**curl example — filtered and sorted**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminUsers(filter: { role: ADMIN, status: ACTIVE, sort: JOINED_AT_DESC }, pagination: { page: 1, limit: 20 }) { total hasNextPage items { id name email handle role status joinedAt } } }"}' | jq
+```
+
+**curl example — no arguments (defaults)**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminUsers { total hasNextPage items { name role status } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument     | Type                        | Required | Description                                                    |
+| ------------ | --------------------------- | -------- | ---------------------------------------------------------------|
+| `filter`     | `AdminUserFilterInput`      | No       | Filter and sort criteria — all fields optional and combinable  |
+| `pagination` | `AdminUserPaginationInput`  | No       | Page and limit — defaults to page 1, limit 20                 |
+
+**`AdminUserFilterInput`**
+
+| Field    | Type                 | Description                                                                                        |
+| -------- | -------------------- | --------------------------------------------------------------------------------------------------- |
+| `role`   | `UserRole`           | Keep only users with this role (`USER` or `ADMIN`)                                                  |
+| `status` | `UserStatus`         | Keep only users with this status (`ACTIVE`, `SUSPENDED` or `DELETED`)                                |
+| `sort`   | `AdminUserSortOrder` | Sort order — see [`AdminUserSortOrder`](#adminusersortorder) below. Defaults to `JOINED_AT_DESC`     |
+
+All fields are optional and combinable. Omitting `filter` entirely returns every user.
+
+### `AdminUserSortOrder`
+
+| Value            | Description                    |
+| ----------------- | ------------------------------ |
+| `NAME_ASC`         | Name, A→Z                      |
+| `NAME_DESC`        | Name, Z→A                      |
+| `ROLE_ASC`         | By role, ascending             |
+| `ROLE_DESC`        | By role, descending            |
+| `STATUS_ASC`       | By status, ascending           |
+| `STATUS_DESC`      | By status, descending          |
+| `JOINED_AT_ASC`    | Oldest account first           |
+| `JOINED_AT_DESC`   | Most recently joined first (default) |
+
+> **Note on role/status ordering:** `ROLE_ASC`/`STATUS_ASC` order by the enum's **declaration order in the Prisma schema**, not alphabetically — `UserRole` is declared `USER` then `ADMIN` (so `ROLE_ASC` lists all `USER` accounts before `ADMIN`), and `UserStatus` is declared `ACTIVE`, `SUSPENDED`, `DELETED` (so `STATUS_ASC` lists `ACTIVE` first, `DELETED` last). `_DESC` reverses that order. Verified empirically — don't assume alphabetical.
+>
+> Every sort additionally applies `id ASC` as a tiebreaker, so users sharing the same role/status/name still get a stable, deterministic order across repeated calls and pages.
+
+**`AdminUserPaginationInput`**
+
+| Field   | Type  | Default | Description                  |
+| ------- | ----- | ------- | ----------------------------- |
+| `page`  | `Int` | `1`     | Page number (1-based, min 1) |
+| `limit` | `Int` | `20`    | Items per page (min 1, max 100) |
+
+**Response type: `AdminUserPageType`**
+
+| Field         | Type              | Nullable | Description                                                |
+| ------------- | ----------------- | -------- | ------------------------------------------------------------|
+| `total`       | `Int`              | No       | Total number of users matching the filter across all pages |
+| `hasNextPage` | `Boolean`          | No       | `true` if more pages exist beyond the current one           |
+| `items`       | `[AdminUserType]`  | No       | Users for the current page                                  |
+
+**`AdminUserType`** (each item in `items`)
+
+| Field       | Type         | Nullable | Description                                          |
+| ----------- | ------------ | -------- | ----------------------------------------------------- |
+| `id`        | `String`     | No       | UUID                                                  |
+| `name`      | `String`     | No       | Display name                                          |
+| `email`     | `String`     | No       | Account email                                         |
+| `handle`    | `String`     | No       | Public handle                                         |
+| `role`      | `UserRole`   | No       | `USER` or `ADMIN`                                     |
+| `status`    | `UserStatus` | No       | `ACTIVE`, `SUSPENDED` or `DELETED`                    |
+| `joinedAt`  | `DateTime`   | No       | Account creation date                                 |
+
+No other `User` field is exposed on this type — in particular no password hash, refresh tokens, API keys or bio.
+
+**Errors**
+
+| Case                                          | Message / behavior                                                     |
+| ---------------------------------------------- | ------------------------------------------------------------------------|
+| No users match the filter                     | Returns `{ total: 0, hasNextPage: false, items: [] }` — never an error |
+| Missing, invalid or expired token              | `401 Unauthorized`                                                      |
+| Valid token, caller is not `ADMIN`             | `403 Forbidden`                                                         |
+
+---
+
+## `adminUser(id)`
+
+Returns a single user's admin detail view — the same field set as an item in [`adminUsers`](#adminusersfilter-pagination). **Admin-only.**
+
+**Source:** `backend/src/modules/admin-user/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  adminUser(id: "00000000-0000-4000-8000-000000000002") {
+    id
+    name
+    email
+    handle
+    role
+    status
+    joinedAt
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminUser(id: \"00000000-0000-4000-8000-000000000002\") { id name email handle role status joinedAt } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type            | Required | Description   |
+| -------- | --------------- | -------- | ------------- |
+| `id`     | `String` (UUID) | Yes      | Id of the user |
+
+**Response type: `AdminUserType`**
+
+Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) — see the field table above.
+
+**Errors**
+
+| Case                                      | Message / behavior                                   |
+| ------------------------------------------- | -------------------------------------------------------|
+| `id` does not reference an existing user  | `USER_NOT_FOUND`                                      |
+| `id` is not a valid UUID                  | `400 Bad Request` — `Validation failed (uuid is expected)` |
+| Missing, invalid or expired token         | `401 Unauthorized`                                    |
+| Valid token, caller is not `ADMIN`        | `403 Forbidden`                                       |
 
 ---
 

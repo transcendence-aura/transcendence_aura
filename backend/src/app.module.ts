@@ -13,6 +13,7 @@ import { CollectionsModule } from './modules/collections/collection.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ConversationModule } from './modules/conversations/conversation.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { AdminUserModule } from './modules/admin-user/admin-user.module';
 import { CommonModule } from './common/common.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
@@ -50,6 +51,7 @@ export class AppModule {
         RealtimeModule,
         ConversationModule,
         WishlistModule,
+        AdminUserModule,
         CommonModule,
       ],
       controllers: [AppController],
