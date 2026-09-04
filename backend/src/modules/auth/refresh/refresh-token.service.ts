@@ -5,7 +5,7 @@ import { AppConfiguration } from '../../../config/configuration';
 import { TokenService } from '../token.service';
 import { UserStatus } from '@prisma/client';
 import { generateRefreshToken, hashRefreshToken } from './refresh-token.utils';
-import { getPermissionsForRole } from '../auth.permissions';
+import { PERMISSIONS } from '../auth.permissions';
 import { randomUUID } from 'node:crypto';
 
 @Injectable()
@@ -132,7 +132,7 @@ export class RefreshTokenService {
         };
       }
 
-      const permissions = getPermissionsForRole(user.role);
+      const permissions = [...PERMISSIONS[user.role]];
 
       // ROTATION. Atomically claim current refresh token for rotation.
       const revoked = await tx.refreshToken.updateMany({

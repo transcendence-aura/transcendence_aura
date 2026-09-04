@@ -14,14 +14,40 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginResult } from './dto/login-response.model';
 import type { Request, Response } from 'express';
 import { RefreshTokenService } from './refresh/refresh-token.service';
-import { REFRESH_COOKIE_NAME, getRefreshCookieOptions } from './refresh/refresh-token.constants';
+import { ConfigService } from '@nestjs/config';
+import { AppConfiguration } from '../../config/configuration';
+import {
+  REFRESH_COOKIE_NAME,
+  getRefreshCookieOptions,
+  getRefreshCookieClearOptions,
+} from './refresh/refresh-token.constants';
+import {
+  ACCESS_COOKIE_NAME,
+  getAccessCookieOptions,
+  getAccessCookieClearOptions,
+} from './auth.constants';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly configService: ConfigService<AppConfiguration, true>,
   ) {}
+
+  private setAccessCookie(res: Response, accessToken: string): void {
+    const { accessTokenTtl } = this.configService.getOrThrow<AppConfiguration['jwt']>('jwt');
+    res.cookie(ACCESS_COOKIE_NAME, accessToken, getAccessCookieOptions(accessTokenTtl * 1000));
+  }
+
+  private setRefreshCookie(res: Response, refreshToken: string, refreshExpiresInMs: number): void {
+    res.cookie(REFRESH_COOKIE_NAME, refreshToken, getRefreshCookieOptions(refreshExpiresInMs));
+  }
+
+  private clearAuthCookies(res: Response): void {
+    res.clearCookie(ACCESS_COOKIE_NAME, getAccessCookieClearOptions());
+    res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieClearOptions());
+  }
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
@@ -36,11 +62,8 @@ export class AuthController {
     if (result.requiresMfa) {
       return result;
     }
-    res.cookie(
-      REFRESH_COOKIE_NAME,
-      result.refreshToken,
-      getRefreshCookieOptions(result.refreshExpiresInMs),
-    );
+    this.setAccessCookie(res, result.accessToken);
+    this.setRefreshCookie(res, result.refreshToken, result.refreshExpiresInMs);
 
     return {
       requiresMfa: result.requiresMfa,
@@ -57,19 +80,17 @@ export class AuthController {
   ): Promise<{ accessToken: string }> {
     const presentedToken = req.cookies?.[REFRESH_COOKIE_NAME];
     if (typeof presentedToken !== 'string' || presentedToken.length === 0) {
+      this.clearAuthCookies(res);
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
     try {
       const result = await this.refreshTokenService.refresh(presentedToken);
-      res.cookie(
-        REFRESH_COOKIE_NAME,
-        result.refreshToken,
-        getRefreshCookieOptions(result.refreshExpiresInMs),
-      );
+      this.setAccessCookie(res, result.accessToken);
+      this.setRefreshCookie(res, result.refreshToken, result.refreshExpiresInMs);
       return { accessToken: result.accessToken };
     } catch (error) {
-      res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieOptions(0));
+      this.clearAuthCookies(res);
       throw error;
     }
   }

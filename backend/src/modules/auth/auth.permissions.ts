@@ -29,7 +29,3 @@ export const PERMISSIONS: Record<UserRole, readonly string[]> = {
     'chat:send',
   ],
 };
-
-export function getPermissionsForRole(role: UserRole): string[] {
-  return [...PERMISSIONS[role]];
-}
