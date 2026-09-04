@@ -3,12 +3,15 @@ import { PrismaService } from '../../database/prisma.service';
 import { ProductsService } from '../products/product.service';
 import { ProductType } from '../products/product.model';
 import { WishlistItemType } from './wishlist.model';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { AnalyticsEventType, AnalyticsTargetType } from '../analytics/analytics-event-type.enum';
 
 @Injectable()
 export class WishlistService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly productsService: ProductsService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   async getWishlist(userId: string): Promise<ProductType[]> {
@@ -23,11 +26,18 @@ export class WishlistService {
 
   async addItem(userId: string, productId: string): Promise<WishlistItemType> {
     await this.assertProductExists(productId);
-    return this.prisma.wishlist.upsert({
+    const item = await this.prisma.wishlist.upsert({
       where: { userId_productId: { userId, productId } },
       create: { userId, productId },
       update: {},
     });
+
+    await this.analyticsService.record(AnalyticsEventType.WISHLIST_ITEM_ADDED, userId, {
+      type: AnalyticsTargetType.PRODUCT,
+      id: productId,
+    });
+
+    return item;
   }
 
   async removeItem(userId: string, productId: string): Promise<boolean> {
