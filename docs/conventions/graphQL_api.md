@@ -21,11 +21,15 @@
 - [wishlist](#wishlist) — Authenticated user's wishlist as full product cards
 - [adminUsers(filter, pagination)](#adminusersfilter-pagination) — Paginated user list for the admin management table, filterable/sortable by role and status. Admin-only
 - [adminUser(id)](#adminuserid) — Single user detail view. Admin-only
+- [followersCount(userId)](#followerscountuserid) — Number of users following the given user
+- [followingCount(userId)](#followingcountuserid) — Number of users the given user follows
 
 **Mutation Reference**
 
 - [addWishlistItem(input)](#addwishlistiteminput) — Add a product to the authenticated user's wishlist (idempotent)
 - [removeWishlistItem(input)](#removewishlistiteminput) — Remove a product from the authenticated user's wishlist (idempotent)
+- [followUser(input)](#followuserinput) — Follow another user (idempotent, self-follow rejected)
+- [unfollowUser(input)](#unfollowuserinput) — Unfollow a user (idempotent)
 
 ---
 
@@ -139,11 +143,11 @@ Obtain a token via the `login` mutation (`backend/src/modules/auth/`). These are
 
 Some queries additionally restrict by role: `adminUsers` and `adminUser` below are **admin-only** — the caller's account must have `role: ADMIN`, enforced with `@Roles(UserRole.ADMIN)` on top of `RolesGuard`. A valid token belonging to a non-admin account is rejected with `403`, not `401`.
 
-| Situation                                              | Result             |
-| -------------------------------------------------------| ------------------ |
-| Missing, invalid or expired token                      | `401 Unauthorized` |
-| Valid token, account suspended or deleted              | `401 Unauthorized` |
-| Valid token, role not allowed for an admin-only query  | `403 Forbidden`    |
+| Situation                                             | Result             |
+| ----------------------------------------------------- | ------------------ |
+| Missing, invalid or expired token                     | `401 Unauthorized` |
+| Valid token, account suspended or deleted             | `401 Unauthorized` |
+| Valid token, role not allowed for an admin-only query | `403 Forbidden`    |
 
 ---
 
@@ -820,33 +824,33 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument     | Type                        | Required | Description                                                    |
-| ------------ | --------------------------- | -------- | ---------------------------------------------------------------|
-| `filter`     | `AdminUserFilterInput`      | No       | Filter and sort criteria — all fields optional and combinable  |
-| `pagination` | `AdminUserPaginationInput`  | No       | Page and limit — defaults to page 1, limit 20                 |
+| Argument     | Type                       | Required | Description                                                   |
+| ------------ | -------------------------- | -------- | ------------------------------------------------------------- |
+| `filter`     | `AdminUserFilterInput`     | No       | Filter and sort criteria — all fields optional and combinable |
+| `pagination` | `AdminUserPaginationInput` | No       | Page and limit — defaults to page 1, limit 20                 |
 
 **`AdminUserFilterInput`**
 
-| Field    | Type                 | Description                                                                                        |
-| -------- | -------------------- | --------------------------------------------------------------------------------------------------- |
-| `role`   | `UserRole`           | Keep only users with this role (`USER` or `ADMIN`)                                                  |
-| `status` | `UserStatus`         | Keep only users with this status (`ACTIVE`, `SUSPENDED` or `DELETED`)                                |
-| `sort`   | `AdminUserSortOrder` | Sort order — see [`AdminUserSortOrder`](#adminusersortorder) below. Defaults to `JOINED_AT_DESC`     |
+| Field    | Type                 | Description                                                                                      |
+| -------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| `role`   | `UserRole`           | Keep only users with this role (`USER` or `ADMIN`)                                               |
+| `status` | `UserStatus`         | Keep only users with this status (`ACTIVE`, `SUSPENDED` or `DELETED`)                            |
+| `sort`   | `AdminUserSortOrder` | Sort order — see [`AdminUserSortOrder`](#adminusersortorder) below. Defaults to `JOINED_AT_DESC` |
 
 All fields are optional and combinable. Omitting `filter` entirely returns every user.
 
 ### `AdminUserSortOrder`
 
-| Value            | Description                    |
-| ----------------- | ------------------------------ |
-| `NAME_ASC`         | Name, A→Z                      |
-| `NAME_DESC`        | Name, Z→A                      |
-| `ROLE_ASC`         | By role, ascending             |
-| `ROLE_DESC`        | By role, descending            |
-| `STATUS_ASC`       | By status, ascending           |
-| `STATUS_DESC`      | By status, descending          |
-| `JOINED_AT_ASC`    | Oldest account first           |
-| `JOINED_AT_DESC`   | Most recently joined first (default) |
+| Value            | Description                          |
+| ---------------- | ------------------------------------ |
+| `NAME_ASC`       | Name, A→Z                            |
+| `NAME_DESC`      | Name, Z→A                            |
+| `ROLE_ASC`       | By role, ascending                   |
+| `ROLE_DESC`      | By role, descending                  |
+| `STATUS_ASC`     | By status, ascending                 |
+| `STATUS_DESC`    | By status, descending                |
+| `JOINED_AT_ASC`  | Oldest account first                 |
+| `JOINED_AT_DESC` | Most recently joined first (default) |
 
 > **Note on role/status ordering:** `ROLE_ASC`/`STATUS_ASC` order by the enum's **declaration order in the Prisma schema**, not alphabetically — `UserRole` is declared `USER` then `ADMIN` (so `ROLE_ASC` lists all `USER` accounts before `ADMIN`), and `UserStatus` is declared `ACTIVE`, `SUSPENDED`, `DELETED` (so `STATUS_ASC` lists `ACTIVE` first, `DELETED` last). `_DESC` reverses that order. Verified empirically — don't assume alphabetical.
 >
@@ -854,40 +858,40 @@ All fields are optional and combinable. Omitting `filter` entirely returns every
 
 **`AdminUserPaginationInput`**
 
-| Field   | Type  | Default | Description                  |
-| ------- | ----- | ------- | ----------------------------- |
-| `page`  | `Int` | `1`     | Page number (1-based, min 1) |
+| Field   | Type  | Default | Description                     |
+| ------- | ----- | ------- | ------------------------------- |
+| `page`  | `Int` | `1`     | Page number (1-based, min 1)    |
 | `limit` | `Int` | `20`    | Items per page (min 1, max 100) |
 
 **Response type: `AdminUserPageType`**
 
 | Field         | Type              | Nullable | Description                                                |
-| ------------- | ----------------- | -------- | ------------------------------------------------------------|
-| `total`       | `Int`              | No       | Total number of users matching the filter across all pages |
-| `hasNextPage` | `Boolean`          | No       | `true` if more pages exist beyond the current one           |
-| `items`       | `[AdminUserType]`  | No       | Users for the current page                                  |
+| ------------- | ----------------- | -------- | ---------------------------------------------------------- |
+| `total`       | `Int`             | No       | Total number of users matching the filter across all pages |
+| `hasNextPage` | `Boolean`         | No       | `true` if more pages exist beyond the current one          |
+| `items`       | `[AdminUserType]` | No       | Users for the current page                                 |
 
 **`AdminUserType`** (each item in `items`)
 
-| Field       | Type         | Nullable | Description                                          |
-| ----------- | ------------ | -------- | ----------------------------------------------------- |
-| `id`        | `String`     | No       | UUID                                                  |
-| `name`      | `String`     | No       | Display name                                          |
-| `email`     | `String`     | No       | Account email                                         |
-| `handle`    | `String`     | No       | Public handle                                         |
-| `role`      | `UserRole`   | No       | `USER` or `ADMIN`                                     |
-| `status`    | `UserStatus` | No       | `ACTIVE`, `SUSPENDED` or `DELETED`                    |
-| `joinedAt`  | `DateTime`   | No       | Account creation date                                 |
+| Field      | Type         | Nullable | Description                        |
+| ---------- | ------------ | -------- | ---------------------------------- |
+| `id`       | `String`     | No       | UUID                               |
+| `name`     | `String`     | No       | Display name                       |
+| `email`    | `String`     | No       | Account email                      |
+| `handle`   | `String`     | No       | Public handle                      |
+| `role`     | `UserRole`   | No       | `USER` or `ADMIN`                  |
+| `status`   | `UserStatus` | No       | `ACTIVE`, `SUSPENDED` or `DELETED` |
+| `joinedAt` | `DateTime`   | No       | Account creation date              |
 
 No other `User` field is exposed on this type — in particular no password hash, refresh tokens, API keys or bio.
 
 **Errors**
 
-| Case                                          | Message / behavior                                                     |
-| ---------------------------------------------- | ------------------------------------------------------------------------|
-| No users match the filter                     | Returns `{ total: 0, hasNextPage: false, items: [] }` — never an error |
-| Missing, invalid or expired token              | `401 Unauthorized`                                                      |
-| Valid token, caller is not `ADMIN`             | `403 Forbidden`                                                         |
+| Case                               | Message / behavior                                                     |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| No users match the filter          | Returns `{ total: 0, hasNextPage: false, items: [] }` — never an error |
+| Missing, invalid or expired token  | `401 Unauthorized`                                                     |
+| Valid token, caller is not `ADMIN` | `403 Forbidden`                                                        |
 
 ---
 
@@ -926,8 +930,8 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description   |
-| -------- | --------------- | -------- | ------------- |
+| Argument | Type            | Required | Description    |
+| -------- | --------------- | -------- | -------------- |
 | `id`     | `String` (UUID) | Yes      | Id of the user |
 
 **Response type: `AdminUserType`**
@@ -936,12 +940,90 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 
 **Errors**
 
-| Case                                      | Message / behavior                                   |
-| ------------------------------------------- | -------------------------------------------------------|
-| `id` does not reference an existing user  | `USER_NOT_FOUND`                                      |
-| `id` is not a valid UUID                  | `400 Bad Request` — `Validation failed (uuid is expected)` |
-| Missing, invalid or expired token         | `401 Unauthorized`                                    |
-| Valid token, caller is not `ADMIN`        | `403 Forbidden`                                       |
+| Case                                     | Message / behavior                                         |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| `id` does not reference an existing user | `USER_NOT_FOUND`                                           |
+| `id` is not a valid UUID                 | `400 Bad Request` — `Validation failed (uuid is expected)` |
+| Missing, invalid or expired token        | `401 Unauthorized`                                         |
+| Valid token, caller is not `ADMIN`       | `403 Forbidden`                                            |
+
+---
+
+## `followersCount(userId)`
+
+Returns the number of users following the given user. Public — no authentication required, returns only a count.
+
+**Source:** `backend/src/modules/follows/`
+
+**Query**
+
+```graphql
+query {
+  followersCount(userId: "00000000-0000-4000-8000-000000000003")
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ followersCount(userId: \"00000000-0000-4000-8000-000000000003\") }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type            | Required | Description             |
+| -------- | --------------- | -------- | ----------------------- |
+| `userId` | `String` (UUID) | Yes      | Id of the user to count |
+
+**Response type: `Int`**
+
+**Errors**
+
+| Case                                         | Message / behavior                   |
+| -------------------------------------------- | ------------------------------------ |
+| `userId` does not reference an existing user | Returns `0` — never an error         |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
+
+---
+
+## `followingCount(userId)`
+
+Returns the number of users the given user follows. Public — same behavior as [`followersCount`](#followerscountuserid), counted in the opposite direction.
+
+**Source:** `backend/src/modules/follows/`
+
+**Query**
+
+```graphql
+query {
+  followingCount(userId: "00000000-0000-4000-8000-000000000003")
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ followingCount(userId: \"00000000-0000-4000-8000-000000000003\") }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type            | Required | Description             |
+| -------- | --------------- | -------- | ----------------------- |
+| `userId` | `String` (UUID) | Yes      | Id of the user to count |
+
+**Response type: `Int`**
+
+**Errors**
+
+| Case                                         | Message / behavior                   |
+| -------------------------------------------- | ------------------------------------ |
+| `userId` does not reference an existing user | Returns `0` — never an error         |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
 
 ---
 
@@ -1044,3 +1126,93 @@ Always `true` once the call succeeds, whether the entry existed beforehand or no
 | Missing, invalid or expired token                  | `401 Unauthorized`                   |
 | `productId` does not reference an existing product | `PRODUCT_NOT_FOUND`                  |
 | `productId` is not a valid UUID                    | GraphQL validation error (automatic) |
+
+---
+
+## `followUser(input)`
+
+Follows another user. Scoped strictly to the caller — the follower is always the one identified by the access token, never a client-supplied id. Idempotent: following an already-followed user is a no-op that returns `true` without creating a duplicate relationship. Following yourself is rejected.
+
+**Source:** `backend/src/modules/follows/`
+
+**Mutation**
+
+```graphql
+mutation {
+  followUser(input: { targetUserId: "00000000-0000-4000-8000-000000000003" })
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { followUser(input: { targetUserId: \"00000000-0000-4000-8000-000000000003\" }) }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type          | Required | Description |
+| -------- | ------------- | -------- | ----------- |
+| `input`  | `FollowInput` | Yes      | See below   |
+
+**`FollowInput`**
+
+| Field          | Type            | Required | Description              |
+| -------------- | --------------- | -------- | ------------------------ |
+| `targetUserId` | `String` (UUID) | Yes      | Id of the user to follow |
+
+**Response type: `Boolean`**
+
+Always `true` once the call succeeds, whether the relationship was just created or already existed.
+
+**Errors**
+
+| Case                                               | Message                              |
+| -------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                  | `401 Unauthorized`                   |
+| `targetUserId` is the caller's own id              | `CANNOT_FOLLOW_SELF`                 |
+| `targetUserId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| `targetUserId` is not a valid UUID                 | GraphQL validation error (automatic) |
+
+---
+
+## `unfollowUser(input)`
+
+Unfollows a user. Scoped strictly to the caller, same as `followUser`. Idempotent: unfollowing a user you don't currently follow is also a no-op — it still returns `true`, since the desired end state ("not following") is already satisfied.
+
+**Source:** `backend/src/modules/follows/`
+
+**Mutation**
+
+```graphql
+mutation {
+  unfollowUser(input: { targetUserId: "00000000-0000-4000-8000-000000000003" })
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { unfollowUser(input: { targetUserId: \"00000000-0000-4000-8000-000000000003\" }) }"}' | jq
+```
+
+**Arguments**
+
+Same `FollowInput` as [`followUser`](#followuserinput).
+
+**Response type: `Boolean`**
+
+Always `true` once the call succeeds, whether the relationship existed beforehand or not.
+
+**Errors**
+
+| Case                               | Message                              |
+| ---------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token  | `401 Unauthorized`                   |
+| `targetUserId` is not a valid UUID | GraphQL validation error (automatic) |
