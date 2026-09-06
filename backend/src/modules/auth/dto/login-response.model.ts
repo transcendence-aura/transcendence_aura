@@ -28,3 +28,9 @@ export class LoginResponse {
   @Field(() => Int)
   expiresIn!: number;
 }
+
+@ObjectType()
+export class RefreshResponse {
+  @Field()
+  accessToken!: string;
+}

@@ -41,7 +41,7 @@ export class AppModule {
           includeStacktraceInErrorResponses: false,
           // Exposes the raw HTTP request in resolver context so guards can
           // read the Authorization header (RolesGuard relies on this).
-          context: ({ req }: { req: unknown }) => ({ req }),
+          context: ({ req, res }: { req: unknown, res: unknown }) => ({ req, res }),
         }),
         ApiModule,
         HealthModule,
