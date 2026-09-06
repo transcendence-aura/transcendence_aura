@@ -13,6 +13,6 @@ import { AnalyticsModule } from '../analytics/analytics.module';
   imports: [PrismaModule, JwtModule.register({}), AnalyticsModule],
   controllers: [AuthController],
   providers: [AuthResolver, AuthService, TokenService, GqlAuthGuard, RefreshTokenService],
-  exports: [AuthService, TokenService, GqlAuthGuard],
+  exports: [AuthService, TokenService, GqlAuthGuard, RefreshTokenService],
 })
 export class AuthModule {}

@@ -3,7 +3,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { AppConfiguration } from '../../../config/configuration';
 import { TokenService } from '../token.service';
-import { UserStatus } from '@prisma/client';
+import { TokenRevocationReason, UserStatus } from '@prisma/client';
 import { generateRefreshToken, hashRefreshToken } from './refresh-token.utils';
 import { PERMISSIONS } from '../auth.permissions';
 import { randomUUID } from 'node:crypto';
@@ -212,5 +212,19 @@ export class RefreshTokenService {
       refreshToken: result.refreshToken,
       refreshExpiresInMs: ttlMs,
     };
+  }
+
+  async revokeAllForUser(userId: string, reason: TokenRevocationReason): Promise<void> {
+    await this.prisma.refreshToken.updateMany({
+      where: {
+        userId,
+        isRevoked: false,
+      },
+      data: {
+        isRevoked: true,
+        revokedAt: new Date(),
+        revocationReason: reason,
+      },
+    });
   }
 }

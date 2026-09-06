@@ -30,6 +30,10 @@
 - [removeWishlistItem(input)](#removewishlistiteminput) — Remove a product from the authenticated user's wishlist (idempotent)
 - [followUser(input)](#followuserinput) — Follow another user (idempotent, self-follow rejected)
 - [unfollowUser(input)](#unfollowuserinput) — Unfollow a user (idempotent)
+- [adminSetUserRole(userId, role)](#adminsetuserroleuserid-role) — Change a user's role between `USER` and `ADMIN`. Admin-only, self-target rejected
+- [adminSuspendUser(userId)](#adminsuspenduseruserid) — Suspend a user: blocks sign-in and revokes every active session. Admin-only, self-target rejected
+- [adminReinstateUser(userId)](#adminreinstateuseruserid) — Reactivate a suspended user. Admin-only
+- [adminDeleteUser(userId)](#admindeleteuseruserid) — Soft-delete a user. Admin-only, self-target rejected
 
 ---
 
@@ -1212,7 +1216,226 @@ Always `true` once the call succeeds, whether the relationship existed beforehan
 
 **Errors**
 
-| Case                               | Message                              |
-| ---------------------------------- | ------------------------------------ |
+| Case                                | Message                              |
+| ------------------------------------ | ------------------------------------ |
 | Missing, invalid or expired token  | `401 Unauthorized`                   |
 | `targetUserId` is not a valid UUID | GraphQL validation error (automatic) |
+
+---
+
+## `adminSetUserRole(userId, role)`
+
+Changes a user's role between `USER` and `ADMIN`. **Admin-only.**
+
+**Guardrail:** an admin can never change their own role through this mutation — rejected outright, regardless of the requested role. This is an explicit server-side guard, not just a frontend confirmation dialog, so a single admin account can't accidentally demote itself and lock everyone out.
+
+**Source:** `backend/src/modules/admin-user/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminSetUserRole(userId: "00000000-0000-4000-8000-000000000003", role: ADMIN) {
+    id
+    name
+    email
+    role
+    status
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminSetUserRole(userId: \"00000000-0000-4000-8000-000000000003\", role: ADMIN) { id name email role status } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type            | Required | Description                                 |
+| -------- | --------------- | -------- | -------------------------------------------- |
+| `userId` | `String` (UUID) | Yes      | Id of the user whose role is being changed  |
+| `role`   | `UserRole`      | Yes      | New role to assign (`USER` or `ADMIN`)      |
+
+**Response type: `AdminUserType`**
+
+Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) — see the field table above.
+
+**Errors**
+
+| Case                                        | Message                              |
+| -------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token           | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`          | `403 Forbidden`                      |
+| `userId` is the caller's own id             | `CANNOT_CHANGE_OWN_ROLE`             |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                    |
+| Target user's status is `DELETED`           | `USER_DELETED`                       |
+| `userId` is not a valid UUID                | GraphQL validation error (automatic) |
+
+---
+
+## `adminSuspendUser(userId)`
+
+Suspends a user account. A suspended user can no longer sign in (the `login` mutation rejects any account whose status isn't `ACTIVE`) and every one of their refresh-token sessions is revoked immediately — an already-issued refresh token stops working right away instead of only failing on its next natural rotation. **Admin-only.**
+
+**Guardrail:** an admin can never suspend their own account through this mutation — rejected outright.
+
+**Source:** `backend/src/modules/admin-user/` (session revocation delegates to `RefreshTokenService.revokeAllForUser` in `backend/src/modules/auth/refresh/`)
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminSuspendUser(userId: "00000000-0000-4000-8000-000000000004") {
+    id
+    email
+    status
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminSuspendUser(userId: \"00000000-0000-4000-8000-000000000004\") { id email status } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type            | Required | Description                |
+| -------- | --------------- | -------- | -------------------------- |
+| `userId` | `String` (UUID) | Yes      | Id of the user to suspend |
+
+**Response type: `AdminUserType`**
+
+Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) — see the field table above.
+
+**Errors**
+
+| Case                                         | Message                              |
+| ---------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token             | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`            | `403 Forbidden`                      |
+| `userId` is the caller's own id               | `CANNOT_SUSPEND_OWN_ACCOUNT`         |
+| `userId` does not reference an existing user  | `USER_NOT_FOUND`                     |
+| Target user's status is already `SUSPENDED`   | `USER_ALREADY_SUSPENDED`             |
+| Target user's status is `DELETED`             | `USER_DELETED`                       |
+| `userId` is not a valid UUID                  | GraphQL validation error (automatic) |
+
+---
+
+## `adminReinstateUser(userId)`
+
+Reactivates a suspended user, setting their status back to `ACTIVE` so they can sign in again. **Admin-only.**
+
+Only valid for a user whose status is currently `SUSPENDED` — reinstating an already-active account, or a deleted one, is rejected rather than silently ignored. Deleted accounts are not meant to come back through this mutation.
+
+**Source:** `backend/src/modules/admin-user/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminReinstateUser(userId: "00000000-0000-4000-8000-000000000004") {
+    id
+    email
+    status
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminReinstateUser(userId: \"00000000-0000-4000-8000-000000000004\") { id email status } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type            | Required | Description                  |
+| -------- | --------------- | -------- | ----------------------------- |
+| `userId` | `String` (UUID) | Yes      | Id of the user to reinstate |
+
+**Response type: `AdminUserType`**
+
+Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) — see the field table above.
+
+**Errors**
+
+| Case                                          | Message                              |
+| ------------------------------------------------ | ------------------------------------ |
+| Missing, invalid or expired token               | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`              | `403 Forbidden`                      |
+| `userId` does not reference an existing user    | `USER_NOT_FOUND`                     |
+| Target user's status is not `SUSPENDED`         | `USER_NOT_SUSPENDED`                 |
+| `userId` is not a valid UUID                    | GraphQL validation error (automatic) |
+
+---
+
+## `adminDeleteUser(userId)`
+
+Soft-deletes a user: status is set to `DELETED` and `deletedAt` is timestamped. Sign-in is blocked immediately and every refresh-token session is revoked, same as [`adminSuspendUser`](#adminsuspenduseruserid). The row itself is never removed — actual data cleanup is left to a future background job. **Admin-only.**
+
+**Guardrail:** an admin can never delete their own account through this mutation — rejected outright.
+
+**Source:** `backend/src/modules/admin-user/` (session revocation delegates to `RefreshTokenService.revokeAllForUser` in `backend/src/modules/auth/refresh/`)
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminDeleteUser(userId: "00000000-0000-4000-8000-000000000004") {
+    id
+    email
+    status
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminDeleteUser(userId: \"00000000-0000-4000-8000-000000000004\") { id email status } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type            | Required | Description               |
+| -------- | --------------- | -------- | -------------------------- |
+| `userId` | `String` (UUID) | Yes      | Id of the user to delete |
+
+**Response type: `AdminUserType`**
+
+Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) — see the field table above.
+
+**Errors**
+
+| Case                                        | Message                              |
+| ---------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token             | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`            | `403 Forbidden`                      |
+| `userId` is the caller's own id               | `CANNOT_DELETE_OWN_ACCOUNT`          |
+| `userId` does not reference an existing user  | `USER_NOT_FOUND`                     |
+| Target user's status is already `DELETED`     | `USER_ALREADY_DELETED`               |
+| `userId` is not a valid UUID                  | GraphQL validation error (automatic) |

@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException} from '@nestjs/common';
+import { Prisma, TokenRevocationReason, UserRole, UserStatus } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { RefreshTokenService } from '../auth/refresh/refresh-token.service';
 import { AdminUserPageType, AdminUserType } from './admin-user.model';
 import { AdminUserFilterInput, AdminUserPaginationInput, AdminUserSortOrder } from './admin-user.input';
 
@@ -49,7 +50,10 @@ function buildOrderBy(sort?: AdminUserSortOrder): Prisma.UserOrderByWithRelation
 
 @Injectable()
 export class AdminUserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly refreshTokenService: RefreshTokenService,
+  ) {}
 
   async findMany(
     filter: AdminUserFilterInput,
@@ -80,6 +84,18 @@ export class AdminUserService {
   }
 
   async findById(id: string): Promise<AdminUserType> {
+    const user = await this.findRawOrThrow(id);
+
+    return mapAdminUser(user);
+  }
+
+  private assertNotSelf(targetUserId: string, actorId: string, message: string): void {
+    if (targetUserId === actorId) {
+      throw new ForbiddenException(message);
+    }
+  }
+
+  private async findRawOrThrow(id: string): Promise<AdminUserRow> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: ADMIN_USER_SELECT,
@@ -89,6 +105,89 @@ export class AdminUserService {
       throw new NotFoundException('USER_NOT_FOUND');
     }
 
-    return mapAdminUser(user);
+    return user;
+  }
+
+  async setRole(targetUserId: string, role: UserRole, actorId: string): Promise<AdminUserType> {
+    this.assertNotSelf(targetUserId, actorId, 'CANNOT_CHANGE_OWN_ROLE');
+
+    const target = await this.findRawOrThrow(targetUserId);
+
+    if (target.status === UserStatus.DELETED) {
+      throw new ConflictException('USER_DELETED');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { role },
+      select: ADMIN_USER_SELECT,
+    });
+
+    return mapAdminUser(updated);
+  }
+
+  async suspend(targetUserId: string, actorId: string): Promise<AdminUserType> {
+    this.assertNotSelf(targetUserId, actorId, 'CANNOT_SUSPEND_OWN_ACCOUNT');
+
+    const target = await this.findRawOrThrow(targetUserId);
+
+    if (target.status === UserStatus.DELETED) {
+      throw new ConflictException('USER_DELETED');
+    }
+    if (target.status === UserStatus.SUSPENDED) {
+      throw new ConflictException('USER_ALREADY_SUSPENDED');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { status: UserStatus.SUSPENDED },
+      select: ADMIN_USER_SELECT,
+    });
+
+    await this.refreshTokenService.revokeAllForUser(
+      targetUserId,
+      TokenRevocationReason.ADMIN_REVOKED,
+    );
+
+    return mapAdminUser(updated);
+  }
+
+  async reinstate(targetUserId: string): Promise<AdminUserType> {
+    const target = await this.findRawOrThrow(targetUserId);
+
+    if (target.status !== UserStatus.SUSPENDED) {
+      throw new ConflictException('USER_NOT_SUSPENDED');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { status: UserStatus.ACTIVE },
+      select: ADMIN_USER_SELECT,
+    });
+
+    return mapAdminUser(updated);
+  }
+
+  async delete(targetUserId: string, actorId: string): Promise<AdminUserType> {
+    this.assertNotSelf(targetUserId, actorId, 'CANNOT_DELETE_OWN_ACCOUNT');
+
+    const target = await this.findRawOrThrow(targetUserId);
+
+    if (target.status === UserStatus.DELETED) {
+      throw new ConflictException('USER_ALREADY_DELETED');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { status: UserStatus.DELETED, deletedAt: new Date() },
+      select: ADMIN_USER_SELECT,
+    });
+
+    await this.refreshTokenService.revokeAllForUser(
+      targetUserId,
+      TokenRevocationReason.ADMIN_REVOKED,
+    );
+
+    return mapAdminUser(updated);
   }
 }
