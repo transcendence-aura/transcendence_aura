@@ -15,6 +15,7 @@ import { ConversationModule } from './modules/conversations/conversation.module'
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { AdminUserModule } from './modules/admin-user/admin-user.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { FollowModule } from './modules/follows/follow.module';
 import { CommonModule } from './common/common.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
@@ -41,7 +42,7 @@ export class AppModule {
           includeStacktraceInErrorResponses: false,
           // Exposes the raw HTTP request in resolver context so guards can
           // read the Authorization header (RolesGuard relies on this).
-          context: ({ req, res }: { req: unknown, res: unknown }) => ({ req, res }),
+          context: ({ req, res }: { req: unknown; res: unknown }) => ({ req, res }),
         }),
         ApiModule,
         HealthModule,
@@ -54,6 +55,7 @@ export class AppModule {
         WishlistModule,
         AdminUserModule,
         AnalyticsModule,
+        FollowModule,
         CommonModule,
       ],
       controllers: [AppController],
