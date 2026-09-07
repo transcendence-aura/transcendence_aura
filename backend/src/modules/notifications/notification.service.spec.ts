@@ -21,7 +21,7 @@ describe('NotificationService', () => {
   });
 
   describe('create', () => {
-    it('persists a notification and maps null fields to undefined', async () => {
+    it('persists a notification with the given fields', async () => {
       prisma.notification.create.mockResolvedValue({
         id: 'notif-1',
         type: NotificationTypeEnum.MESSAGE,
@@ -33,16 +33,29 @@ describe('NotificationService', () => {
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
       });
 
-      const result = await service.create({
+      await service.create({
         userId: 'user-2',
         type: NotificationTypeEnum.MESSAGE,
         actorId: 'user-1',
         body: 'hello',
       });
 
-      expect(result.title).toBeUndefined();
-      expect(result.readAt).toBeUndefined();
-      expect(result.body).toBe('hello');
+      expect(prisma.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: 'user-2',
+          type: NotificationTypeEnum.MESSAGE,
+          actorId: 'user-1',
+          body: 'hello',
+        }),
+      });
+    });
+
+    it('never throws: a database failure is logged and swallowed, not propagated to the caller', async () => {
+      prisma.notification.create.mockRejectedValue(new Error('connection reset'));
+
+      await expect(
+        service.create({ userId: 'user-2', type: NotificationTypeEnum.MESSAGE, body: 'hello' }),
+      ).resolves.toBeUndefined();
     });
 
     it('truncates an over-long body to the database column limit (500 chars)', async () => {

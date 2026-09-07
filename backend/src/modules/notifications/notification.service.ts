@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Notification, NotificationType as NotificationTypeEnum } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { NotificationType } from './notification.model';
@@ -29,20 +29,30 @@ function mapNotification(notification: Notification): NotificationType {
 
 @Injectable()
 export class NotificationService {
+  private readonly logger = new Logger(NotificationService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(params: CreateNotificationParams): Promise<NotificationType> {
-    const notification = await this.prisma.notification.create({
-      data: {
-        userId: params.userId,
-        type: params.type,
-        actorId: params.actorId,
-        title: params.title?.slice(0, TITLE_MAX_LENGTH),
-        body: params.body?.slice(0, BODY_MAX_LENGTH),
-      },
-    });
-
-    return mapNotification(notification);
+  // Never throws: a failure to record a notification must never break the
+  // primary action it observes (same principle as AnalyticsService.record).
+  async create(params: CreateNotificationParams): Promise<void> {
+    try {
+      await this.prisma.notification.create({
+        data: {
+          userId: params.userId,
+          type: params.type,
+          actorId: params.actorId,
+          title: params.title?.slice(0, TITLE_MAX_LENGTH),
+          body: params.body?.slice(0, BODY_MAX_LENGTH),
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Unable to create a ${params.type} notification for user ${params.userId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
   }
 
   async list(userId: string, unreadOnly?: boolean): Promise<NotificationType[]> {
