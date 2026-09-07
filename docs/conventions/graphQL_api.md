@@ -23,6 +23,7 @@
 - [adminUser(id)](#adminuserid) — Single user detail view. Admin-only
 - [followersCount(userId)](#followerscountuserid) — Number of users following the given user
 - [followingCount(userId)](#followingcountuserid) — Number of users the given user follows
+- [userProfile(handle)](#userprofilehandle) — Public profile view: identity, bio, follower/following counts, recent activity
 
 **Mutation Reference**
 
@@ -1031,6 +1032,92 @@ curl -k -X POST https://localhost/graphql \
 
 ---
 
+## `userProfile(handle)`
+
+Returns the public view of a user's profile: name, handle, bio, follower/following counts, and a small "recent activity" snapshot (last users followed, last products added to the wishlist). Public — no authentication required.
+
+Suspended or deleted accounts have no public profile: the query behaves as if the handle didn't exist. The same visibility rule applies one level down — `followersCount`, `followingCount` and `recentFollows` only ever count or list accounts that are themselves `ACTIVE` and not deleted, so a suspended account silently drops out of everyone else's counts and activity the moment it's suspended.
+
+**Source:** `backend/src/modules/profiles/`
+
+**Query**
+
+```graphql
+query {
+  userProfile(handle: "aura-fan") {
+    id
+    name
+    handle
+    bio
+    followersCount
+    followingCount
+    recentFollows {
+      id
+      name
+      handle
+    }
+    recentWishlistAdds {
+      id
+      slug
+      name
+      primaryImage {
+        url
+      }
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ userProfile(handle: \"aura-fan\") { id name handle bio followersCount followingCount recentFollows { id name handle } recentWishlistAdds { id slug name } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type     | Required | Description                        |
+| -------- | -------- | -------- | ---------------------------------- |
+| `handle` | `String` | Yes      | Public handle of the profile owner |
+
+**Response type: `PublicProfileType`**
+
+| Field                | Type                         | Nullable | Description                                             |
+| -------------------- | ---------------------------- | -------- | ------------------------------------------------------- |
+| `id`                 | `String`                     | No       | UUID                                                    |
+| `name`               | `String`                     | No       | Display name                                            |
+| `handle`             | `String`                     | No       | Public handle                                           |
+| `bio`                | `String`                     | Yes      | Profile bio                                             |
+| `followersCount`     | `Int`                        | No       | Number of active accounts following this user           |
+| `followingCount`     | `Int`                        | No       | Number of active accounts this user follows             |
+| `recentFollows`      | `[PublicProfileSummaryType]` | No       | Up to 5 most recently followed users, newest first      |
+| `recentWishlistAdds` | `[ProductType]`              | No       | Up to 5 most recently wishlisted products, newest first |
+
+No other `User` field is exposed — in particular no `email`, `role`, `status`, password hash, refresh tokens or API keys.
+
+**`PublicProfileSummaryType`**
+
+| Field    | Type     | Nullable | Description   |
+| -------- | -------- | -------- | ------------- |
+| `id`     | `String` | No       | UUID          |
+| `name`   | `String` | No       | Display name  |
+| `handle` | `String` | No       | Public handle |
+
+**`recentWishlistAdds` response type**
+
+Same `ProductType` shape as [`product(slug)`](#productslug) — see the field table there.
+
+**Errors**
+
+| Case                                                   | Message / behavior                      |
+| ------------------------------------------------------ | --------------------------------------- |
+| `handle` does not reference an existing user           | `USER_NOT_FOUND`                        |
+| `handle` references a `SUSPENDED` or `DELETED` account | `USER_NOT_FOUND` — same as non-existent |
+
+---
+
 # Mutation Reference
 
 > All mutations below require an `Authorization: Bearer <accessToken>` header — see [Authentication](#authentication).
@@ -1216,8 +1303,8 @@ Always `true` once the call succeeds, whether the relationship existed beforehan
 
 **Errors**
 
-| Case                                | Message                              |
-| ------------------------------------ | ------------------------------------ |
+| Case                               | Message                              |
+| ---------------------------------- | ------------------------------------ |
 | Missing, invalid or expired token  | `401 Unauthorized`                   |
 | `targetUserId` is not a valid UUID | GraphQL validation error (automatic) |
 
@@ -1258,10 +1345,10 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description                                 |
-| -------- | --------------- | -------- | -------------------------------------------- |
-| `userId` | `String` (UUID) | Yes      | Id of the user whose role is being changed  |
-| `role`   | `UserRole`      | Yes      | New role to assign (`USER` or `ADMIN`)      |
+| Argument | Type            | Required | Description                                |
+| -------- | --------------- | -------- | ------------------------------------------ |
+| `userId` | `String` (UUID) | Yes      | Id of the user whose role is being changed |
+| `role`   | `UserRole`      | Yes      | New role to assign (`USER` or `ADMIN`)     |
 
 **Response type: `AdminUserType`**
 
@@ -1269,14 +1356,14 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 
 **Errors**
 
-| Case                                        | Message                              |
+| Case                                         | Message                              |
 | -------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token           | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`          | `403 Forbidden`                      |
-| `userId` is the caller's own id             | `CANNOT_CHANGE_OWN_ROLE`             |
-| `userId` does not reference an existing user | `USER_NOT_FOUND`                    |
-| Target user's status is `DELETED`           | `USER_DELETED`                       |
-| `userId` is not a valid UUID                | GraphQL validation error (automatic) |
+| Missing, invalid or expired token            | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`           | `403 Forbidden`                      |
+| `userId` is the caller's own id              | `CANNOT_CHANGE_OWN_ROLE`             |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| Target user's status is `DELETED`            | `USER_DELETED`                       |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
 
 ---
 
@@ -1313,8 +1400,8 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description                |
-| -------- | --------------- | -------- | -------------------------- |
+| Argument | Type            | Required | Description               |
+| -------- | --------------- | -------- | ------------------------- |
 | `userId` | `String` (UUID) | Yes      | Id of the user to suspend |
 
 **Response type: `AdminUserType`**
@@ -1324,14 +1411,14 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 **Errors**
 
 | Case                                         | Message                              |
-| ---------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token             | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`            | `403 Forbidden`                      |
-| `userId` is the caller's own id               | `CANNOT_SUSPEND_OWN_ACCOUNT`         |
-| `userId` does not reference an existing user  | `USER_NOT_FOUND`                     |
-| Target user's status is already `SUSPENDED`   | `USER_ALREADY_SUSPENDED`             |
-| Target user's status is `DELETED`             | `USER_DELETED`                       |
-| `userId` is not a valid UUID                  | GraphQL validation error (automatic) |
+| -------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token            | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`           | `403 Forbidden`                      |
+| `userId` is the caller's own id              | `CANNOT_SUSPEND_OWN_ACCOUNT`         |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| Target user's status is already `SUSPENDED`  | `USER_ALREADY_SUSPENDED`             |
+| Target user's status is `DELETED`            | `USER_DELETED`                       |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
 
 ---
 
@@ -1368,8 +1455,8 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description                  |
-| -------- | --------------- | -------- | ----------------------------- |
+| Argument | Type            | Required | Description                 |
+| -------- | --------------- | -------- | --------------------------- |
 | `userId` | `String` (UUID) | Yes      | Id of the user to reinstate |
 
 **Response type: `AdminUserType`**
@@ -1378,13 +1465,13 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 
 **Errors**
 
-| Case                                          | Message                              |
-| ------------------------------------------------ | ------------------------------------ |
-| Missing, invalid or expired token               | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`              | `403 Forbidden`                      |
-| `userId` does not reference an existing user    | `USER_NOT_FOUND`                     |
-| Target user's status is not `SUSPENDED`         | `USER_NOT_SUSPENDED`                 |
-| `userId` is not a valid UUID                    | GraphQL validation error (automatic) |
+| Case                                         | Message                              |
+| -------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token            | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`           | `403 Forbidden`                      |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| Target user's status is not `SUSPENDED`      | `USER_NOT_SUSPENDED`                 |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
 
 ---
 
@@ -1421,8 +1508,8 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description               |
-| -------- | --------------- | -------- | -------------------------- |
+| Argument | Type            | Required | Description              |
+| -------- | --------------- | -------- | ------------------------ |
 | `userId` | `String` (UUID) | Yes      | Id of the user to delete |
 
 **Response type: `AdminUserType`**
@@ -1431,11 +1518,11 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 
 **Errors**
 
-| Case                                        | Message                              |
-| ---------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token             | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`            | `403 Forbidden`                      |
-| `userId` is the caller's own id               | `CANNOT_DELETE_OWN_ACCOUNT`          |
-| `userId` does not reference an existing user  | `USER_NOT_FOUND`                     |
-| Target user's status is already `DELETED`     | `USER_ALREADY_DELETED`               |
-| `userId` is not a valid UUID                  | GraphQL validation error (automatic) |
+| Case                                         | Message                              |
+| -------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token            | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`           | `403 Forbidden`                      |
+| `userId` is the caller's own id              | `CANNOT_DELETE_OWN_ACCOUNT`          |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| Target user's status is already `DELETED`    | `USER_ALREADY_DELETED`               |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
