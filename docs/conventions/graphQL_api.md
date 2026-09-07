@@ -1036,13 +1036,9 @@ curl -k -X POST https://localhost/graphql \
 
 ## `notifications(unreadOnly)`
 
-Returns the authenticated user's notifications, newest first. Scoped strictly to the caller — there is no way to query another user's notifications. Pass `unreadOnly: true` to get only the notifications that haven't been read yet; omit it (or pass `false`) to get everything.
+Caller's notifications, newest first. `unreadOnly: true` filters to unread only. Requires authentication.
 
 **Source:** `backend/src/modules/notifications/`
-
-**Requires authentication** — see [Authentication](#authentication).
-
-**Query**
 
 ```graphql
 query {
@@ -1057,40 +1053,14 @@ query {
 }
 ```
 
-**curl example**
+| Field     | Type               | Description                                     |
+| --------- | ------------------ | ----------------------------------------------- |
+| `type`    | `NotificationKind` | `MESSAGE` \| `FOLLOW` \| `WISHLIST` \| `SYSTEM` |
+| `actorId` | `String?`          | Who triggered it, if anyone                     |
+| `body`    | `String?`          | Truncated to 500 chars                          |
+| `readAt`  | `DateTime?`        | `null` while unread                             |
 
-```bash
-curl -k -X POST https://localhost/graphql \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"query":"{ notifications(unreadOnly: true) { id type actorId body readAt createdAt } }"}' | jq
-```
-
-**Arguments**
-
-| Argument     | Type      | Required | Description                                         |
-| ------------ | --------- | -------- | --------------------------------------------------- |
-| `unreadOnly` | `Boolean` | No       | When `true`, only notifications with `readAt: null` |
-
-**Response type: `[NotificationType]`**
-
-| Field       | Type               | Nullable | Description                                                                  |
-| ----------- | ------------------ | -------- | ---------------------------------------------------------------------------- |
-| `id`        | `String`           | No       | UUID of the notification                                                     |
-| `type`      | `NotificationKind` | No       | What the notification is about — `MESSAGE`, `FOLLOW`, `WISHLIST` or `SYSTEM` |
-| `userId`    | `String`           | No       | Id of the recipient (always the caller)                                      |
-| `actorId`   | `String`           | Yes      | Id of the user who triggered it, if any                                      |
-| `title`     | `String`           | Yes      | Short title, if set — truncated to 160 characters on creation                |
-| `body`      | `String`           | Yes      | Notification body, if set — truncated to 500 characters on creation          |
-| `readAt`    | `DateTime`         | Yes      | When it was marked read; `null` while unread                                 |
-| `createdAt` | `DateTime`         | No       | When the notification was created                                            |
-
-**Errors**
-
-| Case                              | Message / behavior            |
-| --------------------------------- | ----------------------------- |
-| Missing, invalid or expired token | `401 Unauthorized`            |
-| No notifications match the filter | Returns `[]` — never an error |
+**Errors:** `401` if unauthenticated.
 
 ---
 
@@ -1288,13 +1258,9 @@ Always `true` once the call succeeds, whether the relationship existed beforehan
 
 ## `markNotificationRead(input)`
 
-Marks a single notification as read. Scoped strictly to the caller: attempting to mark a notification that belongs to someone else behaves exactly like attempting to mark one that doesn't exist at all — same `NOTIFICATION_NOT_FOUND` error, so a caller can never learn whether a given id belongs to another user.
+Marks one notification as read. If it doesn't belong to the caller, returns `NOTIFICATION_NOT_FOUND` — same as if it didn't exist.
 
 **Source:** `backend/src/modules/notifications/`
-
-**Requires authentication** — see [Authentication](#authentication).
-
-**Mutation**
 
 ```graphql
 mutation {
@@ -1305,50 +1271,17 @@ mutation {
 }
 ```
 
-**curl example**
+Input: `{ notificationId: String! }`. Response: `NotificationType` (see [`notifications`](#notificationsunreadonly)), with `readAt` now set.
 
-```bash
-curl -k -X POST https://localhost/graphql \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"query":"mutation Mark($input: MarkNotificationReadInput!) { markNotificationRead(input: $input) { id readAt } }","variables":{"input":{"notificationId":"60000000-0000-4000-8000-000000000001"}}}' | jq
-```
-
-**Arguments**
-
-| Argument | Type                        | Required | Description |
-| -------- | --------------------------- | -------- | ----------- |
-| `input`  | `MarkNotificationReadInput` | Yes      | See below   |
-
-**`MarkNotificationReadInput`**
-
-| Field            | Type            | Required | Description                         |
-| ---------------- | --------------- | -------- | ----------------------------------- |
-| `notificationId` | `String` (UUID) | Yes      | Id of the notification to mark read |
-
-**Response type: `NotificationType`**
-
-Same shape as a single item returned by [`notifications`](#notificationsunreadonly) — see the field table there. `readAt` is set to the current time.
-
-**Errors**
-
-| Case                                                       | Message                              |
-| ---------------------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token                          | `401 Unauthorized`                   |
-| `notificationId` doesn't exist, or belongs to another user | `NOTIFICATION_NOT_FOUND`             |
-| `notificationId` is not a valid UUID                       | GraphQL validation error (automatic) |
+**Errors:** `401` unauthenticated · `NOTIFICATION_NOT_FOUND` unknown or not yours.
 
 ---
 
 ## `markAllNotificationsRead`
 
-Marks every one of the caller's unread notifications as read in a single call. Idempotent: calling it again when nothing is unread is a no-op that returns `0`, never an error.
+Marks all the caller's unread notifications as read. Returns the count marked (`0` if nothing was unread).
 
 **Source:** `backend/src/modules/notifications/`
-
-**Requires authentication** — see [Authentication](#authentication).
-
-**Mutation**
 
 ```graphql
 mutation {
@@ -1356,28 +1289,9 @@ mutation {
 }
 ```
 
-**curl example**
+No arguments. Response: `Int`.
 
-```bash
-curl -k -X POST https://localhost/graphql \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" \
-  -d '{"query":"mutation { markAllNotificationsRead }"}' | jq
-```
-
-**Arguments**
-
-None — always scoped to the caller identified by the access token.
-
-**Response type: `Int`**
-
-The number of notifications that were marked read by this call. `0` when there was nothing unread.
-
-**Errors**
-
-| Case                              | Message            |
-| --------------------------------- | ------------------ |
-| Missing, invalid or expired token | `401 Unauthorized` |
+**Errors:** `401` if unauthenticated.
 
 ---
 
