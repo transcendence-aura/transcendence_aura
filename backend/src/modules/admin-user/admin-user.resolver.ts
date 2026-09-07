@@ -1,8 +1,9 @@
 import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
-import { Args, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UserRole } from '@prisma/client';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 import { AdminUserPageType, AdminUserType } from './admin-user.model';
 import { AdminUserFilterInput, AdminUserPaginationInput } from './admin-user.input';
 import { AdminUserService } from './admin-user.service';
@@ -29,5 +30,35 @@ export class AdminUserResolver {
   @Query(() => AdminUserType)
   adminUser(@Args('id', ParseUUIDPipe) id: string): Promise<AdminUserType> {
     return this.adminUserService.findById(id);
+  }
+
+  @Mutation(() => AdminUserType)
+  adminSetUserRole(
+    @Args('userId', ParseUUIDPipe) userId: string,
+    @Args('role', { type: () => UserRole }) role: UserRole,
+    @CurrentUser() currentUserId: string,
+  ): Promise<AdminUserType> {
+    return this.adminUserService.setRole(userId, role, currentUserId);
+  }
+
+  @Mutation(() => AdminUserType)
+  adminSuspendUser(
+    @Args('userId', ParseUUIDPipe) userId: string,
+    @CurrentUser() currentUserId: string,
+  ): Promise<AdminUserType> {
+    return this.adminUserService.suspend(userId, currentUserId);
+  }
+
+  @Mutation(() => AdminUserType)
+  adminReinstateUser(@Args('userId', ParseUUIDPipe) userId: string): Promise<AdminUserType> {
+    return this.adminUserService.reinstate(userId);
+  }
+
+  @Mutation(() => AdminUserType)
+  adminDeleteUser(
+    @Args('userId', ParseUUIDPipe) userId: string,
+    @CurrentUser() currentUserId: string,
+  ): Promise<AdminUserType> {
+    return this.adminUserService.delete(userId, currentUserId);
   }
 }
