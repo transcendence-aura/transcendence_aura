@@ -23,6 +23,7 @@
 - [adminUser(id)](#adminuserid) — Single user detail view. Admin-only
 - [followersCount(userId)](#followerscountuserid) — Number of users following the given user
 - [followingCount(userId)](#followingcountuserid) — Number of users the given user follows
+- [userProfile(handle)](#userprofilehandle) — Public profile view: identity, bio, follower/following counts, recent activity
 - [notifications(unreadOnly)](#notificationsunreadonly) — Authenticated user's notifications, all or unread-only
 
 **Mutation Reference**
@@ -1034,6 +1035,89 @@ curl -k -X POST https://localhost/graphql \
 
 ---
 
+## `userProfile(handle)`
+
+Returns the public view of a user's profile: name, handle, bio, follower/following counts, and a small "recent activity" snapshot (last users followed, last products added to the wishlist). Public — no authentication required.
+
+Suspended or deleted accounts have no public profile: the query behaves as if the handle didn't exist. The same visibility rule applies one level down — `followersCount`, `followingCount` and `recentFollows` only ever count or list accounts that are themselves `ACTIVE` and not deleted, so a suspended account silently drops out of everyone else's counts and activity the moment it's suspended.
+
+**Source:** `backend/src/modules/profiles/`
+
+**Query**
+
+```graphql
+query {
+  userProfile(handle: "aura-fan") {
+    id
+    name
+    handle
+    bio
+    followersCount
+    followingCount
+    recentFollows {
+      id
+      name
+      handle
+    }
+    recentWishlistAdds {
+      id
+      slug
+      name
+      primaryImage {
+        url
+      }
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ userProfile(handle: \"aura-fan\") { id name handle bio followersCount followingCount recentFollows { id name handle } recentWishlistAdds { id slug name } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type     | Required | Description                        |
+| -------- | -------- | -------- | ---------------------------------- |
+| `handle` | `String` | Yes      | Public handle of the profile owner |
+
+**Response type: `PublicProfileType`**
+
+| Field                | Type                         | Nullable | Description                                             |
+| -------------------- | ---------------------------- | -------- | ------------------------------------------------------- |
+| `id`                 | `String`                     | No       | UUID                                                    |
+| `name`               | `String`                     | No       | Display name                                            |
+| `handle`             | `String`                     | No       | Public handle                                           |
+| `bio`                | `String`                     | Yes      | Profile bio                                             |
+| `followersCount`     | `Int`                        | No       | Number of active accounts following this user           |
+| `followingCount`     | `Int`                        | No       | Number of active accounts this user follows             |
+| `recentFollows`      | `[PublicProfileSummaryType]` | No       | Up to 5 most recently followed users, newest first      |
+| `recentWishlistAdds` | `[ProductType]`              | No       | Up to 5 most recently wishlisted products, newest first |
+
+No other `User` field is exposed — in particular no `email`, `role`, `status`, password hash, refresh tokens or API keys.
+
+**`PublicProfileSummaryType`**
+
+| Field    | Type     | Nullable | Description   |
+| -------- | -------- | -------- | ------------- |
+| `id`     | `String` | No       | UUID          |
+| `name`   | `String` | No       | Display name  |
+| `handle` | `String` | No       | Public handle |
+
+**`recentWishlistAdds` response type**
+
+Same `ProductType` shape as [`product(slug)`](#productslug) — see the field table there.
+
+**Errors**
+
+| Case                                                   | Message / behavior                      |
+| ------------------------------------------------------ | --------------------------------------- |
+| `handle` does not reference an existing user           | `USER_NOT_FOUND`                        |
+| `handle` references a `SUSPENDED` or `DELETED` account | `USER_NOT_FOUND` — same as non-existent |
 ## `notifications(unreadOnly)`
 
 Caller's notifications, newest first. `unreadOnly: true` filters to unread only. Requires authentication.

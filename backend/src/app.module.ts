@@ -16,6 +16,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { AdminUserModule } from './modules/admin-user/admin-user.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { FollowModule } from './modules/follows/follow.module';
+import { ProfileModule } from './modules/profiles/profile.module';
 import { NotificationModule } from './modules/notifications/notification.module';
 import { CommonModule } from './common/common.module';
 import { createAppConfig } from './config/configuration';
@@ -57,6 +58,7 @@ export class AppModule {
         AdminUserModule,
         AnalyticsModule,
         FollowModule,
+        ProfileModule,
         NotificationModule,
         CommonModule,
       ],
