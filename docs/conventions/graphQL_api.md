@@ -23,6 +23,7 @@
 - [adminUser(id)](#adminuserid) — Single user detail view. Admin-only
 - [followersCount(userId)](#followerscountuserid) — Number of users following the given user
 - [followingCount(userId)](#followingcountuserid) — Number of users the given user follows
+- [notifications(unreadOnly)](#notificationsunreadonly) — Authenticated user's notifications, all or unread-only
 
 **Mutation Reference**
 
@@ -30,6 +31,8 @@
 - [removeWishlistItem(input)](#removewishlistiteminput) — Remove a product from the authenticated user's wishlist (idempotent)
 - [followUser(input)](#followuserinput) — Follow another user (idempotent, self-follow rejected)
 - [unfollowUser(input)](#unfollowuserinput) — Unfollow a user (idempotent)
+- [markNotificationRead(input)](#marknotificationreadinput) — Mark a single notification as read (scoped to its owner)
+- [markAllNotificationsRead](#markallnotificationsread) — Mark all of the caller's unread notifications as read, returns the count
 - [adminSetUserRole(userId, role)](#adminsetuserroleuserid-role) — Change a user's role between `USER` and `ADMIN`. Admin-only, self-target rejected
 - [adminSuspendUser(userId)](#adminsuspenduseruserid) — Suspend a user: blocks sign-in and revokes every active session. Admin-only, self-target rejected
 - [adminReinstateUser(userId)](#adminreinstateuseruserid) — Reactivate a suspended user. Admin-only
@@ -1031,6 +1034,36 @@ curl -k -X POST https://localhost/graphql \
 
 ---
 
+## `notifications(unreadOnly)`
+
+Caller's notifications, newest first. `unreadOnly: true` filters to unread only. Requires authentication.
+
+**Source:** `backend/src/modules/notifications/`
+
+```graphql
+query {
+  notifications(unreadOnly: true) {
+    id
+    type
+    actorId
+    body
+    readAt
+    createdAt
+  }
+}
+```
+
+| Field     | Type               | Description                                     |
+| --------- | ------------------ | ----------------------------------------------- |
+| `type`    | `NotificationKind` | `MESSAGE` \| `FOLLOW` \| `WISHLIST` \| `SYSTEM` |
+| `actorId` | `String?`          | Who triggered it, if anyone                     |
+| `body`    | `String?`          | Truncated to 500 chars                          |
+| `readAt`  | `DateTime?`        | `null` while unread                             |
+
+**Errors:** `401` if unauthenticated.
+
+---
+
 # Mutation Reference
 
 > All mutations below require an `Authorization: Bearer <accessToken>` header — see [Authentication](#authentication).
@@ -1216,10 +1249,49 @@ Always `true` once the call succeeds, whether the relationship existed beforehan
 
 **Errors**
 
-| Case                                | Message                              |
-| ------------------------------------ | ------------------------------------ |
+| Case                               | Message                              |
+| ---------------------------------- | ------------------------------------ |
 | Missing, invalid or expired token  | `401 Unauthorized`                   |
 | `targetUserId` is not a valid UUID | GraphQL validation error (automatic) |
+
+---
+
+## `markNotificationRead(input)`
+
+Marks one notification as read. If it doesn't belong to the caller, returns `NOTIFICATION_NOT_FOUND` — same as if it didn't exist.
+
+**Source:** `backend/src/modules/notifications/`
+
+```graphql
+mutation {
+  markNotificationRead(input: { notificationId: "60000000-0000-4000-8000-000000000001" }) {
+    id
+    readAt
+  }
+}
+```
+
+Input: `{ notificationId: String! }`. Response: `NotificationType` (see [`notifications`](#notificationsunreadonly)), with `readAt` now set.
+
+**Errors:** `401` unauthenticated · `NOTIFICATION_NOT_FOUND` unknown or not yours.
+
+---
+
+## `markAllNotificationsRead`
+
+Marks all the caller's unread notifications as read. Returns the count marked (`0` if nothing was unread).
+
+**Source:** `backend/src/modules/notifications/`
+
+```graphql
+mutation {
+  markAllNotificationsRead
+}
+```
+
+No arguments. Response: `Int`.
+
+**Errors:** `401` if unauthenticated.
 
 ---
 
@@ -1258,10 +1330,10 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description                                 |
-| -------- | --------------- | -------- | -------------------------------------------- |
-| `userId` | `String` (UUID) | Yes      | Id of the user whose role is being changed  |
-| `role`   | `UserRole`      | Yes      | New role to assign (`USER` or `ADMIN`)      |
+| Argument | Type            | Required | Description                                |
+| -------- | --------------- | -------- | ------------------------------------------ |
+| `userId` | `String` (UUID) | Yes      | Id of the user whose role is being changed |
+| `role`   | `UserRole`      | Yes      | New role to assign (`USER` or `ADMIN`)     |
 
 **Response type: `AdminUserType`**
 
@@ -1269,14 +1341,14 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 
 **Errors**
 
-| Case                                        | Message                              |
+| Case                                         | Message                              |
 | -------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token           | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`          | `403 Forbidden`                      |
-| `userId` is the caller's own id             | `CANNOT_CHANGE_OWN_ROLE`             |
-| `userId` does not reference an existing user | `USER_NOT_FOUND`                    |
-| Target user's status is `DELETED`           | `USER_DELETED`                       |
-| `userId` is not a valid UUID                | GraphQL validation error (automatic) |
+| Missing, invalid or expired token            | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`           | `403 Forbidden`                      |
+| `userId` is the caller's own id              | `CANNOT_CHANGE_OWN_ROLE`             |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| Target user's status is `DELETED`            | `USER_DELETED`                       |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
 
 ---
 
@@ -1313,8 +1385,8 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description                |
-| -------- | --------------- | -------- | -------------------------- |
+| Argument | Type            | Required | Description               |
+| -------- | --------------- | -------- | ------------------------- |
 | `userId` | `String` (UUID) | Yes      | Id of the user to suspend |
 
 **Response type: `AdminUserType`**
@@ -1324,14 +1396,14 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 **Errors**
 
 | Case                                         | Message                              |
-| ---------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token             | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`            | `403 Forbidden`                      |
-| `userId` is the caller's own id               | `CANNOT_SUSPEND_OWN_ACCOUNT`         |
-| `userId` does not reference an existing user  | `USER_NOT_FOUND`                     |
-| Target user's status is already `SUSPENDED`   | `USER_ALREADY_SUSPENDED`             |
-| Target user's status is `DELETED`             | `USER_DELETED`                       |
-| `userId` is not a valid UUID                  | GraphQL validation error (automatic) |
+| -------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token            | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`           | `403 Forbidden`                      |
+| `userId` is the caller's own id              | `CANNOT_SUSPEND_OWN_ACCOUNT`         |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| Target user's status is already `SUSPENDED`  | `USER_ALREADY_SUSPENDED`             |
+| Target user's status is `DELETED`            | `USER_DELETED`                       |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
 
 ---
 
@@ -1368,8 +1440,8 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description                  |
-| -------- | --------------- | -------- | ----------------------------- |
+| Argument | Type            | Required | Description                 |
+| -------- | --------------- | -------- | --------------------------- |
 | `userId` | `String` (UUID) | Yes      | Id of the user to reinstate |
 
 **Response type: `AdminUserType`**
@@ -1378,13 +1450,13 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 
 **Errors**
 
-| Case                                          | Message                              |
-| ------------------------------------------------ | ------------------------------------ |
-| Missing, invalid or expired token               | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`              | `403 Forbidden`                      |
-| `userId` does not reference an existing user    | `USER_NOT_FOUND`                     |
-| Target user's status is not `SUSPENDED`         | `USER_NOT_SUSPENDED`                 |
-| `userId` is not a valid UUID                    | GraphQL validation error (automatic) |
+| Case                                         | Message                              |
+| -------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token            | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`           | `403 Forbidden`                      |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| Target user's status is not `SUSPENDED`      | `USER_NOT_SUSPENDED`                 |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
 
 ---
 
@@ -1421,8 +1493,8 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description               |
-| -------- | --------------- | -------- | -------------------------- |
+| Argument | Type            | Required | Description              |
+| -------- | --------------- | -------- | ------------------------ |
 | `userId` | `String` (UUID) | Yes      | Id of the user to delete |
 
 **Response type: `AdminUserType`**
@@ -1431,11 +1503,11 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 
 **Errors**
 
-| Case                                        | Message                              |
-| ---------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token             | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`            | `403 Forbidden`                      |
-| `userId` is the caller's own id               | `CANNOT_DELETE_OWN_ACCOUNT`          |
-| `userId` does not reference an existing user  | `USER_NOT_FOUND`                     |
-| Target user's status is already `DELETED`     | `USER_ALREADY_DELETED`               |
-| `userId` is not a valid UUID                  | GraphQL validation error (automatic) |
+| Case                                         | Message                              |
+| -------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token            | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`           | `403 Forbidden`                      |
+| `userId` is the caller's own id              | `CANNOT_DELETE_OWN_ACCOUNT`          |
+| `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
+| Target user's status is already `DELETED`    | `USER_ALREADY_DELETED`               |
+| `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
