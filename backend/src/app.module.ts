@@ -17,6 +17,7 @@ import { AdminUserModule } from './modules/admin-user/admin-user.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { FollowModule } from './modules/follows/follow.module';
 import { ProfileModule } from './modules/profiles/profile.module';
+import { NotificationModule } from './modules/notifications/notification.module';
 import { CommonModule } from './common/common.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
@@ -58,6 +59,7 @@ export class AppModule {
         AnalyticsModule,
         FollowModule,
         ProfileModule,
+        NotificationModule,
         CommonModule,
       ],
       controllers: [AppController],

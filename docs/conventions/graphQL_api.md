@@ -24,6 +24,7 @@
 - [followersCount(userId)](#followerscountuserid) — Number of users following the given user
 - [followingCount(userId)](#followingcountuserid) — Number of users the given user follows
 - [userProfile(handle)](#userprofilehandle) — Public profile view: identity, bio, follower/following counts, recent activity
+- [notifications(unreadOnly)](#notificationsunreadonly) — Authenticated user's notifications, all or unread-only
 
 **Mutation Reference**
 
@@ -31,6 +32,8 @@
 - [removeWishlistItem(input)](#removewishlistiteminput) — Remove a product from the authenticated user's wishlist (idempotent)
 - [followUser(input)](#followuserinput) — Follow another user (idempotent, self-follow rejected)
 - [unfollowUser(input)](#unfollowuserinput) — Unfollow a user (idempotent)
+- [markNotificationRead(input)](#marknotificationreadinput) — Mark a single notification as read (scoped to its owner)
+- [markAllNotificationsRead](#markallnotificationsread) — Mark all of the caller's unread notifications as read, returns the count
 - [adminSetUserRole(userId, role)](#adminsetuserroleuserid-role) — Change a user's role between `USER` and `ADMIN`. Admin-only, self-target rejected
 - [adminSuspendUser(userId)](#adminsuspenduseruserid) — Suspend a user: blocks sign-in and revokes every active session. Admin-only, self-target rejected
 - [adminReinstateUser(userId)](#adminreinstateuseruserid) — Reactivate a suspended user. Admin-only
@@ -1115,6 +1118,33 @@ Same `ProductType` shape as [`product(slug)`](#productslug) — see the field ta
 | ------------------------------------------------------ | --------------------------------------- |
 | `handle` does not reference an existing user           | `USER_NOT_FOUND`                        |
 | `handle` references a `SUSPENDED` or `DELETED` account | `USER_NOT_FOUND` — same as non-existent |
+## `notifications(unreadOnly)`
+
+Caller's notifications, newest first. `unreadOnly: true` filters to unread only. Requires authentication.
+
+**Source:** `backend/src/modules/notifications/`
+
+```graphql
+query {
+  notifications(unreadOnly: true) {
+    id
+    type
+    actorId
+    body
+    readAt
+    createdAt
+  }
+}
+```
+
+| Field     | Type               | Description                                     |
+| --------- | ------------------ | ----------------------------------------------- |
+| `type`    | `NotificationKind` | `MESSAGE` \| `FOLLOW` \| `WISHLIST` \| `SYSTEM` |
+| `actorId` | `String?`          | Who triggered it, if anyone                     |
+| `body`    | `String?`          | Truncated to 500 chars                          |
+| `readAt`  | `DateTime?`        | `null` while unread                             |
+
+**Errors:** `401` if unauthenticated.
 
 ---
 
@@ -1307,6 +1337,45 @@ Always `true` once the call succeeds, whether the relationship existed beforehan
 | ---------------------------------- | ------------------------------------ |
 | Missing, invalid or expired token  | `401 Unauthorized`                   |
 | `targetUserId` is not a valid UUID | GraphQL validation error (automatic) |
+
+---
+
+## `markNotificationRead(input)`
+
+Marks one notification as read. If it doesn't belong to the caller, returns `NOTIFICATION_NOT_FOUND` — same as if it didn't exist.
+
+**Source:** `backend/src/modules/notifications/`
+
+```graphql
+mutation {
+  markNotificationRead(input: { notificationId: "60000000-0000-4000-8000-000000000001" }) {
+    id
+    readAt
+  }
+}
+```
+
+Input: `{ notificationId: String! }`. Response: `NotificationType` (see [`notifications`](#notificationsunreadonly)), with `readAt` now set.
+
+**Errors:** `401` unauthenticated · `NOTIFICATION_NOT_FOUND` unknown or not yours.
+
+---
+
+## `markAllNotificationsRead`
+
+Marks all the caller's unread notifications as read. Returns the count marked (`0` if nothing was unread).
+
+**Source:** `backend/src/modules/notifications/`
+
+```graphql
+mutation {
+  markAllNotificationsRead
+}
+```
+
+No arguments. Response: `Int`.
+
+**Errors:** `401` if unauthenticated.
 
 ---
 
