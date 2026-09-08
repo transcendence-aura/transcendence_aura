@@ -15,6 +15,7 @@ import { ConversationModule } from './modules/conversations/conversation.module'
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { AdminUserModule } from './modules/admin-user/admin-user.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { AnalyticsReportsModule } from './modules/analytics-reports/analytics-reports.module';
 import { FollowModule } from './modules/follows/follow.module';
 import { ProfileModule } from './modules/profiles/profile.module';
 import { NotificationModule } from './modules/notifications/notification.module';
@@ -57,6 +58,7 @@ export class AppModule {
         WishlistModule,
         AdminUserModule,
         AnalyticsModule,
+        AnalyticsReportsModule,
         FollowModule,
         ProfileModule,
         NotificationModule,

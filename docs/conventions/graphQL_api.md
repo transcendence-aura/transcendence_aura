@@ -25,6 +25,11 @@
 - [followingCount(userId)](#followingcountuserid) — Number of users the given user follows
 - [userProfile(handle)](#userprofilehandle) — Public profile view: identity, bio, follower/following counts, recent activity
 - [notifications(unreadOnly)](#notificationsunreadonly) — Authenticated user's notifications, all or unread-only
+- [registrationsOverTime(period)](#registrationsovertimeperiod) — Registration counts bucketed over a period. Admin-only
+- [messagesOverTime(period)](#messagesovertimeperiod) — Message-sent counts bucketed over a period. Admin-only
+- [followsOverTime(period)](#followsovertimeperiod) — Follow counts bucketed over a period. Admin-only
+- [activeUsersOverTime(period)](#activeusersovertimeperiod) — Distinct active users bucketed over a period. Admin-only
+- [topProductsByWishlistAdds(period, limit)](#topproductsbywishlistaddsperiod-limit) — Most-wishlisted products over a period. Admin-only
 
 **Mutation Reference**
 
@@ -1118,6 +1123,9 @@ Same `ProductType` shape as [`product(slug)`](#productslug) — see the field ta
 | ------------------------------------------------------ | --------------------------------------- |
 | `handle` does not reference an existing user           | `USER_NOT_FOUND`                        |
 | `handle` references a `SUSPENDED` or `DELETED` account | `USER_NOT_FOUND` — same as non-existent |
+
+---
+
 ## `notifications(unreadOnly)`
 
 Caller's notifications, newest first. `unreadOnly: true` filters to unread only. Requires authentication.
@@ -1145,6 +1153,211 @@ query {
 | `readAt`  | `DateTime?`        | `null` while unread                             |
 
 **Errors:** `401` if unauthenticated.
+
+---
+
+## `AnalyticsPeriod`
+
+Shared by every query below — one period drives every chart on the dashboard, and the bucket size (the granularity of each returned point) grows with the period so a chart never renders an unusable number of points.
+
+| Value           | Range                 | Bucket size |
+| --------------- | --------------------- | ----------- |
+| `TODAY`         | Since midnight today  | Hour        |
+| `LAST_WEEK`     | Last 7 days           | Day         |
+| `LAST_MONTH`    | Last 1 month          | Day         |
+| `LAST_6_MONTHS` | Last 6 months         | Week        |
+| `ALL_TIME`      | Since the first event | Month       |
+
+`bucket` in every response below is the start of that bucket (e.g. midnight for a day bucket, the 1st for a month bucket), truncated with Postgres `date_trunc`.
+
+---
+
+## `registrationsOverTime(period)`
+
+Registration counts (`USER_REGISTERED` events), bucketed over the given period. **Admin-only.**
+
+**Source:** `backend/src/modules/analytics-reports/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  registrationsOverTime(period: LAST_MONTH) {
+    bucket
+    count
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ registrationsOverTime(period: LAST_MONTH) { bucket count } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type              | Required | Description                                     |
+| -------- | ----------------- | -------- | ----------------------------------------------- |
+| `period` | `AnalyticsPeriod` | Yes      | See [`AnalyticsPeriod`](#analyticsperiod) above |
+
+**Response type: `[AnalyticsTimeSeriesPointType]`**
+
+| Field    | Type       | Nullable | Description                              |
+| -------- | ---------- | -------- | ---------------------------------------- |
+| `bucket` | `DateTime` | No       | Start of the bucket                      |
+| `count`  | `Int`      | No       | Number of matching events in that bucket |
+
+**Errors**
+
+| Case                               | Message / behavior            |
+| ---------------------------------- | ----------------------------- |
+| No registrations in the period     | Returns `[]` — never an error |
+| Missing, invalid or expired token  | `401 Unauthorized`            |
+| Valid token, caller is not `ADMIN` | `403 Forbidden`               |
+
+---
+
+## `messagesOverTime(period)`
+
+Message-sent counts (`MESSAGE_SENT` events), bucketed over the given period. Same shape and behavior as [`registrationsOverTime`](#registrationsovertimeperiod). **Admin-only.**
+
+**Source:** `backend/src/modules/analytics-reports/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+```graphql
+query {
+  messagesOverTime(period: LAST_WEEK) {
+    bucket
+    count
+  }
+}
+```
+
+**Response type:** `[AnalyticsTimeSeriesPointType]` — see [`registrationsOverTime`](#registrationsovertimeperiod).
+
+**Errors:** same as [`registrationsOverTime`](#registrationsovertimeperiod).
+
+---
+
+## `followsOverTime(period)`
+
+Follow counts (`USER_FOLLOWED` events), bucketed over the given period. Same shape and behavior as [`registrationsOverTime`](#registrationsovertimeperiod). **Admin-only.**
+
+Only counts follows created after the event was wired up — see `docs/conventions/analytics-events.md`.
+
+**Source:** `backend/src/modules/analytics-reports/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+```graphql
+query {
+  followsOverTime(period: LAST_6_MONTHS) {
+    bucket
+    count
+  }
+}
+```
+
+**Response type:** `[AnalyticsTimeSeriesPointType]` — see [`registrationsOverTime`](#registrationsovertimeperiod).
+
+**Errors:** same as [`registrationsOverTime`](#registrationsovertimeperiod).
+
+---
+
+## `activeUsersOverTime(period)`
+
+Number of **distinct** users with at least one analytics event (of any type) in each bucket over the given period — not limited to a specific action. **Admin-only.**
+
+**Source:** `backend/src/modules/analytics-reports/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  activeUsersOverTime(period: ALL_TIME) {
+    bucket
+    count
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ activeUsersOverTime(period: ALL_TIME) { bucket count } }"}' | jq
+```
+
+**Response type:** `[AnalyticsTimeSeriesPointType]` — see [`registrationsOverTime`](#registrationsovertimeperiod). Here `count` is `COUNT(DISTINCT actorId)` per bucket, not a raw event count.
+
+**Errors:** same as [`registrationsOverTime`](#registrationsovertimeperiod).
+
+---
+
+## `topProductsByWishlistAdds(period, limit)`
+
+Products ranked by number of `WISHLIST_ITEM_ADDED` events in the given period, highest first. **Admin-only.**
+
+**Source:** `backend/src/modules/analytics-reports/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  topProductsByWishlistAdds(period: LAST_MONTH, limit: 5) {
+    productId
+    name
+    slug
+    wishlistAdds
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ topProductsByWishlistAdds(period: LAST_MONTH, limit: 5) { productId name slug wishlistAdds } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type              | Required | Description                                       |
+| -------- | ----------------- | -------- | ------------------------------------------------- |
+| `period` | `AnalyticsPeriod` | Yes      | See [`AnalyticsPeriod`](#analyticsperiod) above   |
+| `limit`  | `Int`             | No       | Max number of products to return — defaults to 10 |
+
+**Response type: `[TopWishlistedProductType]`**
+
+| Field          | Type     | Nullable | Description                                 |
+| -------------- | -------- | -------- | ------------------------------------------- |
+| `productId`    | `String` | No       | UUID                                        |
+| `name`         | `String` | No       | Product display name                        |
+| `slug`         | `String` | No       | URL-friendly identifier                     |
+| `wishlistAdds` | `Int`    | No       | Number of wishlist-add events in the period |
+
+**Errors**
+
+| Case                               | Message / behavior            |
+| ---------------------------------- | ----------------------------- |
+| No wishlist adds in the period     | Returns `[]` — never an error |
+| Missing, invalid or expired token  | `401 Unauthorized`            |
+| Valid token, caller is not `ADMIN` | `403 Forbidden`               |
 
 ---
 

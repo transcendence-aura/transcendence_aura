@@ -18,14 +18,14 @@ send into a failed request.
 `AnalyticsEventType` (`analytics-event-type.enum.ts`) is the full list.
 A type must be added there before any code is allowed to emit it.
 
-| Type                  | Emitted when                                                                                                                | Actor                                | Target                    |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------- |
-| `USER_REGISTERED`     | A new account is created                                                                                                    | The new user                         | none                      |
-| `USER_LOGGED_IN`      | A login succeeds (non-MFA-pending)                                                                                          | The user                             | none                      |
-| `PRODUCT_VIEWED`      | `product(slug)` query resolves                                                                                              | Caller, if authenticated (see below) | `PRODUCT` / product id    |
-| `WISHLIST_ITEM_ADDED` | `addWishlistItem` mutation runs                                                                                             | The user                             | `PRODUCT` / product id    |
-| `USER_FOLLOWED`       | Not emitted yet — no `follows` module exists (see `TODO(AUR-94)` in `conversation.service.ts`). Wire this up when it ships. | The follower                         | `USER` / followed user id |
-| `MESSAGE_SENT`        | `sendMessage` mutation runs                                                                                                 | The sender                           | `MESSAGE` / message id    |
+| Type                  | Emitted when                                                                                                    | Actor                                | Target                    |
+| --------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ------------------------- |
+| `USER_REGISTERED`     | A new account is created                                                                                        | The new user                         | none                      |
+| `USER_LOGGED_IN`      | A login succeeds (non-MFA-pending)                                                                              | The user                             | none                      |
+| `PRODUCT_VIEWED`      | `product(slug)` query resolves                                                                                  | Caller, if authenticated (see below) | `PRODUCT` / product id    |
+| `WISHLIST_ITEM_ADDED` | `addWishlistItem` mutation runs                                                                                 | The user                             | `PRODUCT` / product id    |
+| `USER_FOLLOWED`       | `followUser` mutation runs, and the follow is newly created (idempotent no-op on repeat calls does not re-emit) | The follower                         | `USER` / followed user id |
+| `MESSAGE_SENT`        | `sendMessage` mutation runs                                                                                     | The sender                           | `MESSAGE` / message id    |
 
 ## Product views and anonymous browsing
 
