@@ -1,10 +1,11 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Int, Query, Resolver } from '@nestjs/graphql';
+import { Args, Query, Resolver } from '@nestjs/graphql';
 import { UserRole } from '@prisma/client';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AnalyticsReportsService } from './analytics-reports.service';
 import { AnalyticsPeriod } from './analytics-period.enum';
+import { TopProductsByWishlistAddsArgs } from './analytics-reports.args';
 import { AnalyticsTimeSeriesPointType, TopWishlistedProductType } from './analytics-reports.model';
 
 @Resolver()
@@ -43,9 +44,8 @@ export class AnalyticsReportsResolver {
 
   @Query(() => [TopWishlistedProductType])
   topProductsByWishlistAdds(
-    @Args('period', { type: () => AnalyticsPeriod }) period: AnalyticsPeriod,
-    @Args('limit', { type: () => Int, nullable: true }) limit?: number,
+    @Args() args: TopProductsByWishlistAddsArgs,
   ): Promise<TopWishlistedProductType[]> {
-    return this.analyticsReportsService.topProductsByWishlistAdds(period, limit);
+    return this.analyticsReportsService.topProductsByWishlistAdds(args.period, args.limit);
   }
 }
