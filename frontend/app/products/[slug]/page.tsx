@@ -11,7 +11,9 @@ import { PriceDisplay } from '@/components/ui/display/PriceDisplay';
 import { Badge } from '@/components/ui/display/badge';
 import { useToast } from '@/components/ui/feedback/toast';
 import { ProductVariant } from '@/lib/graphql/queries/products';
+import { useCart } from '@/lib/hooks/useCart';
 
+// TODO: Replace with generated GraphQL types once product query is connected
 interface ProductMock {
   id: string;
   slug: string;
@@ -31,6 +33,7 @@ interface ProductMock {
   };
 }
 
+// TODO: Remove mock product data once GraphQL query is available
 const MOCK_PRODUCT: ProductMock = {
   id: 'prod-1',
   slug: 'vitamin-c-serum',
@@ -85,6 +88,7 @@ const MOCK_PRODUCT: ProductMock = {
 export default function ProductPage() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(MOCK_PRODUCT.variants[0]);
   const { toast } = useToast();
+  const { addItem } = useCart();
 
   // TODO: Remove mock product data once GraphQL query is available
   const product = MOCK_PRODUCT;
@@ -93,15 +97,25 @@ export default function ProductPage() {
   // Calculate price per 100ml based on first variant volume
   const firstVariant = product.variants[0];
   const volumeMatch = firstVariant.label.match(/(\d+)/);
-  const volume = volumeMatch ? parseInt(volumeMatch[1]) : 100;
+  const volume = volumeMatch ? parseInt(volumeMatch[1], 10) : 100;
   const pricePerUnit = (firstVariant.price / volume) * 100;
 
   const handleAddToCart = () => {
+    addItem({
+      id: `${product.id}-${selectedVariant.id}`,
+      productId: product.id,
+      productName: product.name,
+      variantId: selectedVariant.id,
+      variantLabel: selectedVariant.label,
+      price: selectedVariant.price,
+      quantity: 1,
+      image: productImage?.url,
+    });
+
     toast({
       message: `Added ${selectedVariant.label} to cart`,
       variant: 'success',
     });
-    // TODO: Link to cart context (addToCart function with product id + variant)
   };
 
   return (
@@ -167,7 +181,7 @@ export default function ProductPage() {
           <div className="flex gap-4">
             <button
               onClick={handleAddToCart}
-              className="flex-1 bg-text-primary text-page py-3 font-medium text-body-base hover:opacity-90 flex items-center justify-center gap-2 transition-opacity"
+              className="flex-1 bg-text-primary text-page py-3 font-medium text-body-base hover:opacity-90 flex items-center justify-center gap-2 transition-opacity cursor-pointer"
             >
               <ShoppingCart size={18} />
               ADD TO BAG
