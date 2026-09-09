@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search, ShoppingBag, Menu, X } from 'lucide-react';
 import Link from 'next/link';
+import { CartDot } from '@/components/ui/feedback/cart-dot';
 
 const NAV_LINKS = [
   { label: 'Shop', href: '/catalogue' },
@@ -42,13 +43,10 @@ export function Navbar() {
         />
 
         <div className="relative cursor-pointer">
-          <ShoppingBag
-            className="text-text-secondary h-4 w-4 hover:text-text-primary transition-colors"
-            aria-label="Cart"
-          />
-          <span className="bg-brand-accent text-ui-badge text-text-inverse absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full text-xs font-semibold">
-            2
-          </span>
+          <Link href="/cart" aria-label="Shopping cart" className="flex items-center">
+            <ShoppingBag className="text-text-secondary h-4 w-4 hover:text-text-primary transition-colors" />
+            <CartDot />
+          </Link>
         </div>
 
         <div className="bg-brand-dark text-text-inverse flex h-7 w-7 items-center justify-center rounded-full text-ui-label font-medium">
