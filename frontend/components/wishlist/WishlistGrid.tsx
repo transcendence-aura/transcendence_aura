@@ -1,0 +1,78 @@
+'use client';
+
+import { useMutation } from '@apollo/client/react';
+import { X } from 'lucide-react';
+import { ProductCard } from '@/components/cards/ProductCard';
+import { REMOVE_FROM_WISHLIST, GET_WISHLIST } from '@/lib/graphql/queries/wishlist';
+import { useToast } from '@/components/ui/feedback/toast';
+
+export type WishlistProduct = React.ComponentProps<typeof ProductCard>['product'];
+
+interface WishlistGridProps {
+  products: WishlistProduct[];
+  onItemRemoved?: () => void;
+}
+
+export function WishlistGrid({ products, onItemRemoved }: WishlistGridProps) {
+  const { toast } = useToast();
+
+  const [removeWishlistItem] = useMutation(REMOVE_FROM_WISHLIST, {
+    onCompleted: () => {
+      toast({
+        message: 'Removed from wishlist',
+        variant: 'success',
+      });
+      onItemRemoved?.();
+    },
+    onError: () => {
+      toast({
+        message: 'Failed to remove from wishlist',
+        variant: 'error',
+      });
+    },
+    /* Optimistic update in cache: removes product from wishlist array straight away */
+    update(cache, _, { variables }) {
+      const existingData = cache.readQuery<{ wishlist: WishlistProduct[] }>({
+        query: GET_WISHLIST,
+      });
+
+      if (existingData?.wishlist && variables?.input?.productId) {
+        cache.writeQuery({
+          query: GET_WISHLIST,
+          data: {
+            wishlist: existingData.wishlist.filter((prod) => prod.id !== variables.input.productId),
+          },
+        });
+      }
+    },
+  });
+
+  const handleRemove = (e: React.MouseEvent, productId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    removeWishlistItem({
+      variables: {
+        input: { productId },
+      },
+    });
+  };
+
+  return (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {products.map((product) => (
+        <div key={product.id} className="group relative">
+          <ProductCard product={product} />
+
+          <button
+            type="button"
+            onClick={(e) => handleRemove(e, product.id)}
+            className="hover:bg-brand-accent absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:text-white"
+            aria-label={`Remove ${product.name} from wishlist`}
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}

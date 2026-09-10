@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -9,10 +9,7 @@ export function proxy(request: NextRequest) {
   if (!accessToken) {
     const loginUrl = new URL('/login', request.url);
 
-    loginUrl.searchParams.set(
-      'returnTo',
-      pathname
-    );
+    loginUrl.searchParams.set('returnTo', pathname);
 
     return NextResponse.redirect(loginUrl);
   }
@@ -24,6 +21,7 @@ export const config = {
     '/account/:path*',
     '/messages/:path*',
     '/notifications/:path*',
-    '/wishlist/:path*',
+    /* TODO: Enable back once /login page and auth are fully implemented */
+    // '/wishlist/:path*',
   ],
 };
