@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, ShoppingBag, Menu, X } from 'lucide-react';
+import { Search, ShoppingBag, Heart, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { CartDot } from '@/components/ui/feedback/cart-dot';
 
@@ -28,7 +28,7 @@ export function Navbar() {
           <li key={index}>
             <Link
               href={link.href}
-              className="text-ui-nav text-text-secondary cursor-pointer uppercase hover:text-text-primary transition-colors"
+              className="text-ui-nav text-text-secondary hover:text-text-primary cursor-pointer uppercase transition-colors"
             >
               {link.label}
             </Link>
@@ -38,22 +38,30 @@ export function Navbar() {
 
       <div className="flex items-center gap-4">
         <Search
-          className="text-text-secondary h-4 w-4 cursor-pointer hover:text-text-primary transition-colors"
+          className="text-text-secondary hover:text-text-primary h-4 w-4 cursor-pointer transition-colors"
           aria-label="Search"
         />
 
+        <Link
+          href="/wishlist"
+          aria-label="Wishlist"
+          className="text-text-secondary hover:text-text-primary transition-colors"
+        >
+          <Heart className="h-4 w-4" />
+        </Link>
+
         <div className="relative cursor-pointer">
           <Link href="/cart" aria-label="Shopping cart" className="flex items-center">
-            <ShoppingBag className="text-text-secondary h-4 w-4 hover:text-text-primary transition-colors" />
+            <ShoppingBag className="text-text-secondary hover:text-text-primary h-4 w-4 transition-colors" />
             <CartDot />
           </Link>
         </div>
 
-        <div className="bg-brand-dark text-text-inverse flex h-7 w-7 items-center justify-center rounded-full text-ui-label font-medium">
+        <div className="bg-brand-dark text-text-inverse text-ui-label flex h-7 w-7 items-center justify-center rounded-full font-medium">
           ML
         </div>
 
-        <div className="border-border-default flex items-center border-l pl-4 rtl:border-l-0 rtl:border-r rtl:pr-4 rtl:pl-0">
+        <div className="border-border-default flex items-center border-l pl-4 rtl:border-r rtl:border-l-0 rtl:pr-4 rtl:pl-0">
           {LOCALES.map((code, i) => (
             <span key={code} className="contents">
               <span
@@ -75,7 +83,7 @@ export function Navbar() {
         </div>
 
         <button
-          className="text-text-secondary md:hidden hover:text-text-primary transition-colors"
+          className="text-text-secondary hover:text-text-primary md:hidden transition-colors"
           aria-label="Menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((o) => !o)}
@@ -91,11 +99,18 @@ export function Navbar() {
               key={index}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="text-ui-nav text-text-secondary cursor-pointer uppercase hover:text-text-primary transition-colors"
+              className="text-ui-nav text-text-secondary hover:text-text-primary cursor-pointer uppercase transition-colors"
             >
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/wishlist"
+            onClick={() => setMenuOpen(false)}
+            className="text-ui-nav text-text-secondary hover:text-text-primary cursor-pointer uppercase transition-colors"
+          >
+            Wishlist
+          </Link>
         </div>
       )}
     </nav>
