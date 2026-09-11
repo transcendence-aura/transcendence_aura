@@ -209,6 +209,24 @@ export class ProductsService {
     };
   }
 
+  async findById(id: string): Promise<ProductType> {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      include: {
+        media: { orderBy: { position: 'asc' } },
+        variants: { orderBy: { price: 'asc' } },
+        categories: true,
+        productFamilies: true,
+        collections: true,
+      },
+    });
+    if (!product) {
+      throw new NotFoundException('PRODUCT_NOT_FOUND');
+    }
+
+    return this.mapProduct(product);
+  }
+
   async findByIds(productIds: string[]): Promise<ProductType[]> {
     if (productIds.length === 0) return [];
 
