@@ -56,11 +56,7 @@ export default function WishlistPage() {
     <div className="mx-auto max-w-7xl px-6 py-12 md:px-8">
       <h1 className="text-h2 font-bold mb-8">My Wishlist</h1>
 
-      {products.length === 0 ? (
-        <EmptyWishlist />
-      ) : (
-        <WishlistGrid products={products} onItemRemoved={() => refetch()} />
-      )}
+      {products.length === 0 ? <EmptyWishlist /> : <WishlistGrid products={products} />}
     </div>
   );
 }

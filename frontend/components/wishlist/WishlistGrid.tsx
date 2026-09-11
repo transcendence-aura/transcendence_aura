@@ -10,19 +10,20 @@ export type WishlistProduct = React.ComponentProps<typeof ProductCard>['product'
 
 interface WishlistGridProps {
   products: WishlistProduct[];
-  onItemRemoved?: () => void;
 }
 
-export function WishlistGrid({ products, onItemRemoved }: WishlistGridProps) {
+export function WishlistGrid({ products }: WishlistGridProps) {
   const { toast } = useToast();
 
   const [removeWishlistItem] = useMutation(REMOVE_FROM_WISHLIST, {
+    optimisticResponse: {
+      removeWishlistItem: true,
+    },
     onCompleted: () => {
       toast({
         message: 'Removed from wishlist',
         variant: 'success',
       });
-      onItemRemoved?.();
     },
     onError: () => {
       toast({
@@ -30,7 +31,6 @@ export function WishlistGrid({ products, onItemRemoved }: WishlistGridProps) {
         variant: 'error',
       });
     },
-    /* Optimistic update in cache: removes product from wishlist array straight away */
     update(cache, _, { variables }) {
       const existingData = cache.readQuery<{ wishlist: WishlistProduct[] }>({
         query: GET_WISHLIST,
