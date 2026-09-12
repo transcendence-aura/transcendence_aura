@@ -1,3 +1,7 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+
 const SHOP = ['Serums & Oils', 'Face Care', 'Ritual Sets'];
 const SUPPORT = ['FAQ', 'Shipping & Returns', 'Contact'];
 const ABOUT = ['Our Story', 'Sustainability', 'Journal'];
@@ -22,6 +26,12 @@ function FooterColumn({ label, links }: { label: string; links: string[] }) {
 }
 
 export function Footer() {
+  const pathname = usePathname();
+
+  /* Hide Footer on auth routes to respect minimal layout - NEW */
+  const isAuthPage = pathname === '/login' || pathname === '/register';
+  if (isAuthPage) return null;
+
   return (
     <footer className="bg-footer-bg px-6 md:px-8 pt-12 pb-6">
       <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
