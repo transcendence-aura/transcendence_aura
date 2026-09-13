@@ -47,6 +47,10 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nestjs
 
+# Pre-create the uploads dir owned by the app user - the named volume mounted
+# here at runtime inherits this ownership on first creation.
+RUN mkdir -p /app/uploads && chown -R nestjs:nodejs /app/uploads
+
 # Copy the isolated production dependencies
 COPY --from=prod-deps --chown=nestjs:nodejs /app/node_modules ./node_modules
 # Copy the compiled application code

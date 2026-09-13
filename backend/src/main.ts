@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { mkdirSync } from 'node:fs';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { loadSecrets } from './infrastructure/vault/vault-load-secrets';
 import { RequiredSecrets } from './config/required-secrets';
+import { PUBLIC_UPLOADS_ROOT } from './common/media/media-storage.service';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap(): Promise<void> {
@@ -24,7 +27,7 @@ async function bootstrap(): Promise<void> {
   }
 
   try {
-    const app = await NestFactory.create(AppModule.register(secrets), {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule.register(secrets), {
       bufferLogs: true,
     });
 
@@ -36,6 +39,9 @@ async function bootstrap(): Promise<void> {
       }),
     );
     app.enableShutdownHooks();
+
+    mkdirSync(PUBLIC_UPLOADS_ROOT, { recursive: true });
+    app.useStaticAssets(PUBLIC_UPLOADS_ROOT, { prefix: '/uploads' });
 
     const port = parsePort(process.env.PORT);
 
