@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { slugify } from '../../common/utils/slugify';
@@ -94,39 +99,43 @@ export class AdminProductService {
 
   async createProduct(input: AdminCreateProductInput): Promise<ProductType> {
     await this.assertRelationsExist(input);
-    const slug = await this.generateUniqueSlug(input.name);
-
-    try {
-      const created = await this.prisma.product.create({
-        data: {
-          name: input.name,
-          slug,
-          description: input.description,
-          badges: input.badges ?? [],
-          isActive: input.isActive ?? true,
-          categories: input.categoryIds
-            ? { connect: input.categoryIds.map((id) => ({ id })) }
-            : undefined,
-          productFamilies: input.productFamilyIds
-            ? { connect: input.productFamilyIds.map((id) => ({ id })) }
-            : undefined,
-          collections: input.collectionIds
-            ? { connect: input.collectionIds.map((id) => ({ id })) }
-            : undefined,
-        },
-        select: { id: true },
-      });
-
-      return await this.productsService.findById(created.id);
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_UNIQUE_CONSTRAINT_ERROR
-      ) {
-        throw new ConflictException('PRODUCT_SLUG_TAKEN');
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const slug = await this.generateUniqueSlug(input.name);
+      try {
+        const created = await this.prisma.product.create({
+          data: {
+            name: input.name,
+            slug,
+            description: input.description,
+            badges: input.badges ?? [],
+            isActive: input.isActive ?? true,
+            categories: input.categoryIds
+              ? { connect: input.categoryIds.map((id) => ({ id })) }
+              : undefined,
+            productFamilies: input.productFamilyIds
+              ? { connect: input.productFamilyIds.map((id) => ({ id })) }
+              : undefined,
+            collections: input.collectionIds
+              ? { connect: input.collectionIds.map((id) => ({ id })) }
+              : undefined,
+          },
+          select: { id: true },
+        });
+        return await this.productsService.findById(created.id);
+      } catch (error: unknown) {
+        if (
+          !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+          error.code !== PRISMA_UNIQUE_CONSTRAINT_ERROR
+        ) {
+          throw error;
+        }
+        if (attempt === maxAttempts) {
+          throw new ConflictException('PRODUCT_SLUG_TAKEN');
+        }
       }
-      throw error;
     }
+    throw new ConflictException('PRODUCT_SLUG_TAKEN');
   }
 
   async updateProduct(id: string, input: AdminUpdateProductInput): Promise<ProductType> {
@@ -134,39 +143,46 @@ export class AdminProductService {
     await this.assertRelationsExist(input);
 
     const nameChanged = input.name !== undefined && input.name !== current.name;
-    const slug = nameChanged ? await this.generateUniqueSlug(input.name!, id) : undefined;
+    const maxAttempts = nameChanged ? 3 : 1;
 
-    try {
-      await this.prisma.product.update({
-        where: { id },
-        data: {
-          name: input.name,
-          slug,
-          description: input.description,
-          badges: input.badges,
-          isActive: input.isActive,
-          categories: input.categoryIds
-            ? { set: input.categoryIds.map((catId) => ({ id: catId })) }
-            : undefined,
-          productFamilies: input.productFamilyIds
-            ? { set: input.productFamilyIds.map((famId) => ({ id: famId })) }
-            : undefined,
-          collections: input.collectionIds
-            ? { set: input.collectionIds.map((colId) => ({ id: colId })) }
-            : undefined,
-        },
-      });
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const slug = nameChanged ? await this.generateUniqueSlug(input.name!, id) : undefined;
 
-      return await this.productsService.findById(id);
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_UNIQUE_CONSTRAINT_ERROR
-      ) {
-        throw new ConflictException('PRODUCT_SLUG_TAKEN');
+      try {
+        await this.prisma.product.update({
+          where: { id },
+          data: {
+            name: input.name,
+            slug,
+            description: input.description,
+            badges: input.badges,
+            isActive: input.isActive,
+            categories: input.categoryIds
+              ? { set: input.categoryIds.map((catId) => ({ id: catId })) }
+              : undefined,
+            productFamilies: input.productFamilyIds
+              ? { set: input.productFamilyIds.map((famId) => ({ id: famId })) }
+              : undefined,
+            collections: input.collectionIds
+              ? { set: input.collectionIds.map((colId) => ({ id: colId })) }
+              : undefined,
+          },
+        });
+        return await this.productsService.findById(id);
+      } catch (error: unknown) {
+        if (
+          !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+          error.code !== PRISMA_UNIQUE_CONSTRAINT_ERROR
+        ) {
+          throw error;
+        }
+        if (attempt === maxAttempts) {
+          throw new ConflictException('PRODUCT_SLUG_TAKEN');
+        }
       }
-      throw error;
     }
+
+    throw new ConflictException('PRODUCT_SLUG_TAKEN');
   }
 
   // Soft delete: hides the product from catalog/search (ProductsService
