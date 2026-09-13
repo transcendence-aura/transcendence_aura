@@ -177,7 +177,7 @@ export class ProductsService {
 
   async findBySlug(slug: string): Promise<ProductType> {
     const product = await this.prisma.product.findUnique({
-      where: { slug },
+      where: { slug, isActive: true },
       include: {
         media: { orderBy: { position: 'asc' } },
         variants: { orderBy: { price: 'asc' } },

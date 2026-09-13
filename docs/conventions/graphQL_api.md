@@ -754,34 +754,34 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type                         | Required | Description                                                                  |
-| -------- | ---------------------------- | -------- | ----------------------------------------------------------------------------- |
+| Argument | Type                         | Required | Description                                                                    |
+| -------- | ---------------------------- | -------- | ------------------------------------------------------------------------------ |
 | `filter` | `AdminCollectionFilterInput` | No       | Optional filter — omitting it (or `isActive`) returns both active and inactive |
 
 **`AdminCollectionFilterInput`**
 
 | Field      | Type      | Description                                                          |
-| ---------- | --------- | --------------------------------------------------------------------- |
+| ---------- | --------- | -------------------------------------------------------------------- |
 | `isActive` | `Boolean` | Keep only collections with this active state. Omitted → returns both |
 
 **Response type: `[AdminCollectionType]`**
 
-| Field          | Type      | Nullable | Description                            |
-| -------------- | --------- | -------- | --------------------------------------- |
-| `id`           | `String`  | No       | UUID                                    |
-| `slug`         | `String`  | No       | URL-friendly identifier                 |
-| `name`         | `String`  | No       | Display name                            |
-| `description`  | `String`  | Yes      | Editorial description                   |
-| `heroImageUrl` | `String`  | No       | Banner image URL                        |
+| Field          | Type      | Nullable | Description                                |
+| -------------- | --------- | -------- | ------------------------------------------ |
+| `id`           | `String`  | No       | UUID                                       |
+| `slug`         | `String`  | No       | URL-friendly identifier                    |
+| `name`         | `String`  | No       | Display name                               |
+| `description`  | `String`  | Yes      | Editorial description                      |
+| `heroImageUrl` | `String`  | No       | Banner image URL                           |
 | `isActive`     | `Boolean` | No       | Whether the collection is currently active |
 
 **Errors**
 
 | Case                               | Message / behavior            |
-| ----------------------------------- | ------------------------------ |
-| No collection matches the filter    | Returns `[]` — never an error  |
-| Missing, invalid or expired token   | `401 Unauthorized`             |
-| Valid token, caller is not `ADMIN` | `403 Forbidden`                |
+| ---------------------------------- | ----------------------------- |
+| No collection matches the filter   | Returns `[]` — never an error |
+| Missing, invalid or expired token  | `401 Unauthorized`            |
+| Valid token, caller is not `ADMIN` | `403 Forbidden`               |
 
 ---
 
@@ -828,21 +828,21 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type                       | Required | Description                                                    |
-| -------- | -------------------------- | -------- | ---------------------------------------------------------------- |
-| `filter` | `AdminCategoryFilterInput` | No       | Optional filter — omitting a field drops that constraint          |
+| Argument | Type                       | Required | Description                                              |
+| -------- | -------------------------- | -------- | -------------------------------------------------------- |
+| `filter` | `AdminCategoryFilterInput` | No       | Optional filter — omitting a field drops that constraint |
 
 **`AdminCategoryFilterInput`**
 
 | Field          | Type            | Description                                       |
-| -------------- | --------------- | --------------------------------------------------- |
+| -------------- | --------------- | ------------------------------------------------- |
 | `collectionId` | `String` (UUID) | Keep only categories belonging to this collection |
 | `isActive`     | `Boolean`       | Keep only categories with this active state       |
 
 **Response type: `[AdminCategoryType]`**
 
-| Field          | Type      | Nullable | Description                             |
-| -------------- | --------- | -------- | ----------------------------------------- |
+| Field          | Type      | Nullable | Description                              |
+| -------------- | --------- | -------- | ---------------------------------------- |
 | `id`           | `String`  | No       | UUID                                     |
 | `slug`         | `String`  | No       | URL-friendly identifier                  |
 | `name`         | `String`  | No       | Display name                             |
@@ -852,12 +852,12 @@ curl -k -X POST https://localhost/graphql \
 
 **Errors**
 
-| Case                                | Message / behavior                   |
-| ------------------------------------- | -------------------------------------- |
-| No category matches the filter      | Returns `[]` — never an error          |
-| Missing, invalid or expired token   | `401 Unauthorized`                     |
-| Valid token, caller is not `ADMIN` | `403 Forbidden`                        |
-| `collectionId` is not a valid UUID  | GraphQL validation error (automatic)   |
+| Case                               | Message / behavior                   |
+| ---------------------------------- | ------------------------------------ |
+| No category matches the filter     | Returns `[]` — never an error        |
+| Missing, invalid or expired token  | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN` | `403 Forbidden`                      |
+| `collectionId` is not a valid UUID | GraphQL validation error (automatic) |
 
 ---
 
@@ -904,36 +904,36 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type                             | Required | Description                                              |
-| -------- | --------------------------------- | -------- | ----------------------------------------------------------- |
-| `filter` | `AdminProductFamilyFilterInput`   | No       | Optional filter — omitting a field drops that constraint      |
+| Argument | Type                            | Required | Description                                              |
+| -------- | ------------------------------- | -------- | -------------------------------------------------------- |
+| `filter` | `AdminProductFamilyFilterInput` | No       | Optional filter — omitting a field drops that constraint |
 
 **`AdminProductFamilyFilterInput`**
 
-| Field        | Type            | Description                                          |
-| ------------ | --------------- | ------------------------------------------------------ |
+| Field        | Type            | Description                                           |
+| ------------ | --------------- | ----------------------------------------------------- |
 | `categoryId` | `String` (UUID) | Keep only product families belonging to this category |
-| `isActive`   | `Boolean`       | Keep only product families with this active state    |
+| `isActive`   | `Boolean`       | Keep only product families with this active state     |
 
 **Response type: `[AdminProductFamilyType]`**
 
-| Field         | Type      | Nullable | Description                                     |
-| ------------- | --------- | -------- | -------------------------------------------------- |
-| `id`          | `String`  | No       | UUID                                             |
-| `slug`        | `String`  | No       | URL-friendly identifier                          |
-| `name`        | `String`  | No       | Display name                                     |
-| `description` | `String`  | Yes      | Editorial description                            |
+| Field         | Type      | Nullable | Description                                    |
+| ------------- | --------- | -------- | ---------------------------------------------- |
+| `id`          | `String`  | No       | UUID                                           |
+| `slug`        | `String`  | No       | URL-friendly identifier                        |
+| `name`        | `String`  | No       | Display name                                   |
+| `description` | `String`  | Yes      | Editorial description                          |
 | `isActive`    | `Boolean` | No       | Whether the product family is currently active |
-| `categoryId`  | `String`  | No       | Id of the parent category                        |
+| `categoryId`  | `String`  | No       | Id of the parent category                      |
 
 **Errors**
 
-| Case                                | Message / behavior                 |
-| -------------------------------------- | ------------------------------------- |
-| No product family matches the filter | Returns `[]` — never an error         |
-| Missing, invalid or expired token     | `401 Unauthorized`                    |
-| Valid token, caller is not `ADMIN`   | `403 Forbidden`                       |
-| `categoryId` is not a valid UUID      | GraphQL validation error (automatic)  |
+| Case                                 | Message / behavior                   |
+| ------------------------------------ | ------------------------------------ |
+| No product family matches the filter | Returns `[]` — never an error        |
+| Missing, invalid or expired token    | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`   | `403 Forbidden`                      |
+| `categoryId` is not a valid UUID     | GraphQL validation error (automatic) |
 
 ---
 
@@ -2078,9 +2078,21 @@ mutation {
     name
     description
     badges
-    categories { id slug name }
-    productFamilies { id slug name }
-    collections { id slug name }
+    categories {
+      id
+      slug
+      name
+    }
+    productFamilies {
+      id
+      slug
+      name
+    }
+    collections {
+      id
+      slug
+      name
+    }
   }
 }
 ```
@@ -2096,21 +2108,21 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type                      | Required | Description   |
-| -------- | ------------------------- | -------- | ------------- |
+| Argument | Type                      | Required | Description  |
+| -------- | ------------------------- | -------- | ------------ |
 | `input`  | `AdminCreateProductInput` | Yes      | Product data |
 
 **`AdminCreateProductInput`**
 
-| Field              | Type               | Required | Description                                                                |
-| ------------------ | ------------------ | -------- | ----------------------------------------------------------------------------- |
-| `name`              | `String`           | Yes      | Display name (max 160 characters). Also the source for the auto-generated slug |
-| `description`       | `String`           | No       | Long description                                                             |
-| `badges`            | `[String]`         | No       | Marketing badges (each max 50 characters). Defaults to `[]`                   |
-| `isActive`          | `Boolean`          | No       | Defaults to `true`                                                          |
-| `categoryIds`       | `[String]` (UUIDs) | No       | Categories to assign — every id must already exist                          |
-| `productFamilyIds`  | `[String]` (UUIDs) | No       | Product families to assign — every id must already exist                    |
-| `collectionIds`     | `[String]` (UUIDs) | No       | Collections to assign — every id must already exist                         |
+| Field              | Type               | Required | Description                                                                    |
+| ------------------ | ------------------ | -------- | ------------------------------------------------------------------------------ |
+| `name`             | `String`           | Yes      | Display name (max 160 characters). Also the source for the auto-generated slug |
+| `description`      | `String`           | No       | Long description                                                               |
+| `badges`           | `[String]`         | No       | Marketing badges (each max 50 characters). Defaults to `[]`                    |
+| `isActive`         | `Boolean`          | No       | Defaults to `true`                                                             |
+| `categoryIds`      | `[String]` (UUIDs) | No       | Categories to assign — every id must already exist                             |
+| `productFamilyIds` | `[String]` (UUIDs) | No       | Product families to assign — every id must already exist                       |
+| `collectionIds`    | `[String]` (UUIDs) | No       | Collections to assign — every id must already exist                            |
 
 **Response type: `ProductType`**
 
@@ -2119,14 +2131,14 @@ Same shape as [`product(slug)`](#productslug) — see the field table there. `va
 **Errors**
 
 | Case                                                              | Message                              |
-| -------------------------------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token                                    | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`                                   | `403 Forbidden`                      |
-| `name` is empty or longer than 160 characters                       | GraphQL validation error (automatic) |
-| A `categoryIds` entry does not reference an existing category       | `CATEGORY_NOT_FOUND`                 |
-| A `productFamilyIds` entry does not reference an existing family    | `PRODUCT_FAMILY_NOT_FOUND`           |
-| A `collectionIds` entry does not reference an existing collection   | `COLLECTION_NOT_FOUND`               |
-| `name` slugifies to an empty string (e.g. only symbols/emoji)        | `PRODUCT_NAME_INVALID`               |
+| ----------------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                                 | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                                | `403 Forbidden`                      |
+| `name` is empty or longer than 160 characters                     | GraphQL validation error (automatic) |
+| A `categoryIds` entry does not reference an existing category     | `CATEGORY_NOT_FOUND`                 |
+| A `productFamilyIds` entry does not reference an existing family  | `PRODUCT_FAMILY_NOT_FOUND`           |
+| A `collectionIds` entry does not reference an existing collection | `COLLECTION_NOT_FOUND`               |
+| `name` slugifies to an empty string (e.g. only symbols/emoji)     | `PRODUCT_NAME_INVALID`               |
 
 ---
 
@@ -2178,8 +2190,8 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type                      | Required | Description                    |
-| -------- | ------------------------- | -------- | -------------------------------- |
+| Argument | Type                      | Required | Description                     |
+| -------- | ------------------------- | -------- | ------------------------------- |
 | `id`     | `String` (UUID)           | Yes      | Id of the product to update     |
 | `input`  | `AdminUpdateProductInput` | Yes      | Fields to change — all optional |
 
@@ -2194,14 +2206,14 @@ Same shape as [`product(slug)`](#productslug) — see the field table there. Sam
 **Errors**
 
 | Case                                                              | Message                              |
-| -------------------------------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token                                    | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`                                   | `403 Forbidden`                      |
-| `id` does not reference an existing product                        | `PRODUCT_NOT_FOUND`                  |
-| A `categoryIds` entry does not reference an existing category       | `CATEGORY_NOT_FOUND`                 |
-| A `productFamilyIds` entry does not reference an existing family    | `PRODUCT_FAMILY_NOT_FOUND`           |
-| A `collectionIds` entry does not reference an existing collection   | `COLLECTION_NOT_FOUND`               |
-| `id` is not a valid UUID                                             | GraphQL validation error (automatic) |
+| ----------------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                                 | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                                | `403 Forbidden`                      |
+| `id` does not reference an existing product                       | `PRODUCT_NOT_FOUND`                  |
+| A `categoryIds` entry does not reference an existing category     | `CATEGORY_NOT_FOUND`                 |
+| A `productFamilyIds` entry does not reference an existing family  | `PRODUCT_FAMILY_NOT_FOUND`           |
+| A `collectionIds` entry does not reference an existing collection | `COLLECTION_NOT_FOUND`               |
+| `id` is not a valid UUID                                          | GraphQL validation error (automatic) |
 
 ---
 
@@ -2209,7 +2221,7 @@ Same shape as [`product(slug)`](#productslug) — see the field table there. Sam
 
 Soft-deletes a product: sets `isActive` to `false` server-side. The row itself, its variants, media and any wishlist entries pointing at it are left untouched — nothing is deleted, nothing is left dangling. **Admin-only.**
 
-**Effect:** an inactive product disappears from the public [`products`](#productsfilter-pagination) listing/search and from other users' [`wishlist`](#wishlist) results, but [`product(slug)`](#productslug) still resolves it directly — that query does not filter by `isActive`. The action is reversible: call [`adminUpdateProduct`](#adminupdateproductid-input) with `{ isActive: true }` to reactivate. Calling this mutation twice on the same product is not an error — it's idempotent.
+**Effect:** an inactive product disappears from the public [`products`](#productsfilter-pagination) listing/search, from other users' [`wishlist`](#wishlist) results, and from direct lookup via [`product(slug)`](#productslug) — all three now consistently return `PRODUCT_NOT_FOUND`. The action is reversible: call [`adminUpdateProduct`](#adminupdateproductid-input) with `{ isActive: true }` to reactivate. Calling this mutation twice on the same product is not an error — it's idempotent.
 
 **Source:** `backend/src/modules/admin-product/`
 
@@ -2237,9 +2249,9 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument | Type            | Required | Description                          |
-| -------- | --------------- | -------- | --------------------------------------- |
-| `id`     | `String` (UUID) | Yes      | Id of the product to soft-delete       |
+| Argument | Type            | Required | Description                      |
+| -------- | --------------- | -------- | -------------------------------- |
+| `id`     | `String` (UUID) | Yes      | Id of the product to soft-delete |
 
 **Response type: `ProductType`**
 
@@ -2247,12 +2259,12 @@ Same shape as [`product(slug)`](#productslug) — see the field table there. `is
 
 **Errors**
 
-| Case                                    | Message                              |
-| ------------------------------------------ | ------------------------------------- |
-| Missing, invalid or expired token          | `401 Unauthorized`                    |
-| Valid token, caller is not `ADMIN`        | `403 Forbidden`                       |
-| `id` does not reference an existing product | `PRODUCT_NOT_FOUND`                 |
-| `id` is not a valid UUID                   | GraphQL validation error (automatic)  |
+| Case                                        | Message                              |
+| ------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token           | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`          | `403 Forbidden`                      |
+| `id` does not reference an existing product | `PRODUCT_NOT_FOUND`                  |
+| `id` is not a valid UUID                    | GraphQL validation error (automatic) |
 
 ---
 
@@ -2294,19 +2306,19 @@ curl -k -X POST https://localhost/graphql \
 **Arguments**
 
 | Argument    | Type                             | Required | Description                             |
-| ----------- | -------------------------------- | -------- | ------------------------------------------ |
-| `productId` | `String` (UUID)                  | Yes      | Id of the product to add the variant to   |
-| `input`     | `AdminCreateProductVariantInput` | Yes      | Variant data                              |
+| ----------- | -------------------------------- | -------- | --------------------------------------- |
+| `productId` | `String` (UUID)                  | Yes      | Id of the product to add the variant to |
+| `input`     | `AdminCreateProductVariantInput` | Yes      | Variant data                            |
 
 **`AdminCreateProductVariantInput`**
 
-| Field                | Type      | Required | Description                                                    |
-| --------------------- | --------- | -------- | ------------------------------------------------------------------ |
-| `label`               | `String`  | Yes      | Size/volume label (max 50 characters), e.g. `"50ml"`. Unique per product |
-| `price`               | `Float`   | Yes      | Base price in euros, ≥ 0, max 2 decimal places                    |
-| `isAvailable`         | `Boolean` | No       | Defaults to `true`                                                |
-| `isOnSale`            | `Boolean` | No       | Defaults to `false`                                               |
-| `discountPercentage`  | `Float`   | No       | 0–100, max 2 decimal places. Defaults to `0`                      |
+| Field                | Type      | Required | Description                                                              |
+| -------------------- | --------- | -------- | ------------------------------------------------------------------------ |
+| `label`              | `String`  | Yes      | Size/volume label (max 50 characters), e.g. `"50ml"`. Unique per product |
+| `price`              | `Float`   | Yes      | Base price in euros, ≥ 0, max 2 decimal places                           |
+| `isAvailable`        | `Boolean` | No       | Defaults to `true`                                                       |
+| `isOnSale`           | `Boolean` | No       | Defaults to `false`                                                      |
+| `discountPercentage` | `Float`   | No       | 0–100, max 2 decimal places. Defaults to `0`                             |
 
 **Response type: `ProductVariantType`**
 
@@ -2314,14 +2326,14 @@ Same shape as an item in `product(slug).variants` — see `ProductVariantType` u
 
 **Errors**
 
-| Case                                                     | Message                              |
-| ---------------------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token                          | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`                        | `403 Forbidden`                      |
-| `productId` does not reference an existing product        | `PRODUCT_NOT_FOUND`                  |
-| `label` already used by another variant of the same product | `VARIANT_LABEL_TAKEN`              |
-| `price` is negative or has more than 2 decimal places      | GraphQL validation error (automatic) |
-| `productId` is not a valid UUID                            | GraphQL validation error (automatic) |
+| Case                                                        | Message                              |
+| ----------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                           | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                          | `403 Forbidden`                      |
+| `productId` does not reference an existing product          | `PRODUCT_NOT_FOUND`                  |
+| `label` already used by another variant of the same product | `VARIANT_LABEL_TAKEN`                |
+| `price` is negative or has more than 2 decimal places       | GraphQL validation error (automatic) |
+| `productId` is not a valid UUID                             | GraphQL validation error (automatic) |
 
 ---
 
@@ -2361,20 +2373,20 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument    | Type                             | Required | Description                            |
-| ----------- | --------------------------------- | -------- | ----------------------------------------- |
-| `variantId` | `String` (UUID)                  | Yes      | Id of the variant to edit                |
-| `input`     | `AdminUpdateProductVariantInput` | Yes      | Fields to change — all optional          |
+| Argument    | Type                             | Required | Description                     |
+| ----------- | -------------------------------- | -------- | ------------------------------- |
+| `variantId` | `String` (UUID)                  | Yes      | Id of the variant to edit       |
+| `input`     | `AdminUpdateProductVariantInput` | Yes      | Fields to change — all optional |
 
 **`AdminUpdateProductVariantInput`**
 
-| Field                | Type      | Description                                              |
-| --------------------- | --------- | ------------------------------------------------------------ |
-| `label`               | `String`  | New label (max 50 characters). Must stay unique for the parent product |
-| `price`               | `Float`   | New base price, ≥ 0, max 2 decimal places                   |
-| `isAvailable`         | `Boolean` | New availability                                            |
-| `isOnSale`            | `Boolean` | New sale flag                                               |
-| `discountPercentage`  | `Float`   | New discount rate, 0–100, max 2 decimal places              |
+| Field                | Type      | Description                                                            |
+| -------------------- | --------- | ---------------------------------------------------------------------- |
+| `label`              | `String`  | New label (max 50 characters). Must stay unique for the parent product |
+| `price`              | `Float`   | New base price, ≥ 0, max 2 decimal places                              |
+| `isAvailable`        | `Boolean` | New availability                                                       |
+| `isOnSale`           | `Boolean` | New sale flag                                                          |
+| `discountPercentage` | `Float`   | New discount rate, 0–100, max 2 decimal places                         |
 
 Omitted fields are left unchanged.
 
@@ -2384,13 +2396,13 @@ Same shape as an item in `product(slug).variants` — see `ProductVariantType` u
 
 **Errors**
 
-| Case                                                     | Message                              |
-| ---------------------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token                          | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`                        | `403 Forbidden`                      |
-| `variantId` does not reference an existing variant        | `VARIANT_NOT_FOUND`                  |
-| `label` already used by another variant of the same product | `VARIANT_LABEL_TAKEN`              |
-| `variantId` is not a valid UUID                            | GraphQL validation error (automatic) |
+| Case                                                        | Message                              |
+| ----------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                           | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                          | `403 Forbidden`                      |
+| `variantId` does not reference an existing variant          | `VARIANT_NOT_FOUND`                  |
+| `label` already used by another variant of the same product | `VARIANT_LABEL_TAKEN`                |
+| `variantId` is not a valid UUID                             | GraphQL validation error (automatic) |
 
 ---
 
@@ -2421,9 +2433,9 @@ curl -k -X POST https://localhost/graphql \
 
 **Arguments**
 
-| Argument    | Type            | Required | Description                  |
-| ----------- | --------------- | -------- | -------------------------------- |
-| `variantId` | `String` (UUID) | Yes      | Id of the variant to delete     |
+| Argument    | Type            | Required | Description                 |
+| ----------- | --------------- | -------- | --------------------------- |
+| `variantId` | `String` (UUID) | Yes      | Id of the variant to delete |
 
 **Response type: `Boolean`**
 
@@ -2431,9 +2443,9 @@ curl -k -X POST https://localhost/graphql \
 
 **Errors**
 
-| Case                                                                        | Message                              |
-| -------------------------------------------------------------------------------- | ------------------------------------- |
-| Missing, invalid or expired token                                                | `401 Unauthorized`                    |
-| Valid token, caller is not `ADMIN`                                              | `403 Forbidden`                       |
-| `variantId` does not reference an existing variant (incl. calling this twice)   | `VARIANT_NOT_FOUND`                   |
-| `variantId` is not a valid UUID                                                  | GraphQL validation error (automatic)  |
+| Case                                                                          | Message                              |
+| ----------------------------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                                             | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                                            | `403 Forbidden`                      |
+| `variantId` does not reference an existing variant (incl. calling this twice) | `VARIANT_NOT_FOUND`                  |
+| `variantId` is not a valid UUID                                               | GraphQL validation error (automatic) |
