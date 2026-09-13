@@ -56,6 +56,8 @@
 - [adminReorderProductImages(productId, input)](#adminreorderproductimagesproductid-input) — Reorder a product's images; the first id becomes primary. Admin-only
 - [adminSetPrimaryProductImage(productId, imageId)](#adminsetprimaryproductimageproductid-imageid) — Make one image the primary image. Admin-only
 - [adminDeleteProductImage(productId, imageId)](#admindeleteproductimageproductid-imageid) — Permanently delete a product image (hard delete + file removal). Admin-only
+- [POST /api/v1/users/me/avatar](#post-apiv1usersmeavatar) — Upload/replace the authenticated user's own avatar (REST, not GraphQL)
+- [GET /api/v1/users/:userId/avatar](#get-apiv1usersuseridavatar) — Retrieve a user's avatar image (REST, not GraphQL). Requires authentication, any role
 
 ---
 
@@ -2479,7 +2481,7 @@ Uploads one product image. This is a **plain REST endpoint**, not a GraphQL muta
 
 **Storage:** files are written under a persistent Docker volume (`product_uploads`, see `docker-compose.yml`) at `uploads/public/products/<productId>/<uuid>.jpeg`, and served back publicly (no auth) at `/api/uploads/products/<productId>/<uuid>.jpeg` via `NestExpressApplication.useStaticAssets()` — product images are public by design.
 
-`MediaStorageService` (`backend/src/common/media/media-storage.service.ts`) also implements a `visibility: 'private'` mode that writes to a sibling root (`uploads/private/`) never registered with `useStaticAssets()`, so files saved that way can't be reached by any URL today. This is groundwork for the upcoming avatar upload feature - kept intentionally, not yet wired to any serving route.
+`MediaStorageService` (`backend/src/common/media/media-storage.service.ts`) also implements a `visibility: 'private'` mode that writes to a sibling root (`uploads/private/`) never registered with `useStaticAssets()`, so files saved that way can't be reached by any static URL. This is what the avatar upload feature below uses — avatars are only ever served through the authenticated `GET /api/v1/users/:userId/avatar` endpoint, never as a static file.
 
 **Ordering:** the new image is appended after the product's current highest `position`. The first upload for a product (position `0`) becomes primary automatically, per the existing `position === 0 → primary` convention (see [`ProductMediaType`](#productmediatype)).
 
@@ -2697,3 +2699,80 @@ Same shape as [`product(slug)`](#productslug) — see the field table there.
 | Valid token, caller is not `ADMIN`        | `403 Forbidden`                      |
 | `imageId` does not belong to `productId`  | `IMAGE_NOT_FOUND`                    |
 | `productId`/`imageId` is not a valid UUID | GraphQL validation error (automatic) |
+
+---
+
+## `POST /api/v1/users/me/avatar`
+
+Uploads or replaces the authenticated caller's own avatar. This is a **plain REST endpoint**, not a GraphQL mutation, same reasoning as the product image upload below it in the codebase (no `graphql-upload` wired up). There is no `:userId` in the path — the target is always the caller identified by the access token, so there is no way to upload an avatar on behalf of another user.
+
+**Validation:** identical rules to [`POST /api/v1/admin/products/:productId/images`](#post-apiv1adminproductsproductidimages) — only `image/jpeg` is accepted, checked against the real file content (not just `Content-Type`/extension), the image must be square, and the max size is 5 MB (`413` above that, from nginx or Nest/multer depending on how far over). The uploaded filename is never used to build a path — the server always generates its own `<uuid>.jpeg`.
+
+**Storage:** written privately via `MediaStorageService` (`visibility: 'private'`) under `uploads/private/avatars/<userId>/<uuid>.jpeg` — outside the `uploads/public/` root that's the only one registered with `useStaticAssets()`, so the file cannot be reached by any static URL, only through the authenticated GET endpoint below. Replacing an existing avatar deletes the previous `Media` row and its file — no orphans accumulate.
+
+**Source:** `backend/src/modules/avatar/`
+
+**Requires authentication** (any role) — see [Authentication](#authentication).
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/api/v1/users/me/avatar \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -F "file=@./my-avatar.jpeg;type=image/jpeg"
+```
+
+**Request**
+
+| Field  | Type   | Required | Description                     |
+| ------ | ------ | -------- | ------------------------------- |
+| `file` | binary | Yes      | Multipart form field, one image |
+
+**Response**
+
+`201 Created` with just the created avatar's identifying info as plain JSON — `{ "id": string, "updatedAt": string }`.
+
+**Errors**
+
+| Case                                     | Response                                                                    |
+| ---------------------------------------- | --------------------------------------------------------------------------- |
+| Missing, invalid or expired token        | `401 Unauthorized`                                                          |
+| No `file` field in the request           | `400` `IMAGE_FILE_REQUIRED`                                                 |
+| `Content-Type` isn't `image/jpeg`        | `400` `IMAGE_TYPE_NOT_ALLOWED`                                              |
+| File content isn't actually a valid JPEG | `400` `IMAGE_TYPE_NOT_ALLOWED`                                              |
+| Image width and height differ            | `400` `IMAGE_MUST_BE_SQUARE`                                                |
+| File larger than 5 MB                    | `413` `"File too large"` (Nest/multer's default `PayloadTooLargeException`) |
+
+---
+
+## `GET /api/v1/users/:userId/avatar`
+
+Returns the raw avatar image bytes for the given user. This is a **plain REST endpoint**, not a GraphQL query. Any authenticated account (any role) can view any other user's avatar — visibility is gated on "logged in", not on ownership; only _changing_ an avatar is restricted to its owner (see the upload endpoint above, which has no `:userId` for exactly this reason).
+
+Suspended or soft-deleted accounts have no visible avatar, same as [`userProfile(handle)`](#userprofilehandle) — the endpoint 404s rather than serving a stale image. A user that exists and is active but simply never uploaded an avatar gets a shared **default placeholder image** instead of a 404 — shipped as a build asset at `backend/src/modules/avatar/assets/default-avatar.jpeg` (copied into `dist/` via `nest-cli.json`'s `assets` entry), not user content, so it isn't stored through `MediaStorageService`.
+
+**Source:** `backend/src/modules/avatar/`
+
+**Requires authentication** (any role) — see [Authentication](#authentication).
+
+**curl example**
+
+```bash
+curl -k https://localhost/api/v1/users/00000000-0000-4000-8000-000000000002/avatar \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -o avatar.jpeg
+```
+
+**Response**
+
+`200 OK`, `Content-Type: image/jpeg`, `Cache-Control: private, no-store` (so shared/browser caches never persist another user's avatar bytes), body is the raw image.
+
+**Errors**
+
+| Case                                                                             | Response                                       |
+| -------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Missing, invalid or expired token                                                | `401 Unauthorized`                             |
+| `userId` is not a valid UUID                                                     | `400`                                          |
+| `userId` does not exist, or account suspended/deleted                            | `404` `USER_NOT_FOUND`                         |
+| User exists, active, but never uploaded an avatar                                | `200` default placeholder image (not an error) |
+| Default placeholder asset itself is missing from the build (should never happen) | `404` `AVATAR_NOT_FOUND`                       |
