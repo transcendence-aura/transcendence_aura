@@ -18,6 +18,9 @@
 - [products(filter, pagination)](#productsfilter-pagination) — Paginated product list with filtering and full-text search
 - [collections](#collections) — List of all active collections
 - [collection(slug)](#collectionslug) — Single collection by slug
+- [adminCollections(filter)](#admincollectionsfilter) — Flat list of every collection, active and inactive, for admin pickers. Admin-only
+- [adminCategories(filter)](#admincategoriesfilter) — Flat list of every category, active and inactive, optionally scoped to a collection, for admin pickers. Admin-only
+- [adminProductFamilies(filter)](#adminproductfamiliesfilter) — Flat list of every product family, active and inactive, optionally scoped to a category, for admin pickers. Admin-only
 - [wishlist](#wishlist) — Authenticated user's wishlist as full product cards
 - [adminUsers(filter, pagination)](#adminusersfilter-pagination) — Paginated user list for the admin management table, filterable/sortable by role and status. Admin-only
 - [adminUser(id)](#adminuserid) — Single user detail view. Admin-only
@@ -43,6 +46,12 @@
 - [adminSuspendUser(userId)](#adminsuspenduseruserid) — Suspend a user: blocks sign-in and revokes every active session. Admin-only, self-target rejected
 - [adminReinstateUser(userId)](#adminreinstateuseruserid) — Reactivate a suspended user. Admin-only
 - [adminDeleteUser(userId)](#admindeleteuseruserid) — Soft-delete a user. Admin-only, self-target rejected
+- [adminCreateProduct(input)](#admincreateproductinput) — Create a product; slug is auto-generated from `name`. Admin-only
+- [adminUpdateProduct(id, input)](#adminupdateproductid-input) — Partially update a product; renaming regenerates the slug. Admin-only
+- [adminDeleteProduct(id)](#admindeleteproductid) — Soft-delete a product (`isActive: false`), reversible. Admin-only
+- [adminAddProductVariant(productId, input)](#adminaddproductvariantproductid-input) — Add a size/format variant to a product. Admin-only
+- [adminUpdateProductVariant(variantId, input)](#adminupdateproductvariantvariantid-input) — Partially update a variant. Admin-only
+- [adminDeleteProductVariant(variantId)](#admindeleteproductvariantvariantid) — Permanently delete a variant (hard delete). Admin-only
 
 ---
 
@@ -699,6 +708,232 @@ Same shape as a single item from [`collections`](#collections) — see field tab
 | Case                                  | Message                |
 | ------------------------------------- | ---------------------- |
 | Slug not found or collection inactive | `COLLECTION_NOT_FOUND` |
+
+---
+
+## `adminCollections(filter)`
+
+Returns every collection — active **and** inactive — as a flat, unpaginated list. Used by the admin panel to populate a collection picker (e.g. when creating a category). Read-only: there is no mutation to create, edit or delete a `Collection` — the catalog taxonomy (`Collection`/`Category`/`ProductFamily`) is exclusively managed via `backend/prisma/seed.ts`. **Admin-only.**
+
+**Source:** `backend/src/modules/admin-collection/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  adminCollections(filter: { isActive: true }) {
+    id
+    slug
+    name
+    description
+    heroImageUrl
+    isActive
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminCollections { id slug name description heroImageUrl isActive } }"}' | jq
+```
+
+**curl example — only active collections**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminCollections(filter: { isActive: true }) { id name } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type                         | Required | Description                                                                    |
+| -------- | ---------------------------- | -------- | ------------------------------------------------------------------------------ |
+| `filter` | `AdminCollectionFilterInput` | No       | Optional filter — omitting it (or `isActive`) returns both active and inactive |
+
+**`AdminCollectionFilterInput`**
+
+| Field      | Type      | Description                                                          |
+| ---------- | --------- | -------------------------------------------------------------------- |
+| `isActive` | `Boolean` | Keep only collections with this active state. Omitted → returns both |
+
+**Response type: `[AdminCollectionType]`**
+
+| Field          | Type      | Nullable | Description                                |
+| -------------- | --------- | -------- | ------------------------------------------ |
+| `id`           | `String`  | No       | UUID                                       |
+| `slug`         | `String`  | No       | URL-friendly identifier                    |
+| `name`         | `String`  | No       | Display name                               |
+| `description`  | `String`  | Yes      | Editorial description                      |
+| `heroImageUrl` | `String`  | No       | Banner image URL                           |
+| `isActive`     | `Boolean` | No       | Whether the collection is currently active |
+
+**Errors**
+
+| Case                               | Message / behavior            |
+| ---------------------------------- | ----------------------------- |
+| No collection matches the filter   | Returns `[]` — never an error |
+| Missing, invalid or expired token  | `401 Unauthorized`            |
+| Valid token, caller is not `ADMIN` | `403 Forbidden`               |
+
+---
+
+## `adminCategories(filter)`
+
+Returns every category — active **and** inactive — as a flat list, optionally scoped to one collection. Used by the admin panel to populate a category picker (e.g. when creating a product or a product family). Read-only — no mutation exists to create, edit or delete a `Category`. **Admin-only.**
+
+**Source:** `backend/src/modules/admin-category/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  adminCategories(filter: { collectionId: "10000000-0000-4000-8000-000000000001" }) {
+    id
+    slug
+    name
+    description
+    isActive
+    collectionId
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminCategories { id slug name isActive collectionId } }"}' | jq
+```
+
+**curl example — scoped to one collection**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminCategories(filter: { collectionId: \"10000000-0000-4000-8000-000000000001\" }) { id name } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type                       | Required | Description                                              |
+| -------- | -------------------------- | -------- | -------------------------------------------------------- |
+| `filter` | `AdminCategoryFilterInput` | No       | Optional filter — omitting a field drops that constraint |
+
+**`AdminCategoryFilterInput`**
+
+| Field          | Type            | Description                                       |
+| -------------- | --------------- | ------------------------------------------------- |
+| `collectionId` | `String` (UUID) | Keep only categories belonging to this collection |
+| `isActive`     | `Boolean`       | Keep only categories with this active state       |
+
+**Response type: `[AdminCategoryType]`**
+
+| Field          | Type      | Nullable | Description                              |
+| -------------- | --------- | -------- | ---------------------------------------- |
+| `id`           | `String`  | No       | UUID                                     |
+| `slug`         | `String`  | No       | URL-friendly identifier                  |
+| `name`         | `String`  | No       | Display name                             |
+| `description`  | `String`  | Yes      | Editorial description                    |
+| `isActive`     | `Boolean` | No       | Whether the category is currently active |
+| `collectionId` | `String`  | No       | Id of the parent collection              |
+
+**Errors**
+
+| Case                               | Message / behavior                   |
+| ---------------------------------- | ------------------------------------ |
+| No category matches the filter     | Returns `[]` — never an error        |
+| Missing, invalid or expired token  | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN` | `403 Forbidden`                      |
+| `collectionId` is not a valid UUID | GraphQL validation error (automatic) |
+
+---
+
+## `adminProductFamilies(filter)`
+
+Returns every product family — active **and** inactive — as a flat list, optionally scoped to one category. Used by the admin panel to populate a product-family picker (e.g. when creating a product). Read-only — no mutation exists to create, edit or delete a `ProductFamily`. **Admin-only.**
+
+**Source:** `backend/src/modules/admin-product-family/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Query**
+
+```graphql
+query {
+  adminProductFamilies(filter: { categoryId: "11000000-0000-4000-8000-000000000001" }) {
+    id
+    slug
+    name
+    description
+    isActive
+    categoryId
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminProductFamilies { id slug name isActive categoryId } }"}' | jq
+```
+
+**curl example — scoped to one category**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ adminProductFamilies(filter: { categoryId: \"11000000-0000-4000-8000-000000000001\" }) { id name } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type                            | Required | Description                                              |
+| -------- | ------------------------------- | -------- | -------------------------------------------------------- |
+| `filter` | `AdminProductFamilyFilterInput` | No       | Optional filter — omitting a field drops that constraint |
+
+**`AdminProductFamilyFilterInput`**
+
+| Field        | Type            | Description                                           |
+| ------------ | --------------- | ----------------------------------------------------- |
+| `categoryId` | `String` (UUID) | Keep only product families belonging to this category |
+| `isActive`   | `Boolean`       | Keep only product families with this active state     |
+
+**Response type: `[AdminProductFamilyType]`**
+
+| Field         | Type      | Nullable | Description                                    |
+| ------------- | --------- | -------- | ---------------------------------------------- |
+| `id`          | `String`  | No       | UUID                                           |
+| `slug`        | `String`  | No       | URL-friendly identifier                        |
+| `name`        | `String`  | No       | Display name                                   |
+| `description` | `String`  | Yes      | Editorial description                          |
+| `isActive`    | `Boolean` | No       | Whether the product family is currently active |
+| `categoryId`  | `String`  | No       | Id of the parent category                      |
+
+**Errors**
+
+| Case                                 | Message / behavior                   |
+| ------------------------------------ | ------------------------------------ |
+| No product family matches the filter | Returns `[]` — never an error        |
+| Missing, invalid or expired token    | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`   | `403 Forbidden`                      |
+| `categoryId` is not a valid UUID     | GraphQL validation error (automatic) |
 
 ---
 
@@ -1808,3 +2043,419 @@ Same shape as a single item from [`adminUsers`](#adminusersfilter-pagination) �
 | `userId` does not reference an existing user | `USER_NOT_FOUND`                     |
 | Target user's status is already `DELETED`    | `USER_ALREADY_DELETED`               |
 | `userId` is not a valid UUID                 | GraphQL validation error (automatic) |
+
+---
+
+## `adminCreateProduct(input)`
+
+Creates a new product. **Admin-only.**
+
+**Slug generation:** `slug` is not an input field — it is always derived from `name` server-side (lowercased, accents stripped, non-alphanumeric characters collapsed to `-`). If the generated slug is already taken by another product, a numeric suffix (`-2`, `-3`, ...) is appended automatically until a free one is found — creating two products with the same `name` never fails.
+
+**Associations:** `categoryIds`, `productFamilyIds` and `collectionIds` only **assign** existing categories/product families/collections by id — this mutation never creates catalog taxonomy on the fly (see [`adminCategories`](#admincategoriesfilter) / [`adminProductFamilies`](#adminproductfamiliesfilter) / [`adminCollections`](#admincollectionsfilter) to look up ids for a picker). Every id is validated to exist before the product is created; if any doesn't, nothing is created.
+
+**Guardrail:** a product always starts inactive (`isActive: false`) — it has no variant yet ([`adminAddProductVariant`](#adminaddproductvariantproductid-input) runs afterwards, since a variant needs an existing `productId`), so it can never go live with no size/price to sell. `isActive` isn't even an input field here (a client trying to send it gets a GraphQL schema validation error, not a business error) — activate the product later with [`adminUpdateProduct`](#adminupdateproductid-input) once it has at least one variant.
+
+**Source:** `backend/src/modules/admin-product/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminCreateProduct(
+    input: {
+      name: "Green Tea Serum"
+      description: "A lightweight antioxidant serum."
+      badges: ["NEW"]
+      categoryIds: ["11000000-0000-4000-8000-000000000001"]
+      productFamilyIds: ["12000000-0000-4000-8000-000000000002"]
+      collectionIds: ["10000000-0000-4000-8000-000000000001"]
+    }
+  ) {
+    id
+    slug
+    name
+    description
+    badges
+    categories {
+      id
+      slug
+      name
+    }
+    productFamilies {
+      id
+      slug
+      name
+    }
+    collections {
+      id
+      slug
+      name
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminCreateProduct(input: { name: \"Green Tea Serum\", categoryIds: [\"11000000-0000-4000-8000-000000000001\"] }) { id slug name categories { id slug } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type                      | Required | Description  |
+| -------- | ------------------------- | -------- | ------------ |
+| `input`  | `AdminCreateProductInput` | Yes      | Product data |
+
+**`AdminCreateProductInput`**
+
+| Field              | Type               | Required | Description                                                                    |
+| ------------------ | ------------------ | -------- | ------------------------------------------------------------------------------ |
+| `name`             | `String`           | Yes      | Display name (max 160 characters). Also the source for the auto-generated slug |
+| `description`      | `String`           | No       | Long description                                                               |
+| `badges`           | `[String]`         | No       | Marketing badges (each max 50 characters). Defaults to `[]`                    |
+| `categoryIds`      | `[String]` (UUIDs) | No       | Categories to assign — every id must already exist                             |
+| `productFamilyIds` | `[String]` (UUIDs) | No       | Product families to assign — every id must already exist                       |
+| `collectionIds`    | `[String]` (UUIDs) | No       | Collections to assign — every id must already exist                            |
+
+**Response type: `ProductType`**
+
+Same shape as [`product(slug)`](#productslug) — see the field table there. `variants` is always `[]` right after creation; add variants with [`adminAddProductVariant`](#adminaddproductvariantproductid-input). Note: `isActive` is **not** a queryable field on `ProductType` — the response can't directly confirm the active state; check `products()`/search instead.
+
+**Errors**
+
+| Case                                                              | Message                              |
+| ----------------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                                 | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                                | `403 Forbidden`                      |
+| `name` is empty or longer than 160 characters                     | GraphQL validation error (automatic) |
+| A `categoryIds` entry does not reference an existing category     | `CATEGORY_NOT_FOUND`                 |
+| A `productFamilyIds` entry does not reference an existing family  | `PRODUCT_FAMILY_NOT_FOUND`           |
+| A `collectionIds` entry does not reference an existing collection | `COLLECTION_NOT_FOUND`               |
+| `name` slugifies to an empty string (e.g. only symbols/emoji)     | `PRODUCT_NAME_INVALID`               |
+
+---
+
+## `adminUpdateProduct(id, input)`
+
+Partial update of an existing product — every `input` field is optional, only the ones provided are changed. **Admin-only.**
+
+**Slug regeneration:** the slug is only recalculated when `name` is present in `input` **and** differs from the product's current stored name — omitting `name`, or resubmitting the same value, leaves the slug untouched. Renaming re-runs the same auto-dedup logic as [`adminCreateProduct`](#admincreateproductinput).
+
+**Associations:** `categoryIds`/`productFamilyIds`/`collectionIds`, if provided, **replace** the full set of assignments (an empty array `[]` clears them). Omitting the field entirely leaves existing assignments untouched — this is a different behavior from `[]`.
+
+**Guardrail:** `isActive: true` is rejected if the product currently has zero variants — add at least one with [`adminAddProductVariant`](#adminaddproductvariantproductid-input) first. This is the only way a product ever becomes active, since [`adminCreateProduct`](#admincreateproductinput) always creates it inactive.
+
+**Source:** `backend/src/modules/admin-product/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminUpdateProduct(
+    id: "20000000-0000-4000-8000-000000000001"
+    input: { name: "Green Tea Serum - Reformulated", badges: ["SALE"] }
+  ) {
+    id
+    slug
+    name
+    badges
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminUpdateProduct(id: \"20000000-0000-4000-8000-000000000001\", input: { description: \"Updated description\" }) { id name slug description } }"}' | jq
+```
+
+**curl example — clear all category assignments**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminUpdateProduct(id: \"20000000-0000-4000-8000-000000000001\", input: { categoryIds: [] }) { id categories { id } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type                      | Required | Description                     |
+| -------- | ------------------------- | -------- | ------------------------------- |
+| `id`     | `String` (UUID)           | Yes      | Id of the product to update     |
+| `input`  | `AdminUpdateProductInput` | Yes      | Fields to change — all optional |
+
+**`AdminUpdateProductInput`**
+
+Same fields as [`AdminCreateProductInput`](#admincreateproductinput), all optional (no field is required to update just one thing), plus one Update-only field:
+
+| Field      | Type      | Description                                                                                                                      |
+| ---------- | --------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `isActive` | `Boolean` | Rejected (`CANNOT_ACTIVATE_PRODUCT_WITHOUT_VARIANTS`) if set to `true` while the product has zero variants - see Guardrail above |
+
+**Response type: `ProductType`**
+
+Same shape as [`product(slug)`](#productslug) — see the field table there. `isActive` is not a queryable field on this type, same as [`adminCreateProduct`](#admincreateproductinput) — the response can't directly confirm the active state.
+
+**Errors**
+
+| Case                                                              | Message                                    |
+| ----------------------------------------------------------------- | ------------------------------------------ |
+| Missing, invalid or expired token                                 | `401 Unauthorized`                         |
+| Valid token, caller is not `ADMIN`                                | `403 Forbidden`                            |
+| `id` does not reference an existing product                       | `PRODUCT_NOT_FOUND`                        |
+| `isActive: true` requested but the product has zero variants      | `CANNOT_ACTIVATE_PRODUCT_WITHOUT_VARIANTS` |
+| A `categoryIds` entry does not reference an existing category     | `CATEGORY_NOT_FOUND`                       |
+| A `productFamilyIds` entry does not reference an existing family  | `PRODUCT_FAMILY_NOT_FOUND`                 |
+| A `collectionIds` entry does not reference an existing collection | `COLLECTION_NOT_FOUND`                     |
+| `id` is not a valid UUID                                          | GraphQL validation error (automatic)       |
+
+---
+
+## `adminDeleteProduct(id)`
+
+Soft-deletes a product: sets `isActive` to `false` server-side. The row itself, its variants, media and any wishlist entries pointing at it are left untouched — nothing is deleted, nothing is left dangling. **Admin-only.**
+
+**Effect:** an inactive product disappears from the public [`products`](#productsfilter-pagination) listing/search, from other users' [`wishlist`](#wishlist) results, and from direct lookup via [`product(slug)`](#productslug) — all three now consistently return `PRODUCT_NOT_FOUND`. The action is reversible: call [`adminUpdateProduct`](#adminupdateproductid-input) with `{ isActive: true }` to reactivate. Calling this mutation twice on the same product is not an error — it's idempotent.
+
+**Source:** `backend/src/modules/admin-product/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminDeleteProduct(id: "20000000-0000-4000-8000-000000000001") {
+    id
+    name
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminDeleteProduct(id: \"20000000-0000-4000-8000-000000000001\") { id name } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type            | Required | Description                      |
+| -------- | --------------- | -------- | -------------------------------- |
+| `id`     | `String` (UUID) | Yes      | Id of the product to soft-delete |
+
+**Response type: `ProductType`**
+
+Same shape as [`product(slug)`](#productslug) — see the field table there. `isActive` is not a queryable field on this type, so the response cannot directly confirm the new state — check [`products`](#productsfilter-pagination)/search instead.
+
+**Errors**
+
+| Case                                        | Message                              |
+| ------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token           | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`          | `403 Forbidden`                      |
+| `id` does not reference an existing product | `PRODUCT_NOT_FOUND`                  |
+| `id` is not a valid UUID                    | GraphQL validation error (automatic) |
+
+---
+
+## `adminAddProductVariant(productId, input)`
+
+Adds a size/format variant to an existing product. **Admin-only.**
+
+**Source:** `backend/src/modules/admin-product/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminAddProductVariant(
+    productId: "20000000-0000-4000-8000-000000000001"
+    input: { label: "50ml", price: 24.99 }
+  ) {
+    id
+    label
+    price
+    isAvailable
+    isOnSale
+    discountPercentage
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminAddProductVariant(productId: \"20000000-0000-4000-8000-000000000001\", input: { label: \"50ml\", price: 24.99 }) { id label price isAvailable } }"}' | jq
+```
+
+**Arguments**
+
+| Argument    | Type                             | Required | Description                             |
+| ----------- | -------------------------------- | -------- | --------------------------------------- |
+| `productId` | `String` (UUID)                  | Yes      | Id of the product to add the variant to |
+| `input`     | `AdminCreateProductVariantInput` | Yes      | Variant data                            |
+
+**`AdminCreateProductVariantInput`**
+
+| Field                | Type      | Required | Description                                                              |
+| -------------------- | --------- | -------- | ------------------------------------------------------------------------ |
+| `label`              | `String`  | Yes      | Size/volume label (max 50 characters), e.g. `"50ml"`. Unique per product |
+| `price`              | `Float`   | Yes      | Base price in euros, ≥ 0, max 2 decimal places                           |
+| `isAvailable`        | `Boolean` | No       | Defaults to `true`                                                       |
+| `isOnSale`           | `Boolean` | No       | Defaults to `false`                                                      |
+| `discountPercentage` | `Float`   | No       | 0–100, max 2 decimal places. Defaults to `0`                             |
+
+**Response type: `ProductVariantType`**
+
+Same shape as an item in `product(slug).variants` — see `ProductVariantType` under [`product(slug)`](#productslug).
+
+**Errors**
+
+| Case                                                        | Message                              |
+| ----------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                           | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                          | `403 Forbidden`                      |
+| `productId` does not reference an existing product          | `PRODUCT_NOT_FOUND`                  |
+| `label` already used by another variant of the same product | `VARIANT_LABEL_TAKEN`                |
+| `price` is negative or has more than 2 decimal places       | GraphQL validation error (automatic) |
+| `productId` is not a valid UUID                             | GraphQL validation error (automatic) |
+
+---
+
+## `adminUpdateProductVariant(variantId, input)`
+
+Partial update of an existing variant — every `input` field is optional. **Admin-only.**
+
+**Source:** `backend/src/modules/admin-product/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminUpdateProductVariant(
+    variantId: "30000000-0000-4000-8000-000000000001"
+    input: { price: 19.99, isOnSale: true, discountPercentage: 15 }
+  ) {
+    id
+    label
+    price
+    isOnSale
+    discountPercentage
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminUpdateProductVariant(variantId: \"30000000-0000-4000-8000-000000000001\", input: { price: 19.99 }) { id label price } }"}' | jq
+```
+
+**Arguments**
+
+| Argument    | Type                             | Required | Description                     |
+| ----------- | -------------------------------- | -------- | ------------------------------- |
+| `variantId` | `String` (UUID)                  | Yes      | Id of the variant to edit       |
+| `input`     | `AdminUpdateProductVariantInput` | Yes      | Fields to change — all optional |
+
+**`AdminUpdateProductVariantInput`**
+
+| Field                | Type      | Description                                                            |
+| -------------------- | --------- | ---------------------------------------------------------------------- |
+| `label`              | `String`  | New label (max 50 characters). Must stay unique for the parent product |
+| `price`              | `Float`   | New base price, ≥ 0, max 2 decimal places                              |
+| `isAvailable`        | `Boolean` | New availability                                                       |
+| `isOnSale`           | `Boolean` | New sale flag                                                          |
+| `discountPercentage` | `Float`   | New discount rate, 0–100, max 2 decimal places                         |
+
+Omitted fields are left unchanged.
+
+**Response type: `ProductVariantType`**
+
+Same shape as an item in `product(slug).variants` — see `ProductVariantType` under [`product(slug)`](#productslug).
+
+**Errors**
+
+| Case                                                        | Message                              |
+| ----------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                           | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                          | `403 Forbidden`                      |
+| `variantId` does not reference an existing variant          | `VARIANT_NOT_FOUND`                  |
+| `label` already used by another variant of the same product | `VARIANT_LABEL_TAKEN`                |
+| `variantId` is not a valid UUID                             | GraphQL validation error (automatic) |
+
+---
+
+## `adminDeleteProductVariant(variantId)`
+
+Permanently deletes a variant. Unlike products, this is a **hard delete** — not reversible, and not soft. **Admin-only.**
+
+**Guardrail:** refuses to delete a product's last remaining variant — a product with zero variants would have no size/price left to sell. Delete the whole product with [`adminDeleteProduct`](#admindeleteproductid) instead, or add a replacement variant first.
+
+**Source:** `backend/src/modules/admin-product/`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminDeleteProductVariant(variantId: "30000000-0000-4000-8000-000000000001")
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminDeleteProductVariant(variantId: \"30000000-0000-4000-8000-000000000001\") }"}' | jq
+```
+
+**Arguments**
+
+| Argument    | Type            | Required | Description                 |
+| ----------- | --------------- | -------- | --------------------------- |
+| `variantId` | `String` (UUID) | Yes      | Id of the variant to delete |
+
+**Response type: `Boolean`**
+
+`true` on success. The mutation throws rather than returning `false`, so a resolved response is always `true`.
+
+**Errors**
+
+| Case                                                                          | Message                              |
+| ----------------------------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                                             | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                                            | `403 Forbidden`                      |
+| `variantId` is the product's last remaining variant                           | `CANNOT_DELETE_LAST_VARIANT`         |
+| `variantId` does not reference an existing variant (incl. calling this twice) | `VARIANT_NOT_FOUND`                  |
+| `variantId` is not a valid UUID                                               | GraphQL validation error (automatic) |

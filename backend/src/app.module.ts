@@ -14,6 +14,10 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ConversationModule } from './modules/conversations/conversation.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { AdminUserModule } from './modules/admin-user/admin-user.module';
+import { AdminProductModule } from './modules/admin-product/admin-product.module';
+import { AdminCollectionModule } from './modules/admin-collection/admin-collection.module';
+import { AdminCategoryModule } from './modules/admin-category/admin-category.module';
+import { AdminProductFamilyModule } from './modules/admin-product-family/admin-product-family.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AnalyticsReportsModule } from './modules/analytics-reports/analytics-reports.module';
 import { FollowModule } from './modules/follows/follow.module';
@@ -57,6 +61,10 @@ export class AppModule {
         ConversationModule,
         WishlistModule,
         AdminUserModule,
+        AdminProductModule,
+        AdminCollectionModule,
+        AdminCategoryModule,
+        AdminProductFamilyModule,
         AnalyticsModule,
         AnalyticsReportsModule,
         FollowModule,
