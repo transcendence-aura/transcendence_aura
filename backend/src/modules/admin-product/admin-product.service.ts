@@ -99,6 +99,7 @@ export class AdminProductService {
 
   async createProduct(input: AdminCreateProductInput): Promise<ProductType> {
     await this.assertRelationsExist(input);
+
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const slug = await this.generateUniqueSlug(input.name);
@@ -109,7 +110,10 @@ export class AdminProductService {
             slug,
             description: input.description,
             badges: input.badges ?? [],
-            isActive: input.isActive ?? true,
+            // A new product has no variant yet, so it can never go live with
+            // no size/price to sell - activate it via adminUpdateProduct
+            // once at least one variant has been added.
+            isActive: false,
             categories: input.categoryIds
               ? { connect: input.categoryIds.map((id) => ({ id })) }
               : undefined,
@@ -141,6 +145,13 @@ export class AdminProductService {
   async updateProduct(id: string, input: AdminUpdateProductInput): Promise<ProductType> {
     const current = await this.getProductOrThrow(id);
     await this.assertRelationsExist(input);
+
+    if (input.isActive === true) {
+      const variantCount = await this.prisma.productVariant.count({ where: { productId: id } });
+      if (variantCount === 0) {
+        throw new ConflictException('CANNOT_ACTIVATE_PRODUCT_WITHOUT_VARIANTS');
+      }
+    }
 
     const nameChanged = input.name !== undefined && input.name !== current.name;
     const maxAttempts = nameChanged ? 3 : 1;
@@ -261,7 +272,21 @@ export class AdminProductService {
   }
 
   async deleteVariant(variantId: string): Promise<boolean> {
-    await this.assertVariantExists(variantId);
+    const variant = await this.prisma.productVariant.findUnique({
+      where: { id: variantId },
+      select: { productId: true },
+    });
+    if (!variant) {
+      throw new NotFoundException('VARIANT_NOT_FOUND');
+    }
+
+    // Refuse to leave a product with zero variants - no size/price left to sell.
+    const siblingCount = await this.prisma.productVariant.count({
+      where: { productId: variant.productId },
+    });
+    if (siblingCount <= 1) {
+      throw new ConflictException('CANNOT_DELETE_LAST_VARIANT');
+    }
 
     await this.prisma.productVariant.delete({ where: { id: variantId } });
     return true;

@@ -33,11 +33,6 @@ export class AdminCreateProductInput {
   badges?: string[];
 
   @IsOptional()
-  @IsBoolean()
-  @Field({ nullable: true })
-  isActive?: boolean;
-
-  @IsOptional()
   @IsArray()
   @IsUUID('4', { each: true })
   @Field(() => [String], { nullable: true })
@@ -77,6 +72,7 @@ export class AdminUpdateProductInput {
   @Field(() => [String], { nullable: true })
   badges?: string[];
 
+  // true is rejected unless the product already has at least one variant.
   @IsOptional()
   @IsBoolean()
   @Field({ nullable: true })

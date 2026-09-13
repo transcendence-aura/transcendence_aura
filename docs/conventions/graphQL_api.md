@@ -2054,6 +2054,8 @@ Creates a new product. **Admin-only.**
 
 **Associations:** `categoryIds`, `productFamilyIds` and `collectionIds` only **assign** existing categories/product families/collections by id — this mutation never creates catalog taxonomy on the fly (see [`adminCategories`](#admincategoriesfilter) / [`adminProductFamilies`](#adminproductfamiliesfilter) / [`adminCollections`](#admincollectionsfilter) to look up ids for a picker). Every id is validated to exist before the product is created; if any doesn't, nothing is created.
 
+**Guardrail:** a product always starts inactive (`isActive: false`) — it has no variant yet ([`adminAddProductVariant`](#adminaddproductvariantproductid-input) runs afterwards, since a variant needs an existing `productId`), so it can never go live with no size/price to sell. `isActive` isn't even an input field here (a client trying to send it gets a GraphQL schema validation error, not a business error) — activate the product later with [`adminUpdateProduct`](#adminupdateproductid-input) once it has at least one variant.
+
 **Source:** `backend/src/modules/admin-product/`
 
 **Requires ADMIN role** — see [Authentication](#authentication).
@@ -2067,7 +2069,6 @@ mutation {
       name: "Green Tea Serum"
       description: "A lightweight antioxidant serum."
       badges: ["NEW"]
-      isActive: true
       categoryIds: ["11000000-0000-4000-8000-000000000001"]
       productFamilyIds: ["12000000-0000-4000-8000-000000000002"]
       collectionIds: ["10000000-0000-4000-8000-000000000001"]
@@ -2119,14 +2120,13 @@ curl -k -X POST https://localhost/graphql \
 | `name`             | `String`           | Yes      | Display name (max 160 characters). Also the source for the auto-generated slug |
 | `description`      | `String`           | No       | Long description                                                               |
 | `badges`           | `[String]`         | No       | Marketing badges (each max 50 characters). Defaults to `[]`                    |
-| `isActive`         | `Boolean`          | No       | Defaults to `true`                                                             |
 | `categoryIds`      | `[String]` (UUIDs) | No       | Categories to assign — every id must already exist                             |
 | `productFamilyIds` | `[String]` (UUIDs) | No       | Product families to assign — every id must already exist                       |
 | `collectionIds`    | `[String]` (UUIDs) | No       | Collections to assign — every id must already exist                            |
 
 **Response type: `ProductType`**
 
-Same shape as [`product(slug)`](#productslug) — see the field table there. `variants` is always `[]` right after creation; add variants with [`adminAddProductVariant`](#adminaddproductvariantproductid-input). Note: `isActive` is accepted on the input but is **not** a queryable field on `ProductType` — the response can't directly confirm the active state; check `products()`/search instead.
+Same shape as [`product(slug)`](#productslug) — see the field table there. `variants` is always `[]` right after creation; add variants with [`adminAddProductVariant`](#adminaddproductvariantproductid-input). Note: `isActive` is **not** a queryable field on `ProductType` — the response can't directly confirm the active state; check `products()`/search instead.
 
 **Errors**
 
@@ -2149,6 +2149,8 @@ Partial update of an existing product — every `input` field is optional, only 
 **Slug regeneration:** the slug is only recalculated when `name` is present in `input` **and** differs from the product's current stored name — omitting `name`, or resubmitting the same value, leaves the slug untouched. Renaming re-runs the same auto-dedup logic as [`adminCreateProduct`](#admincreateproductinput).
 
 **Associations:** `categoryIds`/`productFamilyIds`/`collectionIds`, if provided, **replace** the full set of assignments (an empty array `[]` clears them). Omitting the field entirely leaves existing assignments untouched — this is a different behavior from `[]`.
+
+**Guardrail:** `isActive: true` is rejected if the product currently has zero variants — add at least one with [`adminAddProductVariant`](#adminaddproductvariantproductid-input) first. This is the only way a product ever becomes active, since [`adminCreateProduct`](#admincreateproductinput) always creates it inactive.
 
 **Source:** `backend/src/modules/admin-product/`
 
@@ -2197,23 +2199,28 @@ curl -k -X POST https://localhost/graphql \
 
 **`AdminUpdateProductInput`**
 
-Same fields as [`AdminCreateProductInput`](#admincreateproductinput), all optional (no field is required to update just one thing).
+Same fields as [`AdminCreateProductInput`](#admincreateproductinput), all optional (no field is required to update just one thing), plus one Update-only field:
+
+| Field      | Type      | Description                                                                                                                      |
+| ---------- | --------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `isActive` | `Boolean` | Rejected (`CANNOT_ACTIVATE_PRODUCT_WITHOUT_VARIANTS`) if set to `true` while the product has zero variants - see Guardrail above |
 
 **Response type: `ProductType`**
 
-Same shape as [`product(slug)`](#productslug) — see the field table there. Same `isActive` caveat as [`adminCreateProduct`](#admincreateproductinput) applies.
+Same shape as [`product(slug)`](#productslug) — see the field table there. `isActive` is not a queryable field on this type, same as [`adminCreateProduct`](#admincreateproductinput) — the response can't directly confirm the active state.
 
 **Errors**
 
-| Case                                                              | Message                              |
-| ----------------------------------------------------------------- | ------------------------------------ |
-| Missing, invalid or expired token                                 | `401 Unauthorized`                   |
-| Valid token, caller is not `ADMIN`                                | `403 Forbidden`                      |
-| `id` does not reference an existing product                       | `PRODUCT_NOT_FOUND`                  |
-| A `categoryIds` entry does not reference an existing category     | `CATEGORY_NOT_FOUND`                 |
-| A `productFamilyIds` entry does not reference an existing family  | `PRODUCT_FAMILY_NOT_FOUND`           |
-| A `collectionIds` entry does not reference an existing collection | `COLLECTION_NOT_FOUND`               |
-| `id` is not a valid UUID                                          | GraphQL validation error (automatic) |
+| Case                                                              | Message                                    |
+| ----------------------------------------------------------------- | ------------------------------------------ |
+| Missing, invalid or expired token                                 | `401 Unauthorized`                         |
+| Valid token, caller is not `ADMIN`                                | `403 Forbidden`                            |
+| `id` does not reference an existing product                       | `PRODUCT_NOT_FOUND`                        |
+| `isActive: true` requested but the product has zero variants      | `CANNOT_ACTIVATE_PRODUCT_WITHOUT_VARIANTS` |
+| A `categoryIds` entry does not reference an existing category     | `CATEGORY_NOT_FOUND`                       |
+| A `productFamilyIds` entry does not reference an existing family  | `PRODUCT_FAMILY_NOT_FOUND`                 |
+| A `collectionIds` entry does not reference an existing collection | `COLLECTION_NOT_FOUND`                     |
+| `id` is not a valid UUID                                          | GraphQL validation error (automatic)       |
 
 ---
 
@@ -2410,6 +2417,8 @@ Same shape as an item in `product(slug).variants` — see `ProductVariantType` u
 
 Permanently deletes a variant. Unlike products, this is a **hard delete** — not reversible, and not soft. **Admin-only.**
 
+**Guardrail:** refuses to delete a product's last remaining variant — a product with zero variants would have no size/price left to sell. Delete the whole product with [`adminDeleteProduct`](#admindeleteproductid) instead, or add a replacement variant first.
+
 **Source:** `backend/src/modules/admin-product/`
 
 **Requires ADMIN role** — see [Authentication](#authentication).
@@ -2447,5 +2456,6 @@ curl -k -X POST https://localhost/graphql \
 | ----------------------------------------------------------------------------- | ------------------------------------ |
 | Missing, invalid or expired token                                             | `401 Unauthorized`                   |
 | Valid token, caller is not `ADMIN`                                            | `403 Forbidden`                      |
+| `variantId` is the product's last remaining variant                           | `CANNOT_DELETE_LAST_VARIANT`         |
 | `variantId` does not reference an existing variant (incl. calling this twice) | `VARIANT_NOT_FOUND`                  |
 | `variantId` is not a valid UUID                                               | GraphQL validation error (automatic) |
