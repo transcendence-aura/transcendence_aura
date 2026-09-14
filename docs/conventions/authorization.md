@@ -112,3 +112,28 @@ being ignored). Run with:
 ```bash
 npm test -- roles.guard
 ```
+
+## Frontend gate: UX, not a security boundary
+
+`frontend/proxy.ts` and `frontend/lib/auth/use-is-admin.ts` also check
+role, but this is **presentation only** — hiding a nav link, redirecting
+away from a page that would just fail to load its data. Neither one
+re-verifies anything against the database, and neither can be trusted as
+an access-control decision:
+
+- The role signal comes from decoding the access token's `permissions`
+  claim client-side (`frontend/lib/auth/decode-token.ts`), without
+  verifying the token's signature. A forged or stale token can only ever
+  produce a wrong _UI_ decision — it can never reach real data, since
+  every GraphQL call still goes through `RolesGuard` regardless of what
+  the frontend decided to show.
+- `proxy.ts` redirects a logged-in non-admin away from `/admin/*` to `/`
+  before the page renders, purely so the user sees a clean redirect
+  instead of a page that loads and then fails on every query.
+- `Navbar.tsx` hides the "Admin" entry point the same way, via
+  `useIsAdmin()`.
+
+If you're adding a new admin-only page or nav entry: reuse
+`useIsAdmin()`/`hasAdminPermission()` for the frontend gate, but the
+route or mutation it points to must still be protected by `RolesGuard` +
+`@Roles(UserRole.ADMIN)` on the backend — that's the actual boundary.

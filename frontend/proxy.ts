@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { hasAdminPermission } from '@/lib/auth/decode-token';
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -13,6 +14,14 @@ export function proxy(request: NextRequest) {
 
     return NextResponse.redirect(loginUrl);
   }
+
+  // Admin routes: UX-only gate. RolesGuard is what actually protects the
+  // data — this just avoids rendering a page that will fail to load
+  // anything, sending a logged-in-but-not-admin user back home instead.
+  if (pathname.startsWith('/admin') && !hasAdminPermission(accessToken)) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   return NextResponse.next();
 }
 
@@ -23,5 +32,6 @@ export const config = {
     '/notifications/:path*',
     /* TODO: Enable back once /login page and auth are fully implemented */
     // '/wishlist/:path*',
+    '/admin/:path*',
   ],
 };
