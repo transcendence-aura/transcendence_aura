@@ -24,6 +24,7 @@ import { FollowModule } from './modules/follows/follow.module';
 import { ProfileModule } from './modules/profiles/profile.module';
 import { NotificationModule } from './modules/notifications/notification.module';
 import { CommonModule } from './common/common.module';
+import { AvatarModule } from './modules/avatar/avatar.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
 
@@ -71,6 +72,7 @@ export class AppModule {
         ProfileModule,
         NotificationModule,
         CommonModule,
+        AvatarModule,
       ],
       controllers: [AppController],
       providers: [AppService],

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 
 export type MediaVisibility = 'public' | 'private';
@@ -70,11 +70,32 @@ export class MediaStorageService {
     await this.unlinkSafely(PRIVATE_UPLOADS_ROOT, relativePath);
   }
 
-  private async unlinkSafely(root: string, relativePath: string): Promise<void> {
+  // Reads a file previously saved with visibility: 'private'. relativePath
+  // must be a path returned by save() (i.e. server-generated, DB-stored),
+  // never taken directly from client input.
+  async readPrivate(relativePath: string): Promise<Buffer> {
+    const filePath = this.resolveWithinRoot(PRIVATE_UPLOADS_ROOT, relativePath);
+    return readFile(filePath);
+  }
+
+  // Resolves relativePath against root and rejects anything that would
+  // escape it (e.g. via ".." segments), regardless of how relativePath
+  // was produced upstream.
+  private resolveWithinRoot(root: string, relativePath: string): string {
     const normalized = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
     const filePath = resolve(root, normalized);
 
     if (!filePath.startsWith(root + sep)) {
+      throw new Error(`Refused to access a path outside its uploads root: ${relativePath}`);
+    }
+    return filePath;
+  }
+
+  private async unlinkSafely(root: string, relativePath: string): Promise<void> {
+    let filePath: string;
+    try {
+      filePath = this.resolveWithinRoot(root, relativePath);
+    } catch {
       this.logger.warn(`Refused to delete a file outside its uploads root: ${relativePath}`);
       return;
     }
