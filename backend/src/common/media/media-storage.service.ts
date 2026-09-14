@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
@@ -40,7 +40,12 @@ export class MediaStorageService {
     const extension = options.extension ?? 'jpeg';
     const root = visibility === 'public' ? PUBLIC_UPLOADS_ROOT : PRIVATE_UPLOADS_ROOT;
 
-    const dir = join(root, subdirectory);
+    // Defense in depth: a caller-supplied subdirectory containing "../" must never be able to write outside the uploads root (same check as
+    // unlinkSafely(), but throwing - a write can't just silently no-op).
+    const dir = resolve(root, subdirectory);
+    if (!dir.startsWith(root + sep)) {
+      throw new BadRequestException('INVALID_UPLOAD_PATH');
+    }
     await mkdir(dir, { recursive: true });
 
     const filename = `${randomUUID()}.${extension}`;
