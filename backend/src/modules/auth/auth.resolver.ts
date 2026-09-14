@@ -11,6 +11,12 @@ import { ACCESS_COOKIE_NAME, getAccessCookieOptions } from './auth.constants';
 import { AppConfiguration } from '../../config/configuration';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
+import { UseGuards } from '@nestjs/common';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
+import { TwoFactorService } from './two-factor.service';
+import { ConfirmTwoFactorInput } from './dto/confirm-two-factor.input';
+import { TwoFactorSetupResponse, TwoFactorConfirmResponse } from './dto/two-factor-response.model';
 
 @Resolver(() => UserType)
 export class AuthResolver {
@@ -18,6 +24,7 @@ export class AuthResolver {
     private readonly authService: AuthService,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly configService: ConfigService<AppConfiguration, true>,
+    private readonly twoFactorService: TwoFactorService,
   ) {}
 
   @Mutation(() => UserType)
@@ -95,5 +102,31 @@ export class AuthResolver {
     return {
       accessToken: result.accessToken,
     };
+  }
+
+  @UseGuards(RolesGuard)
+  @Mutation(() => TwoFactorSetupResponse)
+  async setupTwoFactor(
+    @Context()
+    context: {
+      req: AuthenticatedRequest;
+      res: Response;
+    },
+  ): Promise<TwoFactorSetupResponse> {
+    context.res.setHeader('Cache-Control', 'no-store');
+    return this.twoFactorService.beginEnrollment(context.req.userId!);
+  }
+
+  @UseGuards(RolesGuard)
+  @Mutation(() => TwoFactorConfirmResponse)
+  async confirmTwoFactor(
+    @Args('input')
+    input: ConfirmTwoFactorInput,
+    @Context()
+    context: {
+      req: AuthenticatedRequest;
+    },
+  ): Promise<TwoFactorConfirmResponse> {
+    return this.twoFactorService.confirmEnrollment(context.req.userId!, input.code);
   }
 }

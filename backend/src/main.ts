@@ -31,6 +31,13 @@ async function bootstrap(): Promise<void> {
       bufferLogs: true,
     });
 
+    const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
+    app.enableCors({
+      origin: allowedOrigins,
+      credentials: true,
+    });
+
     app.useGlobalPipes(
       new ValidationPipe({
         transform: true,

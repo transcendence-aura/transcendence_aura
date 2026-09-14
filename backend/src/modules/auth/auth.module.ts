@@ -8,11 +8,22 @@ import { TokenService } from './token.service';
 import { GqlAuthGuard } from './gql-auth.guard';
 import { RefreshTokenService } from './refresh/refresh-token.service';
 import { AnalyticsModule } from '../analytics/analytics.module';
+import { VaultModule } from '../../infrastructure/vault/vault.module';
+import { TotpService } from './totp.service';
+import { TwoFactorService } from './two-factor.service';
 
 @Module({
-  imports: [PrismaModule, JwtModule.register({}), AnalyticsModule],
+  imports: [PrismaModule, JwtModule.register({}), AnalyticsModule, VaultModule],
   controllers: [AuthController],
-  providers: [AuthResolver, AuthService, TokenService, GqlAuthGuard, RefreshTokenService],
+  providers: [
+    AuthResolver,
+    AuthService,
+    TokenService,
+    GqlAuthGuard,
+    RefreshTokenService,
+    TotpService,
+    TwoFactorService,
+  ],
   exports: [AuthService, TokenService, GqlAuthGuard, RefreshTokenService],
 })
 export class AuthModule {}

@@ -59,6 +59,6 @@ path "secret/data/aura/development/smtp" {
 # TOTP
 # --------------------------------------------------------------
 
-path "secret/data/aura/development/totp" {
+path "secret/data/aura/development/totp/users/*" {
   capabilities = ["create", "read", "update", "delete"]
 }
