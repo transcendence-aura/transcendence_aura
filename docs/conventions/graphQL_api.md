@@ -52,6 +52,10 @@
 - [adminAddProductVariant(productId, input)](#adminaddproductvariantproductid-input) — Add a size/format variant to a product. Admin-only
 - [adminUpdateProductVariant(variantId, input)](#adminupdateproductvariantvariantid-input) — Partially update a variant. Admin-only
 - [adminDeleteProductVariant(variantId)](#admindeleteproductvariantvariantid) — Permanently delete a variant (hard delete). Admin-only
+- [POST /api/v1/admin/products/:productId/images](#post-apiv1adminproductsproductidimages) — Upload a product image (REST, not GraphQL). Admin-only
+- [adminReorderProductImages(productId, input)](#adminreorderproductimagesproductid-input) — Reorder a product's images; the first id becomes primary. Admin-only
+- [adminSetPrimaryProductImage(productId, imageId)](#adminsetprimaryproductimageproductid-imageid) — Make one image the primary image. Admin-only
+- [adminDeleteProductImage(productId, imageId)](#admindeleteproductimageproductid-imageid) — Permanently delete a product image (hard delete + file removal). Admin-only
 
 ---
 
@@ -2459,3 +2463,237 @@ curl -k -X POST https://localhost/graphql \
 | `variantId` is the product's last remaining variant                           | `CANNOT_DELETE_LAST_VARIANT`         |
 | `variantId` does not reference an existing variant (incl. calling this twice) | `VARIANT_NOT_FOUND`                  |
 | `variantId` is not a valid UUID                                               | GraphQL validation error (automatic) |
+
+---
+
+## `POST /api/v1/admin/products/:productId/images`
+
+Uploads one product image. This is a **plain REST endpoint**, not a GraphQL mutation — multipart file upload isn't wired up over GraphQL in this app (no `graphql-upload`). Ordering/primary/deletion of images stay as GraphQL mutations below, consistent with the rest of admin-product. **Admin-only.**
+
+**Validation:**
+
+- Only `image/jpeg` is accepted — checked against the real file content (via `image-size`), not just the client-supplied `Content-Type` or file extension, which are both spoofable.
+- The image must be **square** (`width === height`) — anything else is rejected.
+- Max file size: 5 MB (`nginx.conf`'s `/api/` location raises `client_max_body_size` to 6 MB so it doesn't reject legitimate uploads below the app-level limit itself). A file over 5 MB gets Nest/multer's own `413 "File too large"` — no custom handling needed, it's already clean.
+- The uploaded filename is never used to build a path — the server always generates its own `<uuid>.jpeg`, so path traversal via a crafted filename isn't possible.
+
+**Storage:** files are written under a persistent Docker volume (`product_uploads`, see `docker-compose.yml`) at `uploads/public/products/<productId>/<uuid>.jpeg`, and served back publicly (no auth) at `/api/uploads/products/<productId>/<uuid>.jpeg` via `NestExpressApplication.useStaticAssets()` — product images are public by design.
+
+`MediaStorageService` (`backend/src/common/media/media-storage.service.ts`) also implements a `visibility: 'private'` mode that writes to a sibling root (`uploads/private/`) never registered with `useStaticAssets()`, so files saved that way can't be reached by any URL today. This is groundwork for the upcoming avatar upload feature - kept intentionally, not yet wired to any serving route.
+
+**Ordering:** the new image is appended after the product's current highest `position`. The first upload for a product (position `0`) becomes primary automatically, per the existing `position === 0 → primary` convention (see [`ProductMediaType`](#productmediatype)).
+
+**Source:** `backend/src/modules/admin-product/admin-product-image.controller.ts`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/api/v1/admin/products/20000000-0000-4000-8000-000000000001/images \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -F "file=@./serum-front.jpeg;type=image/jpeg"
+```
+
+**Request**
+
+| Field  | Type   | Required | Description                     |
+| ------ | ------ | -------- | ------------------------------- |
+| `file` | binary | Yes      | Multipart form field, one image |
+
+**Response**
+
+`200 OK` with just the created image, as plain JSON (`ProductMediaType` shape - `id`, `url`, `altText`, `position`, `isPrimary`) - not the whole product, callers only need to know what got uploaded.
+
+**Errors**
+
+| Case                                               | Response                                                                    |
+| -------------------------------------------------- | --------------------------------------------------------------------------- |
+| Missing, invalid or expired token                  | `401 Unauthorized`                                                          |
+| Valid token, caller is not `ADMIN`                 | `403 Forbidden`                                                             |
+| No `file` field in the request                     | `400` `IMAGE_FILE_REQUIRED`                                                 |
+| `Content-Type` isn't `image/jpeg`                  | `400` `IMAGE_TYPE_NOT_ALLOWED`                                              |
+| File content isn't actually a valid JPEG           | `400` `IMAGE_TYPE_NOT_ALLOWED`                                              |
+| Image width and height differ                      | `400` `IMAGE_MUST_BE_SQUARE`                                                |
+| File larger than 5 MB                              | `413` `"File too large"` (Nest/multer's default `PayloadTooLargeException`) |
+| `productId` does not reference an existing product | `404` `PRODUCT_NOT_FOUND`                                                   |
+| `productId` is not a valid UUID                    | `400` (GraphQL-style validation error via `ParseUUIDPipe`)                  |
+
+---
+
+## `adminReorderProductImages(productId, input)`
+
+Reorders every image of a product in one call. Takes the **full** ordered list of that product's image ids — the first id becomes primary (`position: 0`). **Admin-only.**
+
+**Source:** `backend/src/modules/admin-product/admin-product-image.service.ts`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminReorderProductImages(
+    productId: "20000000-0000-4000-8000-000000000001"
+    input: {
+      imageIds: ["40000000-0000-4000-8000-000000000002", "40000000-0000-4000-8000-000000000001"]
+    }
+  ) {
+    id
+    media {
+      id
+      position
+      isPrimary
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminReorderProductImages(productId: \"20000000-0000-4000-8000-000000000001\", input: { imageIds: [\"40000000-0000-4000-8000-000000000002\", \"40000000-0000-4000-8000-000000000001\"] }) { id media { id position isPrimary } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument    | Type                             | Required | Description                                  |
+| ----------- | -------------------------------- | -------- | -------------------------------------------- |
+| `productId` | `String` (UUID)                  | Yes      | Id of the product whose images are reordered |
+| `input`     | `AdminReorderProductImagesInput` | Yes      | Full ordered list of the product's image ids |
+
+**`AdminReorderProductImagesInput`**
+
+| Field      | Type               | Required | Description                                               |
+| ---------- | ------------------ | -------- | --------------------------------------------------------- |
+| `imageIds` | `[String]` (UUIDs) | Yes      | Every image id belonging to the product, in desired order |
+
+**Response type: `ProductType`**
+
+Same shape as [`product(slug)`](#productslug) — see the field table there.
+
+**Errors**
+
+| Case                                                                                                      | Message                              |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                                                                         | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`                                                                        | `403 Forbidden`                      |
+| `productId` does not reference an existing product                                                        | `PRODUCT_NOT_FOUND`                  |
+| `imageIds` doesn't contain exactly the product's current image ids (missing, extra, or duplicate entries) | `IMAGE_ORDER_MISMATCH`               |
+| `productId`/an `imageIds` entry is not a valid UUID                                                       | GraphQL validation error (automatic) |
+
+---
+
+## `adminSetPrimaryProductImage(productId, imageId)`
+
+Convenience mutation to make one existing image primary without resubmitting the full order — internally moves it to `position: 0` and shifts the rest, preserving their relative order. **Admin-only.**
+
+**Source:** `backend/src/modules/admin-product/admin-product-image.service.ts`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminSetPrimaryProductImage(
+    productId: "20000000-0000-4000-8000-000000000001"
+    imageId: "40000000-0000-4000-8000-000000000002"
+  ) {
+    id
+    primaryImage {
+      id
+      url
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminSetPrimaryProductImage(productId: \"20000000-0000-4000-8000-000000000001\", imageId: \"40000000-0000-4000-8000-000000000002\") { id primaryImage { id url } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument    | Type            | Required | Description                     |
+| ----------- | --------------- | -------- | ------------------------------- |
+| `productId` | `String` (UUID) | Yes      | Id of the product               |
+| `imageId`   | `String` (UUID) | Yes      | Id of the image to make primary |
+
+**Response type: `ProductType`**
+
+Same shape as [`product(slug)`](#productslug) — see the field table there.
+
+**Errors**
+
+| Case                                      | Message                              |
+| ----------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token         | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`        | `403 Forbidden`                      |
+| `imageId` does not belong to `productId`  | `IMAGE_NOT_FOUND`                    |
+| `productId`/`imageId` is not a valid UUID | GraphQL validation error (automatic) |
+
+---
+
+## `adminDeleteProductImage(productId, imageId)`
+
+Permanently deletes a product image — **hard delete**, not reversible: removes the `Media` row and the underlying file, then re-sequences the remaining images' `position` values so they stay contiguous from `0`. **Admin-only.**
+
+**Source:** `backend/src/modules/admin-product/admin-product-image.service.ts`
+
+**Requires ADMIN role** — see [Authentication](#authentication).
+
+**Mutation**
+
+```graphql
+mutation {
+  adminDeleteProductImage(
+    productId: "20000000-0000-4000-8000-000000000001"
+    imageId: "40000000-0000-4000-8000-000000000002"
+  ) {
+    id
+    media {
+      id
+      position
+      isPrimary
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { adminDeleteProductImage(productId: \"20000000-0000-4000-8000-000000000001\", imageId: \"40000000-0000-4000-8000-000000000002\") { id media { id position isPrimary } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument    | Type            | Required | Description               |
+| ----------- | --------------- | -------- | ------------------------- |
+| `productId` | `String` (UUID) | Yes      | Id of the product         |
+| `imageId`   | `String` (UUID) | Yes      | Id of the image to delete |
+
+**Response type: `ProductType`**
+
+Same shape as [`product(slug)`](#productslug) — see the field table there.
+
+**Errors**
+
+| Case                                      | Message                              |
+| ----------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token         | `401 Unauthorized`                   |
+| Valid token, caller is not `ADMIN`        | `403 Forbidden`                      |
+| `imageId` does not belong to `productId`  | `IMAGE_NOT_FOUND`                    |
+| `productId`/`imageId` is not a valid UUID | GraphQL validation error (automatic) |

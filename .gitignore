@@ -148,6 +148,8 @@ nginx/ssl/
 # GraphQL schemamake
 backend/src/schema.gql
 
+backend/uploads/
+
 # Secrets
 /local-secrets/
 local-secrets/vault-secret-id
