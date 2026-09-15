@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -104,6 +105,23 @@ export class ConversationService {
     return messages.map(mapMessage);
   }
 
+  async listPendingConversations(userId: string): Promise<ConversationType[]> {
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        status: ConversationStatus.PENDING,
+        initiatorId: { not: userId },
+        OR: [{ userOneId: userId }, { userTwoId: userId }],
+      },
+      include: { messages: { orderBy: { createdAt: 'asc' } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return conversations.map((conversation) => ({
+      ...conversation,
+      messages: conversation.messages.map(mapMessage),
+    }));
+  }
+
   async sendMessage(userId: string, input: SendMessageInput): Promise<MessageType> {
     const conversation = await this.assertParticipant(userId, input.conversationId);
 
@@ -153,6 +171,41 @@ export class ConversationService {
     });
 
     return mapped;
+  }
+
+  async acceptConversation(userId: string, conversationId: string): Promise<ConversationType> {
+    return this.respondToConversation(userId, conversationId, ConversationStatus.ACCEPTED);
+  }
+
+  async declineConversation(userId: string, conversationId: string): Promise<ConversationType> {
+    return this.respondToConversation(userId, conversationId, ConversationStatus.DECLINED);
+  }
+
+  private async respondToConversation(
+    userId: string,
+    conversationId: string,
+    nextStatus: ConversationStatus,
+  ): Promise<ConversationType> {
+    const conversation = await this.assertParticipant(userId, conversationId);
+
+    if (userId === conversation.initiatorId) {
+      // The initiator sent the request - only the other participant can respond to it.
+      throw new ForbiddenException('ONLY_RECIPIENT_CAN_RESPOND');
+    }
+
+    if (conversation.status !== ConversationStatus.PENDING) {
+      throw new ConflictException('CONVERSATION_NOT_PENDING');
+    }
+
+    const updated = await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { status: nextStatus },
+      include: { messages: { orderBy: { createdAt: 'asc' } } },
+    });
+
+    this.realtimeGateway.emitConversationStatusChanged(conversationId, updated.status);
+
+    return { ...updated, messages: updated.messages.map(mapMessage) };
   }
 
   private async assertUserExists(userId: string): Promise<void> {
