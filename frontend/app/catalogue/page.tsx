@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { LayoutGrid, List, Heart, ShoppingBag } from 'lucide-react';
+import { LayoutGrid, List, Heart } from 'lucide-react';
 import { CatalogueSidebar } from '@/components/catalogue/CatalogueSidebar';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { useCart } from '@/lib/hooks/useCart';
@@ -63,7 +63,7 @@ const MOCK_PRODUCTS: Product[] = [
       {
         id: 'v-1',
         label: '30ml',
-        isAvailable: true,
+        isAvailable: false,
         price: 64,
         isOnSale: false,
         discountPercentage: 0,
@@ -403,9 +403,9 @@ export default function CataloguePage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [sortBy, setSortBy] = useState<SortOrder>('featured');
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined')
       return (sessionStorage.getItem('catalogue_view') as ViewMode) || 'grid';
-    }
+
     return 'grid';
   });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -416,9 +416,7 @@ export default function CataloguePage() {
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('catalogue_view', mode);
-    }
+    if (typeof window !== 'undefined') sessionStorage.setItem('catalogue_view', mode);
   };
 
   const toggleWishlist = (productId: string) => {
@@ -449,7 +447,13 @@ export default function CataloguePage() {
 
   const handleAddToCart = (product: Product) => {
     const variant = product.variants[0];
-    if (!variant || !variant.isAvailable) return;
+    if (!variant || !variant.isAvailable) {
+      toast({
+        message: 'This product is currently unavailable',
+        variant: 'error',
+      });
+      return;
+    }
 
     addItem({
       id: `${product.id}-${variant.id}`,
@@ -644,13 +648,18 @@ export default function CataloguePage() {
         {/* Products Grid / List */}
         <div className="p-4 sm:p-5 md:p-6">
           {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 md:gap-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 md:gap-6">
               {paginatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isFavorite={wishlist.includes(product.id)}
+                  onToggleWishlist={toggleWishlist}
+                />
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="divide-y divide-border-default/60">
               {paginatedProducts.map((product) => {
                 const isFavorite = wishlist.includes(product.id);
                 const isAvailable = product.variants[0]?.isAvailable ?? true;
@@ -658,39 +667,51 @@ export default function CataloguePage() {
                 return (
                   <div
                     key={product.id}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border-default pb-5 pt-2 hover:bg-card-subtle/30 px-2 transition-colors rounded-sm"
+                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 py-5 px-2 transition-all ${
+                      !isAvailable ? 'opacity-60 grayscale-[35%]' : 'hover:bg-[#FBFBFA]/60'
+                    }`}
                   >
-                    {/* Left: Clickable Image and Details (redirects to /products/[slug]) */}
-                    <div className="flex items-start gap-4 flex-1 min-w-0">
+                    {/* Left: Clickable Image and Details */}
+                    <div className="flex items-start gap-5 flex-1 min-w-0">
                       <Link
                         href={`/products/${product.slug}`}
-                        className="relative h-28 w-24 shrink-0 bg-[#F9F8F6] rounded overflow-hidden border border-border-default group"
+                        className="relative h-28 w-24 shrink-0 bg-[#FBFBFA] overflow-hidden border border-border-default/60 group"
                       >
+                        {!isAvailable ? (
+                          <span className="absolute left-1.5 top-1.5 z-10 bg-[#782424] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white">
+                            Sold out
+                          </span>
+                        ) : product.badges && product.badges.length > 0 ? (
+                          <span className="absolute left-1.5 top-1.5 z-10 bg-[#2A2421] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white">
+                            {product.badges[0]}
+                          </span>
+                        ) : null}
+
                         {product.media[0] && (
                           <Image
                             src={product.media[0].url}
                             alt={product.name}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                           />
                         )}
                       </Link>
 
                       <div className="flex-1 min-w-0">
                         <Link href={`/products/${product.slug}`} className="group inline-block">
-                          <h3 className="font-medium text-body-base text-text-primary group-hover:underline uppercase tracking-wide truncate">
+                          <h3 className="font-medium text-body-base text-text-primary uppercase tracking-wider group-hover:underline truncate">
                             {product.name}
                           </h3>
                         </Link>
-                        <p className="text-body-sm text-text-muted line-clamp-2 mt-1">
+                        <p className="text-body-sm text-text-muted line-clamp-2 mt-1 font-light">
                           {product.description}
                         </p>
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="flex items-center gap-2 mt-2.5">
                           <span className="font-medium text-body-base text-text-primary">
                             €{product.variants[0]?.price.toFixed(2)}
                           </span>
                           {product.variants[0]?.label && (
-                            <span className="text-xs text-text-muted border border-border-default px-1.5 py-0.5 rounded">
+                            <span className="text-xs text-text-muted border border-border-default/70 px-1.5 py-0.5">
                               {product.variants[0].label}
                             </span>
                           )}
@@ -699,28 +720,29 @@ export default function CataloguePage() {
                     </div>
 
                     {/* Right: Add to Cart and Wishlist */}
-                    <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0 sm:pl-4">
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0 sm:pl-4">
                       <button
                         type="button"
                         disabled={!isAvailable}
                         onClick={() => handleAddToCart(product)}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[#2A2421] px-5 py-2 text-xs font-medium text-white hover:bg-[#1A1412] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                        className="border border-border-default bg-page px-5 py-2 text-[11px] font-medium uppercase tracking-widest text-text-primary transition-colors hover:border-brand-dark hover:bg-[#2A2421] hover:text-white disabled:opacity-40 disabled:hover:bg-page disabled:hover:text-text-primary disabled:cursor-not-allowed cursor-pointer"
                       >
-                        <ShoppingBag className="h-3.5 w-3.5" />
-                        <span>{isAvailable ? 'Add to bag' : 'Sold out'}</span>
+                        {isAvailable ? 'Add to bag' : 'Sold out'}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => toggleWishlist(product.id)}
-                        className={`flex h-8 w-8 items-center justify-center rounded-full border border-border-default bg-page hover:border-border-focus transition-colors cursor-pointer ${
-                          isFavorite
-                            ? 'text-red-500 fill-red-500'
-                            : 'text-text-muted hover:text-text-primary'
-                        }`}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-border-default/70 bg-page hover:border-border-focus transition-colors cursor-pointer"
                         aria-label="Add to wishlist"
                       >
-                        <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                        <Heart
+                          className={`h-3.5 w-3.5 transition-colors ${
+                            isFavorite
+                              ? 'fill-red-600 text-red-600'
+                              : 'text-text-muted hover:text-text-primary'
+                          }`}
+                        />
                       </button>
                     </div>
                   </div>
