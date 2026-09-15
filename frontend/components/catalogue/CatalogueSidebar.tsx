@@ -7,6 +7,8 @@ interface CatalogueSidebarProps {
   onSkinTypeChange: (skinTypes: string[]) => void;
   onPriceChange: (range: [number, number]) => void;
   priceRange: [number, number];
+  selectedCategories?: string[];
+  selectedSkinTypes?: string[];
 }
 
 const CATEGORIES = [
@@ -26,9 +28,9 @@ export const CatalogueSidebar = ({
   onSkinTypeChange,
   onPriceChange,
   priceRange,
+  selectedCategories = [],
+  selectedSkinTypes = [],
 }: CatalogueSidebarProps) => {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedSkinTypes, setSelectedSkinTypes] = useState<string[]>([]);
   const [expandedSections, setExpandedSections] = useState({
     category: true,
     skinType: true,
@@ -39,7 +41,6 @@ export const CatalogueSidebar = ({
     const updated = checked
       ? [...selectedCategories, categoryId]
       : selectedCategories.filter((id) => id !== categoryId);
-    setSelectedCategories(updated);
     onCategoryChange(updated);
   };
 
@@ -47,7 +48,6 @@ export const CatalogueSidebar = ({
     const updated = checked
       ? [...selectedSkinTypes, skinTypeId]
       : selectedSkinTypes.filter((id) => id !== skinTypeId);
-    setSelectedSkinTypes(updated);
     onSkinTypeChange(updated);
   };
 
@@ -63,6 +63,7 @@ export const CatalogueSidebar = ({
       {/* Category Filter */}
       <div className="mb-6 pb-6 border-b border-subtle">
         <button
+          type="button"
           onClick={() => toggleSection('category')}
           className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
         >
@@ -77,7 +78,10 @@ export const CatalogueSidebar = ({
         {expandedSections.category && (
           <div className="space-y-2">
             {CATEGORIES.map((category) => (
-              <label key={category.id} className="flex items-center gap-2 cursor-pointer group">
+              <label
+                key={category.id}
+                className="flex items-center gap-2 cursor-pointer group select-none"
+              >
                 <input
                   type="checkbox"
                   checked={selectedCategories.includes(category.id)}
@@ -96,6 +100,7 @@ export const CatalogueSidebar = ({
       {/* Skin Type Filter */}
       <div className="mb-6 pb-6 border-b border-subtle">
         <button
+          type="button"
           onClick={() => toggleSection('skinType')}
           className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
         >
@@ -110,7 +115,10 @@ export const CatalogueSidebar = ({
         {expandedSections.skinType && (
           <div className="space-y-2">
             {SKIN_TYPES.map((skinType) => (
-              <label key={skinType.id} className="flex items-center gap-2 cursor-pointer group">
+              <label
+                key={skinType.id}
+                className="flex items-center gap-2 cursor-pointer group select-none"
+              >
                 <input
                   type="checkbox"
                   checked={selectedSkinTypes.includes(skinType.id)}
@@ -129,6 +137,7 @@ export const CatalogueSidebar = ({
       {/* Price Filter */}
       <div>
         <button
+          type="button"
           onClick={() => toggleSection('price')}
           className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
         >
@@ -146,7 +155,7 @@ export const CatalogueSidebar = ({
               type="text"
               value={`€${priceRange[0]}`}
               onChange={(e) => {
-                const val = Number(e.target.value.replace('€', ''));
+                const val = Number(e.target.value.replace('€', '')) || 0;
                 onPriceChange([val, priceRange[1]]);
               }}
               className="w-15 px-2 py-1.5 border border-border-default text-body-sm text-text-primary bg-page font-jost outline-none"
@@ -156,7 +165,7 @@ export const CatalogueSidebar = ({
               type="text"
               value={`€${priceRange[1]}`}
               onChange={(e) => {
-                const val = Number(e.target.value.replace('€', ''));
+                const val = Number(e.target.value.replace('€', '')) || 0;
                 onPriceChange([priceRange[0], val]);
               }}
               className="w-15 px-2 py-1.5 border border-border-default text-body-sm text-text-primary bg-page font-jost outline-none"

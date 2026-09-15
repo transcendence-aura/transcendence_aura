@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Search, Heart, ShoppingBag, Menu, X, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { CartDot } from '@/components/ui/feedback/cart-dot';
 
 const LANGUAGES = ['EN', 'FR', 'AR'] as const;
 type Language = (typeof LANGUAGES)[number];
@@ -65,14 +66,17 @@ export function Navbar() {
           <Heart className="h-5 w-5" />
         </Link>
 
-        {/* Cart */}
-        <Link
-          href="/cart"
-          aria-label="Shopping cart"
-          className="text-text-secondary hover:text-text-primary transition-colors"
-        >
-          <ShoppingBag className="h-5 w-5" />
-        </Link>
+        {/* Cart Trigger */}
+        <div className="relative">
+          <Link
+            href="/checkout"
+            aria-label="Shopping cart"
+            className="text-text-secondary hover:text-text-primary transition-colors flex items-center"
+          >
+            <ShoppingBag className="h-5 w-5" />
+            <CartDot />
+          </Link>
+        </div>
 
         {/* Desktop Language Switcher */}
         <div className="hidden sm:flex items-center border-l border-border-default pl-3 text-[10px] tracking-wider uppercase">
@@ -139,6 +143,15 @@ export function Navbar() {
             className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors"
           >
             About
+          </Link>
+
+          {/* Cart Mobile */}
+          <Link
+            href="/checkout"
+            onClick={() => setMenuOpen(false)}
+            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors flex items-center gap-2"
+          >
+            <ShoppingBag className="h-4 w-4" /> Cart
           </Link>
 
           {/* Mobile Language Selection */}

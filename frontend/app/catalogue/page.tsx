@@ -2,8 +2,12 @@
 
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { LayoutGrid, List, Heart, ShoppingBag } from 'lucide-react';
 import { CatalogueSidebar } from '@/components/catalogue/CatalogueSidebar';
 import { ProductCard } from '@/components/cards/ProductCard';
+import { useCart } from '@/lib/hooks/useCart';
+import { useToast } from '@/components/ui/feedback/toast';
 
 type SortOrder = 'featured' | 'price-asc' | 'price-desc';
 type ViewMode = 'grid' | 'list';
@@ -32,6 +36,12 @@ interface Product {
   skinTypeIds?: string[];
 }
 
+/*
+ * TODO: GraphQL Integration
+ * 1. Replace MOCK_PRODUCTS with real Apollo Client query (GET_PRODUCTS).
+ * 2. Use filtering, sorting, and pagination variables (limit, offset) from GraphQL arguments.
+ * 3. Clean up client-side mock data array when backend resolver is active.
+ */
 const MOCK_PRODUCTS: Product[] = [
   {
     id: 'prod-1',
@@ -43,15 +53,15 @@ const MOCK_PRODUCTS: Product[] = [
     skinTypeIds: ['2', '3'],
     media: [
       {
-        id: 'media-1',
-        url: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80',
+        id: 'm-1',
+        url: '/images/products/product-vitamin-c-serum.jpg',
         altText: 'Vitamin C Serum',
         position: 0,
       },
     ],
     variants: [
       {
-        id: 'var-1',
+        id: 'v-1',
         label: '30ml',
         isAvailable: true,
         price: 64,
@@ -70,15 +80,15 @@ const MOCK_PRODUCTS: Product[] = [
     skinTypeIds: ['3', '4'],
     media: [
       {
-        id: 'media-2',
-        url: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80',
+        id: 'm-2',
+        url: '/images/products/product-rosehip-face-oil.jpg',
         altText: 'Rosehip Oil',
         position: 0,
       },
     ],
     variants: [
       {
-        id: 'var-2',
+        id: 'v-2',
         label: '50ml',
         isAvailable: true,
         price: 52,
@@ -97,15 +107,15 @@ const MOCK_PRODUCTS: Product[] = [
     skinTypeIds: ['2', '3'],
     media: [
       {
-        id: 'media-3',
-        url: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80',
+        id: 'm-3',
+        url: '/images/products/product-barrier-repair-cream.jpg',
         altText: 'Barrier Cream',
         position: 0,
       },
     ],
     variants: [
       {
-        id: 'var-3',
+        id: 'v-3',
         label: '100ml',
         isAvailable: true,
         price: 48,
@@ -120,19 +130,19 @@ const MOCK_PRODUCTS: Product[] = [
     name: 'Brightening Eye Serum',
     description: 'Targeted eye care serum.',
     badges: [],
-    categoryId: '2',
+    categoryId: '1',
     skinTypeIds: ['3'],
     media: [
       {
-        id: 'media-4',
-        url: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80',
+        id: 'm-4',
+        url: '/images/products/product-brightening-eye-serum.jpg',
         altText: 'Eye Serum',
         position: 0,
       },
     ],
     variants: [
       {
-        id: 'var-4',
+        id: 'v-4',
         label: '15ml',
         isAvailable: true,
         price: 44,
@@ -151,15 +161,15 @@ const MOCK_PRODUCTS: Product[] = [
     skinTypeIds: ['4'],
     media: [
       {
-        id: 'media-5',
-        url: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80',
+        id: 'm-5',
+        url: '/images/products/product-retinol-night-serum.jpg',
         altText: 'Retinol Serum',
         position: 0,
       },
     ],
     variants: [
       {
-        id: 'var-5',
+        id: 'v-5',
         label: '30ml',
         isAvailable: true,
         price: 72,
@@ -178,18 +188,180 @@ const MOCK_PRODUCTS: Product[] = [
     skinTypeIds: ['2', '3', '4'],
     media: [
       {
-        id: 'media-6',
-        url: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=80',
+        id: 'm-6',
+        url: '/images/products/product-hydrating-face-mist.jpg',
         altText: 'Face Mist',
         position: 0,
       },
     ],
     variants: [
       {
-        id: 'var-6',
+        id: 'v-6',
         label: '100ml',
         isAvailable: true,
         price: 38,
+        isOnSale: false,
+        discountPercentage: 0,
+      },
+    ],
+  },
+  {
+    id: 'prod-7',
+    slug: 'balancing-toner',
+    name: 'Balancing Toner',
+    description: 'Clarifying and pore-refining facial toner.',
+    badges: [],
+    categoryId: '2',
+    skinTypeIds: ['3', '4'],
+    media: [
+      {
+        id: 'm-7',
+        url: '/images/products/product-balancing-toner.jpg',
+        altText: 'Balancing Toner',
+        position: 0,
+      },
+    ],
+    variants: [
+      {
+        id: 'v-7',
+        label: '150ml',
+        isAvailable: true,
+        price: 36,
+        isOnSale: false,
+        discountPercentage: 0,
+      },
+    ],
+  },
+  {
+    id: 'prod-8',
+    slug: 'gentle-cleansing-oil',
+    name: 'Gentle Cleansing Oil',
+    description: 'Melt away impurities without stripping moisture.',
+    badges: ['Bestseller'],
+    categoryId: '2',
+    skinTypeIds: ['2', '3', '4'],
+    media: [
+      {
+        id: 'm-8',
+        url: '/images/products/product-gentle-cleansing-oil.jpg',
+        altText: 'Cleansing Oil',
+        position: 0,
+      },
+    ],
+    variants: [
+      {
+        id: 'v-8',
+        label: '120ml',
+        isAvailable: true,
+        price: 42,
+        isOnSale: false,
+        discountPercentage: 0,
+      },
+    ],
+  },
+  {
+    id: 'prod-9',
+    slug: 'gentle-face-wash',
+    name: 'Gentle Face Wash',
+    description: 'Mild foaming daily gel cleanser.',
+    badges: [],
+    categoryId: '2',
+    skinTypeIds: ['2', '3'],
+    media: [
+      {
+        id: 'm-9',
+        url: '/images/products/product-gentle-face-wash.jpg',
+        altText: 'Face Wash',
+        position: 0,
+      },
+    ],
+    variants: [
+      {
+        id: 'v-9',
+        label: '150ml',
+        isAvailable: true,
+        price: 34,
+        isOnSale: false,
+        discountPercentage: 0,
+      },
+    ],
+  },
+  {
+    id: 'prod-10',
+    slug: 'deep-hydration-mask',
+    name: 'Deep Hydration Mask',
+    description: 'Overnight moisture surge infusion treatment.',
+    badges: ['Ritual'],
+    categoryId: '3',
+    skinTypeIds: ['2'],
+    media: [
+      {
+        id: 'm-10',
+        url: '/images/products/product-deep-hydration-mask.jpg',
+        altText: 'Hydration Mask',
+        position: 0,
+      },
+    ],
+    variants: [
+      {
+        id: 'v-10',
+        label: '75ml',
+        isAvailable: true,
+        price: 56,
+        isOnSale: false,
+        discountPercentage: 0,
+      },
+    ],
+  },
+  {
+    id: 'prod-11',
+    slug: 'intensive-night-cream',
+    name: 'Intensive Night Cream',
+    description: 'Cellular recovery and overnight barrier nourishment.',
+    badges: [],
+    categoryId: '2',
+    skinTypeIds: ['2', '3'],
+    media: [
+      {
+        id: 'm-11',
+        url: '/images/products/product-intensive-night-cream.jpg',
+        altText: 'Night Cream',
+        position: 0,
+      },
+    ],
+    variants: [
+      {
+        id: 'v-11',
+        label: '50ml',
+        isAvailable: true,
+        price: 68,
+        isOnSale: false,
+        discountPercentage: 0,
+      },
+    ],
+  },
+  {
+    id: 'prod-12',
+    slug: 'luminous-face-serum',
+    name: 'Luminous Face Serum',
+    description: 'Radiance booster for dull and fatigued complexions.',
+    badges: ['New'],
+    categoryId: '1',
+    skinTypeIds: ['2', '3', '4'],
+    media: [
+      {
+        id: 'm-12',
+        url: '/images/products/product-luminous-face-serum.jpg',
+        altText: 'Luminous Serum',
+        position: 0,
+      },
+    ],
+    variants: [
+      {
+        id: 'v-12',
+        label: '30ml',
+        isAvailable: true,
+        price: 58,
         isOnSale: false,
         discountPercentage: 0,
       },
@@ -209,51 +381,99 @@ const SKIN_TYPES_MAP: Record<string, string> = {
   '4': 'Oily skin',
 };
 
+const ITEMS_PER_PAGE = 9;
+
 const sortProducts = (products: Product[], sortBy: SortOrder): Product[] => {
   const sorted = [...products];
 
   switch (sortBy) {
     case 'price-asc':
-      return sorted.sort((a, b) => {
-        const priceA = a.variants[0]?.price || 0;
-        const priceB = b.variants[0]?.price || 0;
-        return priceA - priceB;
-      });
+      return sorted.sort((a, b) => (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0));
     case 'price-desc':
-      return sorted.sort((a, b) => {
-        const priceA = a.variants[0]?.price || 0;
-        const priceB = b.variants[0]?.price || 0;
-        return priceB - priceA;
-      });
+      return sorted.sort((a, b) => (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0));
     default:
       return sorted;
   }
 };
 
 export default function CataloguePage() {
+  const { addItem } = useCart();
+  const { toast } = useToast();
+
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [sortBy, setSortBy] = useState<SortOrder>('featured');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined') {
+      return (sessionStorage.getItem('catalogue_view') as ViewMode) || 'grid';
+    }
+    return 'grid';
+  });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSkinTypes, setSelectedSkinTypes] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('catalogue_view', mode);
+    }
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
+    );
+  };
 
   const handlePriceChange = (range: [number, number]) => {
     setPriceRange(range);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (categories: string[]) => {
+    setSelectedCategories(categories);
+    setCurrentPage(1);
+  };
+
+  const handleSkinTypeChange = (skinTypes: string[]) => {
+    setSelectedSkinTypes(skinTypes);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(e.target.value as SortOrder);
+    setCurrentPage(1);
+  };
+
+  const handleAddToCart = (product: Product) => {
+    const variant = product.variants[0];
+    if (!variant || !variant.isAvailable) return;
+
+    addItem({
+      id: `${product.id}-${variant.id}`,
+      productId: product.id,
+      productName: product.name,
+      variantId: variant.id,
+      variantLabel: variant.label,
+      price: variant.price,
+      quantity: 1,
+      image: product.media[0]?.url,
+    });
+
+    toast({
+      message: `Added ${product.name} to cart`,
+      variant: 'success',
+    });
   };
 
   const filteredProducts = useMemo(() => {
     return MOCK_PRODUCTS.filter((product) => {
       const minPrice = Math.min(...product.variants.map((v) => v.price));
-
-      /* Price filter */
       const priceMatch = minPrice >= priceRange[0] && minPrice <= priceRange[1];
-
-      /* Category filter - if nothing selected, all products pass */
       const categoryMatch =
         selectedCategories.length === 0 || selectedCategories.includes(product.categoryId || '');
-
-      /* Skin type filter - if nothing selected, all products pass */
       const skinTypeMatch =
         selectedSkinTypes.length === 0 ||
         (product.skinTypeIds || []).some((id) => selectedSkinTypes.includes(id));
@@ -263,6 +483,12 @@ export default function CataloguePage() {
   }, [priceRange, selectedCategories, selectedSkinTypes]);
 
   const sortedProducts = sortProducts(filteredProducts, sortBy);
+
+  const totalPages = Math.ceil(sortedProducts.length / ITEMS_PER_PAGE) || 1;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedProducts, currentPage]);
 
   return (
     <div className="bg-page min-h-screen">
@@ -276,13 +502,13 @@ export default function CataloguePage() {
           <p className="text-body-sm text-text-muted">{sortedProducts.length} products</p>
         </div>
 
-        {/* Sort & View Controls */}
+        {/* Controls */}
         <div className="flex w-full items-center gap-3 sm:w-auto sm:gap-4">
           <div className="hidden items-center gap-2 sm:flex">
             <span className="text-sm text-ui-label text-text-muted">Sort by</span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOrder)}
+              onChange={handleSortChange}
               className="border-0 border-b border-border-default bg-transparent pb-0.5 text-body-sm text-text-primary outline-none cursor-pointer"
             >
               <option value="featured">Featured</option>
@@ -291,34 +517,39 @@ export default function CataloguePage() {
             </select>
           </div>
 
-          {/* Grid/List View Icons */}
-          <div className="flex gap-0.5 ml-auto sm:ml-0">
+          {/* Grid / List View Toggle */}
+          <div className="flex gap-1 ml-auto sm:ml-0">
             <button
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center justify-center text-sm w-7 h-7 ${
+              type="button"
+              onClick={() => handleViewModeChange('grid')}
+              aria-label="Grid view"
+              className={`flex items-center justify-center w-8 h-8 rounded border transition-colors ${
                 viewMode === 'grid'
-                  ? 'border-1.5 border-border-focus text-text-primary'
-                  : 'border border-border-default text-text-muted'
+                  ? 'border-brand-dark bg-card-subtle text-text-primary'
+                  : 'border-border-default text-text-muted hover:text-text-primary'
               }`}
             >
-              ⊞
+              <LayoutGrid className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setViewMode('list')}
-              className={`flex items-center justify-center text-sm w-7 h-7 ${
+              type="button"
+              onClick={() => handleViewModeChange('list')}
+              aria-label="List view"
+              className={`flex items-center justify-center w-8 h-8 rounded border transition-colors ${
                 viewMode === 'list'
-                  ? 'border-1.5 border-border-focus text-text-primary'
-                  : 'border border-border-default text-text-muted'
+                  ? 'border-brand-dark bg-card-subtle text-text-primary'
+                  : 'border-border-default text-text-muted hover:text-text-primary'
               }`}
             >
-              ≡
+              <List className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Mobile Menu Toggle */}
           <button
+            type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="flex items-center justify-center w-7 h-7 md:hidden border border-border-default text-text-primary"
+            className="flex items-center justify-center w-8 h-8 md:hidden border border-border-default text-text-primary rounded"
+            aria-label="Toggle filters"
           >
             ☰
           </button>
@@ -336,8 +567,11 @@ export default function CataloguePage() {
           >
             {CATEGORIES_MAP[catId]}
             <button
-              onClick={() => setSelectedCategories(selectedCategories.filter((id) => id !== catId))}
-              className="ml-1 text-xs text-text-muted hover:text-text-primary"
+              type="button"
+              onClick={() => {
+                handleCategoryChange(selectedCategories.filter((id) => id !== catId));
+              }}
+              className="ml-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
             >
               ✕
             </button>
@@ -351,8 +585,11 @@ export default function CataloguePage() {
           >
             {SKIN_TYPES_MAP[skinId]}
             <button
-              onClick={() => setSelectedSkinTypes(selectedSkinTypes.filter((id) => id !== skinId))}
-              className="ml-1 text-xs text-text-muted hover:text-text-primary"
+              type="button"
+              onClick={() => {
+                handleSkinTypeChange(selectedSkinTypes.filter((id) => id !== skinId));
+              }}
+              className="ml-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
             >
               ✕
             </button>
@@ -363,8 +600,9 @@ export default function CataloguePage() {
           <div className="flex items-center gap-1.5 border border-border-default px-2.5 py-1 text-body-sm text-text-primary">
             €{priceRange[0]} — €{priceRange[1]}
             <button
-              onClick={() => setPriceRange([0, 1000])}
-              className="ml-1 text-xs text-text-muted hover:text-text-primary"
+              type="button"
+              onClick={() => handlePriceChange([0, 1000])}
+              className="ml-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
             >
               ✕
             </button>
@@ -376,12 +614,14 @@ export default function CataloguePage() {
         priceRange[0] > 0 ||
         priceRange[1] < 1000 ? (
           <button
+            type="button"
             onClick={() => {
               setSelectedCategories([]);
               setSelectedSkinTypes([]);
               setPriceRange([0, 1000]);
+              setCurrentPage(1);
             }}
-            className="ml-auto border-b border-border-default pb-0.5 text-sm text-ui-label text-text-muted"
+            className="ml-auto border-b border-border-default pb-0.5 text-sm text-ui-label text-text-muted cursor-pointer"
           >
             Clear all
           </button>
@@ -390,76 +630,149 @@ export default function CataloguePage() {
 
       {/* Main Layout: Sidebar + Grid */}
       <div className="grid grid-cols-1 md:grid-cols-[210px_1fr] min-h-175">
-        {/* Sidebar - Hidden on mobile, shown on md+ or when toggled */}
         <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block`}>
           <CatalogueSidebar
-            onCategoryChange={setSelectedCategories}
-            onSkinTypeChange={setSelectedSkinTypes}
+            onCategoryChange={handleCategoryChange}
+            onSkinTypeChange={handleSkinTypeChange}
             onPriceChange={handlePriceChange}
             priceRange={priceRange}
+            selectedCategories={selectedCategories}
+            selectedSkinTypes={selectedSkinTypes}
           />
         </div>
 
-        {/* Products Grid/List */}
+        {/* Products Grid / List */}
         <div className="p-4 sm:p-5 md:p-6">
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 md:gap-5">
-              {sortedProducts.map((product) => (
+              {paginatedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-4">
-              {sortedProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="flex flex-col gap-4 border-b border-border-default pb-4 sm:flex-row"
-                >
-                  <div className="h-48 w-full shrink-0 bg-subtle rounded sm:h-32 sm:w-24 sm:shrink-0">
-                    {product.media[0] && (
-                      <Image
-                        src={product.media[0].url}
-                        alt={product.name}
-                        width={96}
-                        height={128}
-                        className="h-full w-full object-cover"
-                      />
-                    )}
+            <div className="space-y-4">
+              {paginatedProducts.map((product) => {
+                const isFavorite = wishlist.includes(product.id);
+                const isAvailable = product.variants[0]?.isAvailable ?? true;
+
+                return (
+                  <div
+                    key={product.id}
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border-default pb-5 pt-2 hover:bg-card-subtle/30 px-2 transition-colors rounded-sm"
+                  >
+                    {/* Left: Clickable Image and Details (redirects to /products/[slug]) */}
+                    <div className="flex items-start gap-4 flex-1 min-w-0">
+                      <Link
+                        href={`/products/${product.slug}`}
+                        className="relative h-28 w-24 shrink-0 bg-[#F9F8F6] rounded overflow-hidden border border-border-default group"
+                      >
+                        {product.media[0] && (
+                          <Image
+                            src={product.media[0].url}
+                            alt={product.name}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        )}
+                      </Link>
+
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/products/${product.slug}`} className="group inline-block">
+                          <h3 className="font-medium text-body-base text-text-primary group-hover:underline uppercase tracking-wide truncate">
+                            {product.name}
+                          </h3>
+                        </Link>
+                        <p className="text-body-sm text-text-muted line-clamp-2 mt-1">
+                          {product.description}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="font-medium text-body-base text-text-primary">
+                            €{product.variants[0]?.price.toFixed(2)}
+                          </span>
+                          {product.variants[0]?.label && (
+                            <span className="text-xs text-text-muted border border-border-default px-1.5 py-0.5 rounded">
+                              {product.variants[0].label}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Add to Cart and Wishlist */}
+                    <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end shrink-0 sm:pl-4">
+                      <button
+                        type="button"
+                        disabled={!isAvailable}
+                        onClick={() => handleAddToCart(product)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#2A2421] px-5 py-2 text-xs font-medium text-white hover:bg-[#1A1412] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <ShoppingBag className="h-3.5 w-3.5" />
+                        <span>{isAvailable ? 'Add to bag' : 'Sold out'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleWishlist(product.id)}
+                        className={`flex h-8 w-8 items-center justify-center rounded-full border border-border-default bg-page hover:border-border-focus transition-colors cursor-pointer ${
+                          isFavorite
+                            ? 'text-red-500 fill-red-500'
+                            : 'text-text-muted hover:text-text-primary'
+                        }`}
+                        aria-label="Add to wishlist"
+                      >
+                        <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="mb-1 font-medium text-body-base text-text-primary">
-                      {product.name}
-                    </h3>
-                    <p className="mb-2 text-body-sm text-text-muted">{product.description}</p>
-                    <p className="font-medium text-body-base text-text-primary">
-                      €{product.variants[0]?.price}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
-          {/* Pagination */}
-          {sortedProducts.length > 0 && (
-            <div className="mt-6 flex items-center justify-center gap-1 overflow-x-auto pb-2 sm:mt-9">
-              <button className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus">
+          {/* Interactive Pagination */}
+          {sortedProducts.length > 0 && totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-1.5 overflow-x-auto pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                disabled={currentPage === 1}
+                className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                aria-label="Previous page"
+              >
                 ‹
               </button>
-              <button className="flex h-8 w-8 shrink-0 items-center justify-center border-1.5 border-border-focus bg-page font-medium text-body-sm text-text-primary">
-                1
-              </button>
-              <button className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus">
-                2
-              </button>
-              <button className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus">
-                3
-              </button>
-              <span className="px-1 text-body-sm text-text-muted">…</span>
-              <button className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus">
-                8
-              </button>
-              <button className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus">
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => {
+                    setCurrentPage(page);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center bg-page text-body-sm transition-colors ${
+                    currentPage === page
+                      ? 'border-1.5 border-border-focus font-medium text-text-primary'
+                      : 'border border-border-default text-text-muted hover:border-border-focus'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                disabled={currentPage === totalPages}
+                className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                aria-label="Next page"
+              >
                 ›
               </button>
             </div>
