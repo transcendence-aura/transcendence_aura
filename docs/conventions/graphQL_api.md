@@ -26,6 +26,8 @@
 - [adminUser(id)](#adminuserid) — Single user detail view. Admin-only
 - [followersCount(userId)](#followerscountuserid) — Number of users following the given user
 - [followingCount(userId)](#followingcountuserid) — Number of users the given user follows
+- [conversation(otherUserId)](#conversationotheruserid) — Get or create the 1:1 conversation with another user; starts `PENDING` unless the recipient already follows the initiator
+- [messages(conversationId)](#messagesconversationid) — Messages in a conversation the caller participates in, oldest first
 - [userProfile(handle)](#userprofilehandle) — Public profile view: identity, bio, follower/following counts, recent activity
 - [notifications(unreadOnly)](#notificationsunreadonly) — Authenticated user's notifications, all or unread-only
 - [registrationsOverTime(period)](#registrationsovertimeperiod) — Registration counts bucketed over a period. Admin-only
@@ -40,6 +42,7 @@
 - [removeWishlistItem(input)](#removewishlistiteminput) — Remove a product from the authenticated user's wishlist (idempotent)
 - [followUser(input)](#followuserinput) — Follow another user (idempotent, self-follow rejected)
 - [unfollowUser(input)](#unfollowuserinput) — Unfollow a user (idempotent)
+- [sendMessage(input)](#sendmessageinput) — Send a message in a conversation; the initiator gets only one message while it's `PENDING`
 - [markNotificationRead(input)](#marknotificationreadinput) — Mark a single notification as read (scoped to its owner)
 - [markAllNotificationsRead](#markallnotificationsread) — Mark all of the caller's unread notifications as read, returns the count
 - [adminSetUserRole(userId, role)](#adminsetuserroleuserid-role) — Change a user's role between `USER` and `ADMIN`. Admin-only, self-target rejected
@@ -1412,6 +1415,139 @@ curl -k -X POST https://localhost/graphql \
 
 ---
 
+## `ConversationStatus`
+
+The state of a 1:1 conversation between two users. Referenced by [`conversation`](#conversationotheruserid), [`pendingConversations`](#pendingconversations), [`acceptConversation`](#acceptconversationinput) and [`declineConversation`](#declineconversationinput).
+
+| Value      | Meaning                                                                                                          |
+| ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| `PENDING`  | Opened by someone the recipient doesn't (yet) follow. Awaiting the recipient's response.                         |
+| `ACCEPTED` | Normal conversation — both sides can send messages freely.                                                       |
+| `DECLINED` | The recipient refused the request. Blocks further messages from either side, unless later unblocked (see below). |
+
+---
+
+## `conversation(otherUserId)`
+
+Gets the caller's 1:1 conversation with another user, creating it if it doesn't exist yet. Requires authentication.
+
+On creation, [`status`](#conversationstatus) is decided once and never re-evaluated afterward: it starts `ACCEPTED` if the recipient (`otherUserId`) already follows the caller — this also covers the mutual-follow case, since a mutual follow implies the recipient follows the caller — otherwise it starts `PENDING`. Calling this again for an existing pair just returns that conversation as-is, whatever its current status.
+
+**Source:** `backend/src/modules/conversations/`
+
+**Query**
+
+```graphql
+query {
+  conversation(otherUserId: "00000000-0000-4000-8000-000000000003") {
+    id
+    userOneId
+    userTwoId
+    initiatorId
+    status
+    messages {
+      id
+      senderId
+      content
+      createdAt
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ conversation(otherUserId: \"00000000-0000-4000-8000-000000000003\") { id status initiatorId } }"}' | jq
+```
+
+**Arguments**
+
+| Argument      | Type            | Required | Description                 |
+| ------------- | --------------- | -------- | --------------------------- |
+| `otherUserId` | `String` (UUID) | Yes      | Id of the other participant |
+
+**Response type: `ConversationType`**
+
+| Field         | Type                 | Nullable | Description                                                         |
+| ------------- | -------------------- | -------- | ------------------------------------------------------------------- |
+| `id`          | `String`             | No       | UUID                                                                |
+| `userOneId`   | `String`             | No       | The two participant ids, alphabetically sorted (not creation order) |
+| `userTwoId`   | `String`             | No       | See above                                                           |
+| `initiatorId` | `String`             | No       | Who actually opened the conversation                                |
+| `status`      | `ConversationStatus` | No       | See [`ConversationStatus`](#conversationstatus)                     |
+| `messages`    | `[MessageType]`      | No       | All messages, oldest first                                          |
+
+**`MessageType`**
+
+| Field       | Type       | Nullable | Description                            |
+| ----------- | ---------- | -------- | -------------------------------------- |
+| `id`        | `String`   | No       | UUID                                   |
+| `senderId`  | `String`   | Yes      | `null` if the sender was later deleted |
+| `content`   | `String`   | No       |                                        |
+| `createdAt` | `DateTime` | No       |                                        |
+
+**Errors**
+
+| Case                                              | Message               |
+| ------------------------------------------------- | --------------------- |
+| Missing, invalid or expired token                 | `401 Unauthorized`    |
+| `otherUserId` is the caller's own id              | `CANNOT_MESSAGE_SELF` |
+| `otherUserId` does not reference an existing user | `USER_NOT_FOUND`      |
+
+---
+
+## `messages(conversationId)`
+
+Messages of a conversation the caller participates in, oldest first. Requires authentication.
+
+**Source:** `backend/src/modules/conversations/`
+
+**Query**
+
+```graphql
+query {
+  messages(conversationId: "40000000-0000-4000-8000-000000000001") {
+    id
+    senderId
+    content
+    createdAt
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ messages(conversationId: \"40000000-0000-4000-8000-000000000001\") { id senderId content createdAt } }"}' | jq
+```
+
+**Arguments**
+
+| Argument         | Type            | Required | Description            |
+| ---------------- | --------------- | -------- | ---------------------- |
+| `conversationId` | `String` (UUID) | Yes      | Id of the conversation |
+
+**Response type: `[MessageType]`**
+
+Same shape as the `messages` field of [`conversation`](#conversationotheruserid).
+
+**Errors**
+
+| Case                                                         | Message                                               |
+| ------------------------------------------------------------ | ----------------------------------------------------- |
+| Missing, invalid or expired token                            | `401 Unauthorized`                                    |
+| Caller is not a participant of `conversationId`              | `NOT_A_PARTICIPANT`                                   |
+| `conversationId` does not reference an existing conversation | `NOT_A_PARTICIPANT` — same as not being a participant |
+
+---
+
 ## `userProfile(handle)`
 
 Returns the public view of a user's profile: name, handle, bio, follower/following counts, and a small "recent activity" snapshot (last users followed, last products added to the wishlist). Public — no authentication required.
@@ -1839,6 +1975,8 @@ Always `true` once the call succeeds, whether the entry existed beforehand or no
 
 Follows another user. Scoped strictly to the caller — the follower is always the one identified by the access token, never a client-supplied id. Idempotent: following an already-followed user is a no-op that returns `true` without creating a duplicate relationship. Following yourself is rejected.
 
+If the caller was the recipient of a conversation they'd previously [declined](#declineconversationinput) from the user they're now following, that conversation is automatically moved back to `ACCEPTED` — following is treated as forgiveness. This only triggers in that exact direction (recipient follows initiator); the initiator following the recipient back has no effect on a declined conversation.
+
 **Source:** `backend/src/modules/follows/`
 
 **Mutation**
@@ -1922,6 +2060,67 @@ Always `true` once the call succeeds, whether the relationship existed beforehan
 | ---------------------------------- | ------------------------------------ |
 | Missing, invalid or expired token  | `401 Unauthorized`                   |
 | `targetUserId` is not a valid UUID | GraphQL validation error (automatic) |
+
+---
+
+## `sendMessage(input)`
+
+Sends a message in a conversation the caller participates in. Behavior depends on the conversation's [`status`](#conversationstatus):
+
+- `ACCEPTED` — no restriction, either side can send freely.
+- `PENDING` — only the initiator may send, and only once; the recipient must [`acceptConversation`](#acceptconversationinput) or [`declineConversation`](#declineconversationinput) first.
+- `DECLINED` — blocked for both sides, unless later unblocked (see [`followUser`](#followuserinput)).
+
+**Source:** `backend/src/modules/conversations/`
+
+**Mutation**
+
+```graphql
+mutation {
+  sendMessage(input: { conversationId: "40000000-0000-4000-8000-000000000001", content: "Hey!" }) {
+    id
+    content
+    createdAt
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { sendMessage(input: { conversationId: \"40000000-0000-4000-8000-000000000001\", content: \"Hey!\" }) { id content createdAt } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type               | Required | Description |
+| -------- | ------------------ | -------- | ----------- |
+| `input`  | `SendMessageInput` | Yes      | See below   |
+
+**`SendMessageInput`**
+
+| Field            | Type            | Required | Description          |
+| ---------------- | --------------- | -------- | -------------------- |
+| `conversationId` | `String` (UUID) | Yes      | Target conversation  |
+| `content`        | `String`        | Yes      | 1 to 2000 characters |
+
+**Response type: `MessageType`**
+
+Same shape as the `messages` field of [`conversation`](#conversationotheruserid).
+
+**Errors**
+
+| Case                                                                                                | Message                              |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Missing, invalid or expired token                                                                   | `401 Unauthorized`                   |
+| Caller is not a participant of `conversationId`                                                     | `NOT_A_PARTICIPANT`                  |
+| Conversation is `DECLINED`                                                                          | `CONVERSATION_DECLINED`              |
+| Conversation is `PENDING` and caller is the recipient                                               | `CONVERSATION_PENDING_APPROVAL`      |
+| Conversation is `PENDING`, caller is the initiator, and they already sent their one allowed message | `CONVERSATION_MESSAGE_LIMIT_REACHED` |
+| `content` is empty or over 2000 characters                                                          | GraphQL validation error (automatic) |
 
 ---
 

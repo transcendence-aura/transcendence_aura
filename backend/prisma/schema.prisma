@@ -24,6 +24,12 @@ enum NotificationType {
   SYSTEM
 }
 
+enum ConversationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 enum TokenRevocationReason {
   ROTATED
   REUSE_DETECTED
@@ -65,6 +71,7 @@ model User {
 
   conversationsAsUserOne Conversation[] @relation("ConversationUserOne")
   conversationsAsUserTwo Conversation[] @relation("ConversationUserTwo")
+  conversationsInitiated Conversation[] @relation("ConversationInitiator")
   messages               Message[]
 
   analyticsEvents AnalyticsEvent[] @relation("AnalyticsEventActor")
@@ -307,12 +314,21 @@ model Conversation {
   userOneDeletedAt DateTime?
   userTwoDeletedAt DateTime?
 
+  // The user who opened the conversation - the only one allowed to send a
+  // message while the conversation is PENDING, and never the one who can
+  // accept/decline it.
+  initiatorId String @db.Uuid
+  initiator   User   @relation("ConversationInitiator", fields: [initiatorId], references: [id], onDelete: Restrict)
+
+  status ConversationStatus @default(ACCEPTED)
+
   messages Message[]
 
   createdAt DateTime @default(now())
 
   @@unique([userOneId, userTwoId])
   @@index([userTwoId])
+  @@index([initiatorId])
   @@map("conversations")
 }
 

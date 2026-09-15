@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { ConversationStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEventType, AnalyticsTargetType } from '../analytics/analytics-event-type.enum';
@@ -38,6 +38,8 @@ export class FollowService {
       id: followingId,
     });
 
+    await this.unblockDeclinedConversation(followerId, followingId);
+
     return true;
   }
 
@@ -52,6 +54,23 @@ export class FollowService {
 
   followingCount(userId: string): Promise<number> {
     return this.prisma.follow.count({ where: { followerId: userId } });
+  }
+
+  private async unblockDeclinedConversation(
+    followerId: string,
+    followingId: string,
+  ): Promise<void> {
+    const [userOneId, userTwoId] = [followerId, followingId].sort();
+
+    await this.prisma.conversation.updateMany({
+      where: {
+        userOneId,
+        userTwoId,
+        status: ConversationStatus.DECLINED,
+        initiatorId: followingId,
+      },
+      data: { status: ConversationStatus.ACCEPTED },
+    });
   }
 
   private async assertUserExists(userId: string): Promise<void> {

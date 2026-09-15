@@ -4,7 +4,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Message, NotificationType as NotificationTypeEnum } from '@prisma/client';
+import {
+  ConversationStatus,
+  Message,
+  NotificationType as NotificationTypeEnum,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationService } from '../notifications/notification.service';
@@ -13,9 +18,13 @@ import { SendMessageInput } from './conversation.input';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEventType, AnalyticsTargetType } from '../analytics/analytics-event-type.enum';
 
+const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
+
 interface ConversationParticipants {
   userOneId: string;
   userTwoId: string;
+  initiatorId: string;
+  status: ConversationStatus;
 }
 
 function mapMessage(message: Message): MessageType {
@@ -41,31 +50,47 @@ export class ConversationService {
       throw new BadRequestException('CANNOT_MESSAGE_SELF');
     }
 
-    let otherUser: { id: string } | null = null;
-    try {
-      otherUser = await this.prisma.user.findUnique({
-        where: { id: otherUserId },
-        select: { id: true },
-      });
-    } catch {
-      otherUser = null;
-    }
+    await this.assertUserExists(otherUserId);
 
-    if (!otherUser) {
-      throw new NotFoundException('USER_NOT_FOUND');
-    }
-
-    // TODO(AUR-94): check the follow relationship between userId and otherUserId before creating a conversation, once the backend
     const [userOneId, userTwoId] = [userId, otherUserId].sort();
 
-    const conversation = await this.prisma.conversation.upsert({
+    const existing = await this.prisma.conversation.findUnique({
       where: { userOneId_userTwoId: { userOneId, userTwoId } },
-      create: { userOneId, userTwoId },
-      update: {},
       include: { messages: { orderBy: { createdAt: 'asc' } } },
     });
 
-    return { ...conversation, messages: conversation.messages.map(mapMessage) };
+    if (existing) {
+      return { ...existing, messages: existing.messages.map(mapMessage) };
+    }
+
+    // Skip the pending request entirely when the recipient already follows
+    const recipientFollowsInitiator = await this.prisma.follow.findUnique({
+      where: { followerId_followingId: { followerId: otherUserId, followingId: userId } },
+    });
+    const status = recipientFollowsInitiator
+      ? ConversationStatus.ACCEPTED
+      : ConversationStatus.PENDING;
+
+    try {
+      const conversation = await this.prisma.conversation.create({
+        data: { userOneId, userTwoId, initiatorId: userId, status },
+        include: { messages: { orderBy: { createdAt: 'asc' } } },
+      });
+
+      return { ...conversation, messages: conversation.messages.map(mapMessage) };
+    } catch (error: unknown) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PRISMA_UNIQUE_CONSTRAINT_ERROR
+      ) {
+        const conversation = await this.prisma.conversation.findUniqueOrThrow({
+          where: { userOneId_userTwoId: { userOneId, userTwoId } },
+          include: { messages: { orderBy: { createdAt: 'asc' } } },
+        });
+        return { ...conversation, messages: conversation.messages.map(mapMessage) };
+      }
+      throw error;
+    }
   }
 
   async getMessages(userId: string, conversationId: string): Promise<MessageType[]> {
@@ -81,6 +106,25 @@ export class ConversationService {
 
   async sendMessage(userId: string, input: SendMessageInput): Promise<MessageType> {
     const conversation = await this.assertParticipant(userId, input.conversationId);
+
+    if (conversation.status === ConversationStatus.DECLINED) {
+      throw new ForbiddenException('CONVERSATION_DECLINED');
+    }
+
+    if (conversation.status === ConversationStatus.PENDING) {
+      if (userId !== conversation.initiatorId) {
+        // The recipient must accept/decline before they can reply.
+        throw new ForbiddenException('CONVERSATION_PENDING_APPROVAL');
+      }
+
+      const messagesAlreadySent = await this.prisma.message.count({
+        where: { conversationId: input.conversationId, senderId: conversation.initiatorId },
+      });
+
+      if (messagesAlreadySent > 0) {
+        throw new ForbiddenException('CONVERSATION_MESSAGE_LIMIT_REACHED');
+      }
+    }
 
     const message = await this.prisma.message.create({
       data: {
@@ -111,6 +155,22 @@ export class ConversationService {
     return mapped;
   }
 
+  private async assertUserExists(userId: string): Promise<void> {
+    let user: { id: string } | null = null;
+    try {
+      user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+    } catch {
+      user = null;
+    }
+
+    if (!user) {
+      throw new NotFoundException('USER_NOT_FOUND');
+    }
+  }
+
   private async assertParticipant(
     userId: string,
     conversationId: string,
@@ -120,7 +180,7 @@ export class ConversationService {
     try {
       conversation = await this.prisma.conversation.findUnique({
         where: { id: conversationId },
-        select: { userOneId: true, userTwoId: true },
+        select: { userOneId: true, userTwoId: true, initiatorId: true, status: true },
       });
     } catch {
       conversation = null;

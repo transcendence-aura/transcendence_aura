@@ -1,4 +1,7 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, ObjectType, registerEnumType } from '@nestjs/graphql';
+import { ConversationStatus } from '@prisma/client';
+
+registerEnumType(ConversationStatus, { name: 'ConversationStatus' });
 
 @ObjectType()
 export class MessageType {
@@ -25,6 +28,12 @@ export class ConversationType {
 
   @Field()
   userTwoId!: string;
+
+  @Field()
+  initiatorId!: string;
+
+  @Field(() => ConversationStatus)
+  status!: ConversationStatus;
 
   @Field(() => [MessageType])
   messages!: MessageType[];
