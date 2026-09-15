@@ -216,25 +216,33 @@ export class AuthService {
         user.status !== UserStatus.ACTIVE ||
         user.deletedAt !== null
       ) {
+        this.logger.warn('MFA verification failed: Invalid user state');
         throw new UnauthorizedException();
       }
 
       const secret = await this.vaultService.readTotpSecret(user.id);
 
       if (!secret) {
+        this.logger.warn('MFA verification failed: Secret unavailable');
         throw new UnauthorizedException();
       }
 
       const valid = await this.totpService.verifyCode(secret, code);
 
       if (!valid) {
+        this.logger.warn('MFA verification failed: Invalid code');
         throw new UnauthorizedException();
       }
 
       const session = await this.issueAuthenticatedSession(user);
 
       return session;
-    } catch {
+    } catch (error) {
+      if (!(error instanceof UnauthorizedException)) {
+        this.logger.warn(
+          `MFA verification failed unexpectedly: ${error instanceof Error ? error.name : 'unknown error'}`,
+        );
+      }
       throw new UnauthorizedException('Invalid authentication challenge');
     }
   }
