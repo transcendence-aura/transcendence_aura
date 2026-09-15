@@ -16,3 +16,12 @@ export const CONFIRM_TWO_FACTOR_MUTATION = gql`
     }
   }
 `;
+
+export const VERIFY_MFA_MUTATION = gql`
+  mutation VerifyMfa($input: VerifyMfaInput!) {
+    verifyMfa(input: $input) {
+      accessToken
+      expiresIn
+    }
+  }
+`;

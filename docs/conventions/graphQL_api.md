@@ -271,6 +271,43 @@ Login with 2FA enabled
 }
 ```
 
+`verifyMfa` completes the login for a user with 2FA enabled.
+
+Mutation
+
+```graphql
+mutation VerifyMfa($input: VerifyMfaInput!) {
+  verifyMfa(input: $input) {
+    accessToken
+    expiresIn
+  }
+}
+```
+
+Variables
+
+```graphql
+{
+  "input": {
+    "mfaPendingToken": "<temp-mfa-token>",
+    "code": "123456"
+  }
+}
+```
+
+Successful response
+
+```graphql
+{
+  "data": {
+    "verifyMfa": {
+      "accessToken": "<access-token>",
+      "expiresIn": 900
+    }
+  }
+}
+```
+
 ---
 
 ## Adding a New Query

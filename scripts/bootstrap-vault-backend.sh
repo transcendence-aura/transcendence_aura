@@ -76,7 +76,7 @@ vault_exec write \
   token_type="batch" \
   token_ttl="5m" \
   token_max_ttl="15m" \
-  secret_id_ttl="10m" \
+  secret_id_ttl="0" \
   secret_id_num_uses=0
 
 SEED_FILE="local-secrets/vault-seed.json"
