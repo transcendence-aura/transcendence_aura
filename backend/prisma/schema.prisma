@@ -41,10 +41,11 @@ model User {
   handle String  @unique @db.VarChar(30)
   bio    String? @db.VarChar(500)
 
-  passwordHash     String    @db.VarChar(255)
-  emailVerifiedAt  DateTime?
-  twoFactorEnabled Boolean   @default(false)
-  lastLoginAt      DateTime?
+  passwordHash       String    @db.VarChar(255)
+  emailVerifiedAt    DateTime?
+  twoFactorEnabled   Boolean   @default(false)
+  twoFactorEnabledAt DateTime?
+  lastLoginAt        DateTime?
 
   role   UserRole   @default(USER)
   status UserStatus @default(ACTIVE)

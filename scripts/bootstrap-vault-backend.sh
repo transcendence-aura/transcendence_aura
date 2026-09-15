@@ -8,9 +8,9 @@ fail() {
 
 ROLE_NAME="aura-backend"
 POLICY_NAME="backend-policy"
-
+RUNTIME_POLICY_NAME="backend-runtime-policy"
 POLICY_FILE="/vault/aura/policies/backend-policy.hcl"
-
+RUNTIME_POLICY_FILE="/vault/aura/policies/backend-runtime-policy.hcl"
 SECRET_ID_OUTPUT="local-secrets/vault-secret-id"
 ENV_FILE=".env"
 
@@ -60,6 +60,10 @@ vault_exec policy write \
   "$POLICY_NAME" \
   "$POLICY_FILE"
 
+vault_exec policy write \
+  "$RUNTIME_POLICY_NAME" \
+  "$RUNTIME_POLICY_FILE"
+
 if ! vault_exec auth list -format=json |
   grep -q '"approle/"'; then
   vault_exec auth enable approle
@@ -67,7 +71,7 @@ fi
 
 vault_exec write \
   "auth/approle/role/$ROLE_NAME" \
-  token_policies="$POLICY_NAME" \
+  token_policies="$POLICY_NAME,$RUNTIME_POLICY_NAME" \
   token_no_default_policy=true \
   token_type="batch" \
   token_ttl="5m" \

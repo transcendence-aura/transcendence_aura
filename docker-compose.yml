@@ -93,6 +93,7 @@ services:
       - -dev-no-store-token
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN_ID}
+      VAULT_ADDR: ${VAULT_ADDR}
     volumes:
       - type: bind
         source: ./vault

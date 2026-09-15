@@ -3,13 +3,37 @@
 import { useState } from 'react';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/form/button';
+import { useRouter } from 'next/navigation';
+import { useMutation } from '@apollo/client/react';
+import { LOGIN_MUTATION } from '@/lib/auth/login.mutation';
+import { LoginResponse } from '@/lib/auth/auth.types';
+import { setAccessToken } from '@/lib/auth/token-store';
+
+type LoginStep = 'credentials' | 'mfa';
+
+type LoginMutationData = {
+  login: LoginResponse;
+};
+
+type LoginMutationVariables = {
+  input: {
+    email: string;
+    password: string;
+  };
+};
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [login, { loading }] = useMutation<LoginMutationData, LoginMutationVariables>(
+    LOGIN_MUTATION,
+  );
+  const [step, setStep] = useState<LoginStep>('credentials');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaPendingToken, setMfaPendingToken] = useState<string | null>(null);
+  const router = useRouter();
 
   const validateForm = (): boolean => {
     if (!email.trim()) {
@@ -27,18 +51,128 @@ export function LoginForm() {
     return true;
   };
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
-    /* TODO: Connect GraphQL login mutation */
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
+    try {
+      const { data } = await login({
+        variables: {
+          input: {
+            email: email.trim(),
+            password,
+          },
+        },
+      });
+
+      const result = data?.login;
+
+      if (!result) {
+        setError('Unable to sign in. Please try again.');
+        return;
+      }
+      if (result.requiresMfa) {
+        setMfaPendingToken(result.mfaPendingToken);
+        setPassword('');
+        setMfaCode('');
+        setStep('mfa');
+        return;
+      }
+
+      setAccessToken(result.accessToken);
+
+      setPassword('');
+      router.replace('/');
+      router.refresh();
+    } catch {
+      setError('Unable to sign in. Please check your credentials and try again.');
+    }
   };
+
+  const handleMfa = async () => {
+    setError(null);
+
+    if (!/^\d{6}$/.test(mfaCode)) {
+      setError('Please enter the 6-digit authentication code.');
+      return;
+    }
+
+    if (!mfaPendingToken) {
+      setError('Your authentication session has expired. Please sign in again.');
+      setStep('credentials');
+    }
+
+    // TODO: Implement verifyMfa mutation AUR-87
+    setError('Two-factor authentication verification is not available yet.');
+  };
+
+  if (step === 'mfa') {
+    return (
+      <div>
+        <h2 className="font-coromant mb-1.5 test-3xl font-normal text-text-primary">
+          Verify your identity
+        </h2>
+        <p className="mb-6 text-xs leading-relaxed text-text-secondary">
+          Enter the 6-digit code from your authenticator app.
+        </p>
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            await handleMfa();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="mb-1.5 block text-xs uppercase tracking-wider text-text-muted">
+              Authentication Code
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              value={mfaCode}
+              onChange={(event) => {
+                const value = event.target.value.replace(/\D/g, '').slice(0, 6);
+                setMfaCode(value);
+              }}
+              placeholder="123456"
+              className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-xs tracking-[0.35em] text-text-primary outline-none transition-colors"
+            />
+          </div>
+          {error && <p className="text-xs text-brand-accent">{error}</p>}
+          <Button
+            type="submit"
+            disabled={loading || mfaCode.length !== 6}
+            className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-xs font-medium uppercase tracking-wider text-white"
+          >
+            Verify code
+          </Button>
+          <button
+            type="button"
+            onClick={() => {
+              setStep('credentials');
+              setMfaCode('');
+              setMfaPendingToken(null);
+              setError(null);
+            }}
+            className="w-full text-xs text-text-muted transition-colors hover:text-text-primary"
+          >
+            Back to sign in
+          </button>
+        </form>
+        <div>
+          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#7a9e8e]" />
+          <p className="text-[12px] leading-reladed text-text-secondary">
+            Open your authenticator app and enter the code for your account.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -104,10 +238,10 @@ export function LoginForm() {
         {/* Submit button */}
         <Button
           type="submit"
-          disabled={isLoading}
+          disabled={loading}
           className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-xs font-medium uppercase tracking-wider text-white"
         >
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {loading ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>
 
@@ -162,7 +296,7 @@ export function LoginForm() {
       <div className="mt-6 flex items-start gap-2.5 bg-bg-subtle p-3">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#7a9e8e]" />
         <p className="text-[12px] leading-relaxed text-text-secondary">
-          *Two-factor authentication is enabled. You&apos;ll receive a code after signing in.
+          *If two-factor authentication is enabled, you&apos;ll receive a code after signing in.
         </p>
       </div>
     </div>

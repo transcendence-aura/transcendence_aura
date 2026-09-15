@@ -13,7 +13,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { AccessTokenPayload, TokenService } from '../../modules/auth/token.service';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { AuthenticatedRequest } from '../types/authenticated-request';
-
+import { ACCESS_COOKIE_NAME } from '../../modules/auth/auth.constants';
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
@@ -97,11 +97,16 @@ export class RolesGuard implements CanActivate {
   private extractToken(request: AuthenticatedRequest): string | undefined {
     const header = request.headers.authorization;
 
-    if (!header) {
-      return undefined;
+    if (header) {
+      const [scheme, token] = header.split(' ');
+
+      if (scheme === 'Bearer' && token) {
+        return token;
+      }
     }
 
-    const [scheme, token] = header.split(' ');
-    return scheme === 'Bearer' && token ? token : undefined;
+    const cookieToken = request.cookies?.[ACCESS_COOKIE_NAME];
+
+    return typeof cookieToken === 'string' && cookieToken.length > 0 ? cookieToken : undefined;
   }
 }
