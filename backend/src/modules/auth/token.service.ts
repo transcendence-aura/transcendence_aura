@@ -42,14 +42,20 @@ export class TokenService {
     });
   }
 
-  verifyAccessToken(token: string): Promise<AccessTokenPayload> {
+  async verifyAccessToken(token: string): Promise<AccessTokenPayload> {
     const jwt = this.configService.get('jwt', { infer: true });
 
-    return this.jwtService.verifyAsync<AccessTokenPayload>(token, {
+    const payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token, {
       secret: jwt.accessSecret,
+      algorithms: ['HS256'],
       issuer: jwt.issuer,
       audience: jwt.accessAudience,
     });
+
+    if (payload.tokenType !== 'access') {
+      throw new Error('Invalid token.');
+    }
+    return payload;
   }
 
   issueMfaPendingToken(userId: string): Promise<string> {
@@ -68,5 +74,21 @@ export class TokenService {
       audience: jwt.mfaPendingAudience,
       jwtid: randomUUID(),
     });
+  }
+
+  async verifyMfaPendingToken(token: string): Promise<MfaPendingTokenPayload> {
+    const jwt = this.configService.get('jwt', { infer: true });
+
+    const payload = await this.jwtService.verifyAsync<MfaPendingTokenPayload>(token, {
+      secret: jwt.accessSecret,
+      algorithms: ['HS256'],
+      issuer: jwt.issuer,
+      audience: jwt.mfaPendingAudience,
+    });
+
+    if (payload.tokenType !== 'mfaPending') {
+      throw new Error('Invalid token.');
+    }
+    return payload;
   }
 }

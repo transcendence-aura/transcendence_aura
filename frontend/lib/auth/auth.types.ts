@@ -14,3 +14,19 @@ export type LoginResponse =
       mfaPendingToken: string;
       expiresIn: number;
     };
+
+export type VerifyMfaResponse = {
+  accessToken: string;
+  expiresIn: number;
+};
+
+export type VerifyMfaMutationData = {
+  verifyMfa: VerifyMfaResponse;
+};
+
+export type VerifyMfaMutationVariables = {
+  input: {
+    mfaPendingToken: string;
+    code: string;
+  };
+};

@@ -6,8 +6,13 @@ import { Button } from '@/components/ui/form/button';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@apollo/client/react';
 import { LOGIN_MUTATION } from '@/lib/auth/login.mutation';
-import { LoginResponse } from '@/lib/auth/auth.types';
+import {
+  LoginResponse,
+  VerifyMfaMutationData,
+  VerifyMfaMutationVariables,
+} from '@/lib/auth/auth.types';
 import { setAccessToken } from '@/lib/auth/token-store';
+import { VERIFY_MFA_MUTATION } from '@/lib/auth/two-factor.mutations';
 
 type LoginStep = 'credentials' | 'mfa';
 
@@ -33,6 +38,10 @@ export function LoginForm() {
   const [step, setStep] = useState<LoginStep>('credentials');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaPendingToken, setMfaPendingToken] = useState<string | null>(null);
+  const [verifyMfa, { loading: mfaLoading }] = useMutation<
+    VerifyMfaMutationData,
+    VerifyMfaMutationVariables
+  >(VERIFY_MFA_MUTATION);
   const router = useRouter();
 
   const validateForm = (): boolean => {
@@ -102,16 +111,40 @@ export function LoginForm() {
     if (!mfaPendingToken) {
       setError('Your authentication session has expired. Please sign in again.');
       setStep('credentials');
+      return;
     }
 
-    // TODO: Implement verifyMfa mutation AUR-87
-    setError('Two-factor authentication verification is not available yet.');
+    try {
+      const { data } = await verifyMfa({
+        variables: {
+          input: {
+            mfaPendingToken,
+            code: mfaCode,
+          },
+        },
+      });
+
+      const result = data?.verifyMfa;
+
+      if (!result) {
+        setError('Unable to verify authentication code.');
+        return;
+      }
+
+      setAccessToken(result.accessToken);
+      setMfaCode('');
+      setMfaPendingToken(null);
+      router.replace('/');
+      router.refresh();
+    } catch {
+      setError('Unable to verify authentication code.');
+    }
   };
 
   if (step === 'mfa') {
     return (
       <div>
-        <h2 className="font-coromant mb-1.5 test-3xl font-normal text-text-primary">
+        <h2 className="font-cormorant mb-1.5 test-3xl font-normal text-text-primary">
           Verify your identity
         </h2>
         <p className="mb-6 text-xs leading-relaxed text-text-secondary">
@@ -146,10 +179,10 @@ export function LoginForm() {
           {error && <p className="text-xs text-brand-accent">{error}</p>}
           <Button
             type="submit"
-            disabled={loading || mfaCode.length !== 6}
+            disabled={mfaLoading || mfaCode.length !== 6}
             className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-xs font-medium uppercase tracking-wider text-white"
           >
-            Verify code
+            {mfaLoading ? 'Verifying...' : 'Verify code'}
           </Button>
           <button
             type="button"
@@ -164,9 +197,9 @@ export function LoginForm() {
             Back to sign in
           </button>
         </form>
-        <div>
+        <div className="mt-6 flex items-center gap-2.5 bg-bg-subtle p-3">
           <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#7a9e8e]" />
-          <p className="text-[12px] leading-reladed text-text-secondary">
+          <p className="text-[12px] leading-relaxed text-text-secondary">
             Open your authenticator app and enter the code for your account.
           </p>
         </div>
