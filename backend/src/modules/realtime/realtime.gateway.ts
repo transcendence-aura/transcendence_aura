@@ -13,6 +13,7 @@ import { ConversationStatus } from '@prisma/client';
 import { TokenService } from '../auth/token.service';
 import { PrismaService } from '../../database/prisma.service';
 import { MessageType } from '../conversations/conversation.model';
+import { NotificationType } from '../notifications/notification.model';
 
 interface JoinConversationPayload {
   conversationId: string;
@@ -39,6 +40,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       conversationId,
       status,
     });
+  }
+  emitNewNotification(userId: string, notification: NotificationType): void {
+    this.server.to(`user:${userId}`).emit('newNotification', notification);
   }
 
   async handleConnection(client: Socket): Promise<void> {
