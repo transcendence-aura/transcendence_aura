@@ -3,6 +3,7 @@ import { ConversationStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEventType, AnalyticsTargetType } from '../analytics/analytics-event-type.enum';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
 
@@ -11,6 +12,7 @@ export class FollowService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly analyticsService: AnalyticsService,
+    private readonly realtimeGateway: RealtimeGateway,
   ) {}
 
   async follow(followerId: string, followingId: string): Promise<boolean> {
@@ -62,15 +64,29 @@ export class FollowService {
   ): Promise<void> {
     const [userOneId, userTwoId] = [followerId, followingId].sort();
 
-    await this.prisma.conversation.updateMany({
+    const conversation = await this.prisma.conversation.findFirst({
       where: {
         userOneId,
         userTwoId,
         status: ConversationStatus.DECLINED,
         initiatorId: followingId,
       },
+      select: { id: true },
+    });
+
+    if (!conversation) {
+      return;
+    }
+
+    await this.prisma.conversation.update({
+      where: { id: conversation.id },
       data: { status: ConversationStatus.ACCEPTED },
     });
+
+    this.realtimeGateway.emitConversationStatusChanged(
+      conversation.id,
+      ConversationStatus.ACCEPTED,
+    );
   }
 
   private async assertUserExists(userId: string): Promise<void> {
