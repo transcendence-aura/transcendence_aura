@@ -16,8 +16,9 @@ export function Navbar() {
   const pathname = usePathname();
   const isAdmin = useIsAdmin();
 
-  /* Hide Navbar on auth routes */
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  /* Hide Navbar on auth routes and inside the admin shell (its own layout provides navigation) */
+  const isAuthPage =
+    pathname === '/login' || pathname === '/register' || pathname.startsWith('/admin');
   if (isAuthPage) return null;
 
   return (

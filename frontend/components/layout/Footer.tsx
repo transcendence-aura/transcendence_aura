@@ -28,8 +28,9 @@ function FooterColumn({ label, links }: { label: string; links: string[] }) {
 export function Footer() {
   const pathname = usePathname();
 
-  /* Hide Footer on auth routes to respect minimal layout - NEW */
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  /* Hide Footer on auth routes and inside the admin shell to respect minimal layout - NEW */
+  const isAuthPage =
+    pathname === '/login' || pathname === '/register' || pathname.startsWith('/admin');
   if (isAuthPage) return null;
 
   return (
