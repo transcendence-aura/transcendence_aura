@@ -9,6 +9,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { ConversationStatus } from '@prisma/client';
 import { TokenService } from '../auth/token.service';
 import { PrismaService } from '../../database/prisma.service';
 import { MessageType } from '../conversations/conversation.model';
@@ -31,6 +32,13 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   emitNewMessage(conversationId: string, message: MessageType): void {
     this.server.to(`conversation:${conversationId}`).emit('newMessage', message);
+  }
+
+  emitConversationStatusChanged(conversationId: string, status: ConversationStatus): void {
+    this.server.to(`conversation:${conversationId}`).emit('conversationStatusChanged', {
+      conversationId,
+      status,
+    });
   }
 
   async handleConnection(client: Socket): Promise<void> {

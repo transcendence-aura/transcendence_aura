@@ -1,6 +1,12 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
-import { NotificationType, PrismaClient, UserRole, UserStatus } from '@prisma/client';
+import {
+  ConversationStatus,
+  NotificationType,
+  PrismaClient,
+  UserRole,
+  UserStatus,
+} from '@prisma/client';
 
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
@@ -944,13 +950,15 @@ async function seedConversations(): Promise<void> {
   const conversations = [
     {
       id: ids.conversations.marieAndClara,
-      userOneId: ids.users.marie,
-      userTwoId: ids.users.clara,
+      userOneId: ids.users.clara,
+      userTwoId: ids.users.marie,
+      initiatorId: ids.users.marie,
     },
     {
       id: ids.conversations.marieAndSophie,
       userOneId: ids.users.marie,
       userTwoId: ids.users.sophie,
+      initiatorId: ids.users.marie,
     },
   ];
 
@@ -965,9 +973,11 @@ async function seedConversations(): Promise<void> {
       update: {
         userOneDeletedAt: null,
         userTwoDeletedAt: null,
+        status: ConversationStatus.ACCEPTED,
       },
       create: {
         ...conversation,
+        status: ConversationStatus.ACCEPTED,
         createdAt: seedDates.conversationCreated,
       },
     });

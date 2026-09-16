@@ -13,3 +13,17 @@ export class SendMessageInput {
   @MaxLength(2000)
   content!: string;
 }
+
+@InputType()
+export class RespondToConversationInput {
+  @Field()
+  @IsUUID()
+  conversationId!: string;
+}
+
+@InputType()
+export class StartConversationInput {
+  @Field()
+  @IsUUID()
+  otherUserId!: string;
+}
