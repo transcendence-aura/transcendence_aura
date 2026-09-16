@@ -5,6 +5,7 @@ import { Search, Heart, ShoppingBag, Menu, X, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { CartDot } from '@/components/ui/feedback/cart-dot';
+import { useIsAdmin } from '@/lib/auth/use-is-admin';
 
 const LANGUAGES = ['EN', 'FR', 'AR'] as const;
 type Language = (typeof LANGUAGES)[number];
@@ -13,6 +14,7 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>('EN');
   const pathname = usePathname();
+  const isAdmin = useIsAdmin();
 
   /* Hide Navbar on auth routes */
   const isAuthPage = pathname === '/login' || pathname === '/register';
@@ -45,6 +47,17 @@ export function Navbar() {
         >
           About
         </Link>
+        {/* UX-only: hides the entry point for non-admins. RolesGuard is
+            what actually protects the admin data — see
+            docs/conventions/authorization.md. */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="text-text-secondary hover:text-text-primary text-xs uppercase tracking-wider transition-colors"
+          >
+            Admin
+          </Link>
+        )}
       </div>
 
       {/* Right Section: Actions & Language */}
@@ -144,6 +157,15 @@ export function Navbar() {
           >
             About
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={() => setMenuOpen(false)}
+              className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors"
+            >
+              Admin
+            </Link>
+          )}
 
           {/* Cart Mobile */}
           <Link
