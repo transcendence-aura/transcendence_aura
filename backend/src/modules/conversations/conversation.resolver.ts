@@ -4,19 +4,31 @@ import { GqlAuthGuard } from '../auth/gql-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { ConversationService } from './conversation.service';
 import { ConversationType, MessageType } from './conversation.model';
-import { RespondToConversationInput, SendMessageInput } from './conversation.input';
+import {
+  RespondToConversationInput,
+  SendMessageInput,
+  StartConversationInput,
+} from './conversation.input';
 
 @Resolver()
 @UseGuards(GqlAuthGuard)
 export class ConversationResolver {
   constructor(private readonly conversationService: ConversationService) {}
 
-  @Query(() => ConversationType)
+  @Query(() => ConversationType, { nullable: true })
   conversation(
     @CurrentUser() userId: string,
     @Args('otherUserId') otherUserId: string,
+  ): Promise<ConversationType | null> {
+    return this.conversationService.getConversation(userId, otherUserId);
+  }
+
+  @Mutation(() => ConversationType)
+  startConversation(
+    @CurrentUser() userId: string,
+    @Args('input') input: StartConversationInput,
   ): Promise<ConversationType> {
-    return this.conversationService.findOrCreateConversation(userId, otherUserId);
+    return this.conversationService.startConversation(userId, input.otherUserId);
   }
 
   @Query(() => [MessageType])

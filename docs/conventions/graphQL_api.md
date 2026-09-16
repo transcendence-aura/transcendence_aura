@@ -26,7 +26,7 @@
 - [adminUser(id)](#adminuserid) — Single user detail view. Admin-only
 - [followersCount(userId)](#followerscountuserid) — Number of users following the given user
 - [followingCount(userId)](#followingcountuserid) — Number of users the given user follows
-- [conversation(otherUserId)](#conversationotheruserid) — Get or create the 1:1 conversation with another user; starts `PENDING` unless the recipient already follows the initiator
+- [conversation(otherUserId)](#conversationotheruserid) — Read-only: the caller's 1:1 conversation with another user, or `null` if none exists yet
 - [messages(conversationId)](#messagesconversationid) — Messages in a conversation the caller participates in, oldest first
 - [pendingConversations](#pendingconversations) — Conversation requests awaiting the caller's response (they are the recipient, not the initiator)
 - [userProfile(handle)](#userprofilehandle) — Public profile view: identity, bio, follower/following counts, recent activity
@@ -43,6 +43,7 @@
 - [removeWishlistItem(input)](#removewishlistiteminput) — Remove a product from the authenticated user's wishlist (idempotent)
 - [followUser(input)](#followuserinput) — Follow another user (idempotent, self-follow rejected)
 - [unfollowUser(input)](#unfollowuserinput) — Unfollow a user (idempotent)
+- [startConversation(input)](#startconversationinput) — Create (or fetch) the 1:1 conversation with another user; starts `PENDING` unless the recipient already follows the initiator
 - [sendMessage(input)](#sendmessageinput) — Send a message in a conversation; the initiator gets only one message while it's `PENDING`
 - [acceptConversation(input)](#acceptconversationinput) — Accept a pending conversation request. Recipient-only
 - [declineConversation(input)](#declineconversationinput) — Decline a pending conversation request, blocking further messages. Recipient-only
@@ -1432,9 +1433,7 @@ The state of a 1:1 conversation between two users. Referenced by [`conversation`
 
 ## `conversation(otherUserId)`
 
-Gets the caller's 1:1 conversation with another user, creating it if it doesn't exist yet. Requires authentication.
-
-On creation, [`status`](#conversationstatus) is decided once and never re-evaluated afterward: it starts `ACCEPTED` if the recipient (`otherUserId`) already follows the caller — this also covers the mutual-follow case, since a mutual follow implies the recipient follows the caller — otherwise it starts `PENDING`. Calling this again for an existing pair just returns that conversation as-is, whatever its current status.
+Read-only lookup of the caller's 1:1 conversation with another user. Returns `null` if no conversation exists between the two yet - it never creates one as a side effect of being queried. Use [`startConversation`](#startconversationinput) to create it. Requires authentication.
 
 **Source:** `backend/src/modules/conversations/`
 
@@ -1473,7 +1472,9 @@ curl -k -X POST https://localhost/graphql \
 | ------------- | --------------- | -------- | --------------------------- |
 | `otherUserId` | `String` (UUID) | Yes      | Id of the other participant |
 
-**Response type: `ConversationType`**
+**Response type: `ConversationType`, nullable**
+
+`null` if the pair has no conversation yet. Otherwise:
 
 | Field         | Type                 | Nullable | Description                                                         |
 | ------------- | -------------------- | -------- | ------------------------------------------------------------------- |
@@ -1500,6 +1501,57 @@ curl -k -X POST https://localhost/graphql \
 | Missing, invalid or expired token                 | `401 Unauthorized`    |
 | `otherUserId` is the caller's own id              | `CANNOT_MESSAGE_SELF` |
 | `otherUserId` does not reference an existing user | `USER_NOT_FOUND`      |
+
+---
+
+## `startConversation(input)`
+
+Creates the caller's 1:1 conversation with another user, or returns the existing one if the pair already has one (idempotent - same behavior the old `conversation` query used to have). This is now the only operation that ever creates a conversation: a PR review flagged that a plain `@Query` silently creating a visible `PENDING` request (just from opening a chat) violated read/write separation, so creation was moved here, behind an explicit mutation.
+
+[`status`](#conversationstatus) is decided once, on creation, and never re-evaluated afterward: it starts `ACCEPTED` if the recipient (`otherUserId`) already follows the caller - this also covers the mutual-follow case, since a mutual follow implies the recipient follows the caller - otherwise it starts `PENDING`.
+
+**Source:** `backend/src/modules/conversations/`
+
+**Mutation**
+
+```graphql
+mutation {
+  startConversation(input: { otherUserId: "00000000-0000-4000-8000-000000000003" }) {
+    id
+    status
+    initiatorId
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"mutation { startConversation(input: { otherUserId: \"00000000-0000-4000-8000-000000000003\" }) { id status initiatorId } }"}' | jq
+```
+
+**Arguments**
+
+| Argument | Type                     | Required | Description |
+| -------- | ------------------------ | -------- | ----------- |
+| `input`  | `StartConversationInput` | Yes      | See below   |
+
+**`StartConversationInput`**
+
+| Field         | Type            | Required | Description                 |
+| ------------- | --------------- | -------- | --------------------------- |
+| `otherUserId` | `String` (UUID) | Yes      | Id of the other participant |
+
+**Response type: `ConversationType`**
+
+Same shape as [`conversation`](#conversationotheruserid), never `null` here.
+
+**Errors**
+
+Same as [`conversation`](#conversationotheruserid).
 
 ---
 

@@ -46,19 +46,25 @@ export class ConversationService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async findOrCreateConversation(userId: string, otherUserId: string): Promise<ConversationType> {
-    if (userId === otherUserId) {
-      throw new BadRequestException('CANNOT_MESSAGE_SELF');
+  async getConversation(userId: string, otherUserId: string): Promise<ConversationType | null> {
+    await this.assertValidOtherUser(userId, otherUserId);
+
+    const [userOneId, userTwoId] = [userId, otherUserId].sort();
+    const conversation = await this.findConversationRow(userOneId, userTwoId);
+
+    if (!conversation) {
+      return null;
     }
 
-    await this.assertUserExists(otherUserId);
+    return { ...conversation, messages: conversation.messages.map(mapMessage) };
+  }
+
+  async startConversation(userId: string, otherUserId: string): Promise<ConversationType> {
+    await this.assertValidOtherUser(userId, otherUserId);
 
     const [userOneId, userTwoId] = [userId, otherUserId].sort();
 
-    const existing = await this.prisma.conversation.findUnique({
-      where: { userOneId_userTwoId: { userOneId, userTwoId } },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
-    });
+    const existing = await this.findConversationRow(userOneId, userTwoId);
 
     if (existing) {
       return { ...existing, messages: existing.messages.map(mapMessage) };
@@ -206,6 +212,21 @@ export class ConversationService {
     this.realtimeGateway.emitConversationStatusChanged(conversationId, updated.status);
 
     return { ...updated, messages: updated.messages.map(mapMessage) };
+  }
+
+  private async assertValidOtherUser(userId: string, otherUserId: string): Promise<void> {
+    if (userId === otherUserId) {
+      throw new BadRequestException('CANNOT_MESSAGE_SELF');
+    }
+
+    await this.assertUserExists(otherUserId);
+  }
+
+  private findConversationRow(userOneId: string, userTwoId: string) {
+    return this.prisma.conversation.findUnique({
+      where: { userOneId_userTwoId: { userOneId, userTwoId } },
+      include: { messages: { orderBy: { createdAt: 'asc' } } },
+    });
   }
 
   private async assertUserExists(userId: string): Promise<void> {

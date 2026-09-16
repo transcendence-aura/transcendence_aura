@@ -20,3 +20,10 @@ export class RespondToConversationInput {
   @IsUUID()
   conversationId!: string;
 }
+
+@InputType()
+export class StartConversationInput {
+  @Field()
+  @IsUUID()
+  otherUserId!: string;
+}

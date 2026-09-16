@@ -947,15 +947,11 @@ async function seedFollows(): Promise<void> {
 }
 
 async function seedConversations(): Promise<void> {
-  // Marie/Clara and Marie/Sophie already follow each other back in
-  // seedFollows(), so both seeded conversations skip the pending request
-  // flow and start ACCEPTED, with Marie as the (irrelevant, since already
-  // mutual) historical initiator.
   const conversations = [
     {
       id: ids.conversations.marieAndClara,
-      userOneId: ids.users.marie,
-      userTwoId: ids.users.clara,
+      userOneId: ids.users.clara,
+      userTwoId: ids.users.marie,
       initiatorId: ids.users.marie,
     },
     {
