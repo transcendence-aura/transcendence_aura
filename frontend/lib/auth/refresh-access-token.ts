@@ -1,4 +1,4 @@
-import { clearAccessToken, setAccessToken } from "./token-store";
+import { clearAccessToken, setAccessToken } from './token-store';
 
 let refreshPromise: Promise<string | null> | null = null;
 
@@ -27,7 +27,7 @@ export function refreshAccessToken(): Promise<string | null> {
 
 async function performRefresh(): Promise<string | null> {
   try {
-    const response = await fetch('https://localhost/graphql',{
+    const response = await fetch('https://localhost/graphql', {
       method: 'POST',
       credentials: 'include',
       headers: {

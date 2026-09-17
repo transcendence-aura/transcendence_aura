@@ -30,8 +30,7 @@ export const config = {
     '/account/:path*',
     '/messages/:path*',
     '/notifications/:path*',
-    /* TODO: Enable back once /login page and auth are fully implemented */
-    // '/wishlist/:path*',
+    '/wishlist/:path*',
     '/admin/:path*',
   ],
 };

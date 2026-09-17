@@ -11,8 +11,8 @@ export async function getServerApolloClient() {
     uri: process.env.GRAPHQL_URL,
     headers: accessToken
       ? {
-        authorization: `Bearer ${accessToken}`,
-      }
+          authorization: `Bearer ${accessToken}`,
+        }
       : {},
   });
 
