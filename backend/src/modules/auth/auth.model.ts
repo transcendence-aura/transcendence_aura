@@ -13,4 +13,7 @@ export class UserType {
 
   @Field()
   handle!: string;
+
+  @Field({ nullable: true })
+  bio?: string;
 }
