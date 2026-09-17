@@ -30,6 +30,7 @@
 - [messages(conversationId)](#messagesconversationid) — Messages in a conversation the caller participates in, oldest first
 - [pendingConversations](#pendingconversations) — Conversation requests awaiting the caller's response (they are the recipient, not the initiator)
 - [userProfile(handle)](#userprofilehandle) — Public profile view: identity, bio, follower/following counts, recent activity
+- [circleFeed(pagination)](#circlefeedpagination) — Paginated feed of recent activity (new follows, new wishlist adds) from the users the caller follows
 - [notifications(unreadOnly)](#notificationsunreadonly) — Authenticated user's notifications, all or unread-only
 - [registrationsOverTime(period)](#registrationsovertimeperiod) — Registration counts bucketed over a period. Admin-only
 - [messagesOverTime(period)](#messagesovertimeperiod) — Message-sent counts bucketed over a period. Admin-only
@@ -1733,6 +1734,120 @@ Same `ProductType` shape as [`product(slug)`](#productslug) — see the field ta
 | ------------------------------------------------------ | --------------------------------------- |
 | `handle` does not reference an existing user           | `USER_NOT_FOUND`                        |
 | `handle` references a `SUSPENDED` or `DELETED` account | `USER_NOT_FOUND` — same as non-existent |
+
+---
+
+## `circleFeed(pagination)`
+
+Returns a paginated feed of recent activity from the users the caller follows ("their circle"), newest first. Requires authentication.
+
+**Included activity types** (closed list — see [`CircleFeedActivityType`](#circlefeedactivitytype) below):
+
+- `NEW_FOLLOW` — a followed user followed someone else
+- `WISHLIST_ITEM_ADDED` — a followed user added a product to their wishlist
+
+There is no product review/rating feature anywhere in this codebase yet, so the "new review" activity mentioned in the original ticket is intentionally **not** included — add it to `CircleFeedActivityType` once that feature exists.
+
+Only activity from users the caller currently follows is included, and only while that followed user is `ACTIVE` and not soft-deleted — same visibility rule as [`userProfile(handle)`](#userprofilehandle)'s `recentFollows`/`recentWishlistAdds`. Following nobody returns `{ total: 0, items: [] }`, not an error.
+
+**Source:** `backend/src/modules/circle-feed/`
+
+**Query**
+
+```graphql
+query {
+  circleFeed(pagination: { page: 1, limit: 20 }) {
+    total
+    hasNextPage
+    items {
+      id
+      type
+      createdAt
+      actor {
+        id
+        name
+        handle
+      }
+      followedUser {
+        id
+        name
+        handle
+      }
+      product {
+        id
+        slug
+        name
+        primaryImage {
+          url
+        }
+      }
+    }
+  }
+}
+```
+
+**curl example**
+
+```bash
+curl -k -X POST https://localhost/graphql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ circleFeed(pagination: { page: 1, limit: 20 }) { total hasNextPage items { id type createdAt actor { id name handle } followedUser { id name handle } product { id slug name } } } }"}' | jq
+```
+
+**Arguments**
+
+| Argument     | Type                        | Required | Description                                   |
+| ------------ | --------------------------- | -------- | --------------------------------------------- |
+| `pagination` | `CircleFeedPaginationInput` | No       | Page and limit — defaults to page 1, limit 20 |
+
+**`CircleFeedPaginationInput`**
+
+| Field   | Type  | Default | Description                     |
+| ------- | ----- | ------- | ------------------------------- |
+| `page`  | `Int` | `1`     | Page number (1-based, min 1)    |
+| `limit` | `Int` | `20`    | Items per page (min 1, max 100) |
+
+**Response type: `CircleFeedPageType`**
+
+| Field         | Type                   | Nullable | Description                                          |
+| ------------- | ---------------------- | -------- | ---------------------------------------------------- |
+| `items`       | `[CircleFeedItemType]` | No       | The requested page, newest first                     |
+| `total`       | `Int`                  | No       | Total number of activities across all followed users |
+| `hasNextPage` | `Boolean`              | No       | Whether another page exists after this one           |
+
+**`CircleFeedItemType`**
+
+| Field          | Type                       | Nullable | Description                                                           |
+| -------------- | -------------------------- | -------- | --------------------------------------------------------------------- |
+| `id`           | `String`                   | No       | Synthetic id, unique across activity types — not a database row id    |
+| `type`         | `CircleFeedActivityType`   | No       | Which kind of activity this is                                        |
+| `actor`        | `PublicProfileSummaryType` | No       | The followed user who performed the activity                          |
+| `createdAt`    | `DateTime`                 | No       | When the activity happened                                            |
+| `followedUser` | `PublicProfileSummaryType` | Yes      | Set only when `type` is `NEW_FOLLOW`: the user `actor` followed       |
+| `product`      | `ProductType`              | Yes      | Set only when `type` is `WISHLIST_ITEM_ADDED`: the wishlisted product |
+
+`PublicProfileSummaryType` — same shape as in [`userProfile(handle)`](#userprofilehandle). `ProductType` — same shape as [`product(slug)`](#productslug).
+
+### `CircleFeedActivityType`
+
+| Value                 | Description                                       |
+| --------------------- | ------------------------------------------------- |
+| `NEW_FOLLOW`          | A followed user followed someone else             |
+| `WISHLIST_ITEM_ADDED` | A followed user added a product to their wishlist |
+
+**Errors**
+
+| Case                                                       | Message / behavior                                 |
+| ---------------------------------------------------------- | -------------------------------------------------- |
+| Missing, invalid or expired token                          | `401 Unauthorized`                                 |
+| Caller follows nobody (or only suspended/deleted accounts) | Returns `{ total: 0, items: [] }` — never an error |
+
+**Implementation notes**
+
+- Activity is read directly from the existing `follows` and `wishlists` tables (actor + `createdAt`) — there is no separate activity/feed table to keep in sync.
+- Pagination fetches the top `skip + limit` rows from each source independently (both already ordered `createdAt desc`, with a secondary tiebreak — `followerId`/`followingId` for follows, `id` for wishlists — matching the tiebreak used when merging in application code, so a `createdAt` tie between rows never causes an inconsistent page across calls), merges and re-sorts them in application code, then slices to the requested page. This avoids a raw SQL `UNION` while still being provably correct: the merged top-N of two already-sorted lists is always contained within each list's own top-N.
+- A product that has since been deactivated (`isActive: false`) silently drops its `WISHLIST_ITEM_ADDED` entry from the feed, same visibility rule as [`wishlist`](#wishlist) itself. This can very rarely make `total`/`hasNextPage` overshoot the actual number of renderable items by a small amount — a known, accepted trade-off, not a bug.
 
 ---
 
