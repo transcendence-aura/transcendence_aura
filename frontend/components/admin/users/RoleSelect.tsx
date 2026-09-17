@@ -3,7 +3,11 @@
 import { useMutation } from '@apollo/client/react';
 import { Select } from '@/components/ui/form/select';
 import { useToast } from '@/components/ui/feedback/toast';
-import { ADMIN_SET_USER_ROLE, type AdminUserRole } from '@/lib/graphql/queries/admin-users';
+import {
+  ADMIN_SET_USER_ROLE,
+  GET_ADMIN_USERS,
+  type AdminUserRole,
+} from '@/lib/graphql/queries/admin-users';
 
 const ROLES: AdminUserRole[] = ['USER', 'ADMIN'];
 
@@ -17,6 +21,11 @@ export function RoleSelect({ userId, role, disabled = false }: RoleSelectProps) 
   const { toast } = useToast();
 
   const [setUserRole, { loading }] = useMutation(ADMIN_SET_USER_ROLE, {
+    // The row itself updates via Apollo's normalized cache (id match), but
+    // promoting/demoting moves the user between the Admin/User filter pill
+    // counts, which are separate cached queries the cache has no way to
+    // know are related — refetch them explicitly, same as AddUserDialog.
+    refetchQueries: [GET_ADMIN_USERS],
     onCompleted: () => {
       toast({ message: 'Role updated', variant: 'success' });
     },
