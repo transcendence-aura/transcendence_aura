@@ -51,6 +51,7 @@ export const Avatar = ({
             src={src}
             alt={alt || name}
             fill
+            unoptimized
             onError={() => setHasError(true)}
             className="object-cover"
           />
