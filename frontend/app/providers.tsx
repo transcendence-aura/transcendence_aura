@@ -5,13 +5,16 @@ import { ApolloProvider } from '@apollo/client/react';
 import { apolloClient } from '@/lib/apollo-client';
 import { ToastProvider } from '@/components/ui/feedback/toast';
 import { CartProvider } from '@/lib/hooks/useCart';
+import { AuthProvider } from '@/lib/auth/auth-provider';
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ApolloProvider client={apolloClient}>
-      <CartProvider>
-        <ToastProvider>{children}</ToastProvider>
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </CartProvider>
+      </AuthProvider>
     </ApolloProvider>
   );
 }
