@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Notification, NotificationType as NotificationTypeEnum } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationType } from './notification.model';
 
 interface CreateNotificationParams {
@@ -31,13 +32,17 @@ function mapNotification(notification: Notification): NotificationType {
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtimeGateway: RealtimeGateway,
+  ) {}
 
   // Never throws: a failure to record a notification must never break the
   // primary action it observes (same principle as AnalyticsService.record).
   async create(params: CreateNotificationParams): Promise<void> {
+    let created: Notification;
     try {
-      await this.prisma.notification.create({
+      created = await this.prisma.notification.create({
         data: {
           userId: params.userId,
           type: params.type,
@@ -49,6 +54,17 @@ export class NotificationService {
     } catch (error) {
       this.logger.warn(
         `Unable to create a ${params.type} notification for user ${params.userId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return;
+    }
+
+    try {
+      this.realtimeGateway.emitNewNotification(params.userId, mapNotification(created));
+    } catch (error) {
+      this.logger.warn(
+        `Unable to push notification ${created.id} to user ${params.userId}: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

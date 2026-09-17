@@ -13,11 +13,15 @@ describe('NotificationService', () => {
     },
   };
 
+  const realtimeGateway = {
+    emitNewNotification: jest.fn(),
+  };
+
   let service: NotificationService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new NotificationService(prisma as never);
+    service = new NotificationService(prisma as never, realtimeGateway as never);
   });
 
   describe('create', () => {
@@ -50,8 +54,54 @@ describe('NotificationService', () => {
       });
     });
 
+    it('pushes the created notification to the owner over the realtime gateway', async () => {
+      prisma.notification.create.mockResolvedValue({
+        id: 'notif-1',
+        type: NotificationTypeEnum.MESSAGE,
+        userId: 'user-2',
+        actorId: 'user-1',
+        title: null,
+        body: 'hello',
+        readAt: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      });
+
+      await service.create({
+        userId: 'user-2',
+        type: NotificationTypeEnum.MESSAGE,
+        actorId: 'user-1',
+        body: 'hello',
+      });
+
+      expect(realtimeGateway.emitNewNotification).toHaveBeenCalledWith(
+        'user-2',
+        expect.objectContaining({ id: 'notif-1', userId: 'user-2', body: 'hello' }),
+      );
+    });
+
     it('never throws: a database failure is logged and swallowed, not propagated to the caller', async () => {
       prisma.notification.create.mockRejectedValue(new Error('connection reset'));
+
+      await expect(
+        service.create({ userId: 'user-2', type: NotificationTypeEnum.MESSAGE, body: 'hello' }),
+      ).resolves.toBeUndefined();
+      expect(realtimeGateway.emitNewNotification).not.toHaveBeenCalled();
+    });
+
+    it('never throws: a realtime push failure is logged and swallowed - the notification was already persisted', async () => {
+      prisma.notification.create.mockResolvedValue({
+        id: 'notif-1',
+        type: NotificationTypeEnum.MESSAGE,
+        userId: 'user-2',
+        actorId: 'user-1',
+        title: null,
+        body: 'hello',
+        readAt: null,
+        createdAt: new Date(),
+      });
+      realtimeGateway.emitNewNotification.mockImplementation(() => {
+        throw new Error('socket server not ready');
+      });
 
       await expect(
         service.create({ userId: 'user-2', type: NotificationTypeEnum.MESSAGE, body: 'hello' }),
