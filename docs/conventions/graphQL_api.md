@@ -1848,6 +1848,7 @@ curl -k -X POST https://localhost/graphql \
 - Activity is read directly from the existing `follows` and `wishlists` tables (actor + `createdAt`) — there is no separate activity/feed table to keep in sync.
 - Pagination fetches the top `skip + limit` rows from each source independently (both already ordered `createdAt desc`, with a secondary tiebreak — `followerId`/`followingId` for follows, `id` for wishlists — matching the tiebreak used when merging in application code, so a `createdAt` tie between rows never causes an inconsistent page across calls), merges and re-sorts them in application code, then slices to the requested page. This avoids a raw SQL `UNION` while still being provably correct: the merged top-N of two already-sorted lists is always contained within each list's own top-N.
 - A product that has since been deactivated (`isActive: false`) silently drops its `WISHLIST_ITEM_ADDED` entry from the feed, same visibility rule as [`wishlist`](#wishlist) itself. This can very rarely make `total`/`hasNextPage` overshoot the actual number of renderable items by a small amount — a known, accepted trade-off, not a bug.
+- New activity is also pushed live: a genuine new [`followUser`](#followuserinput) or [`addWishlistItem`](#addwishlistiteminput) (not the idempotent no-op path) broadcasts a `circleFeedActivity` socket event to every current follower of the actor, on their existing `user:<id>` room. The payload is a single `CircleFeedItemType`, built with the exact same logic as this query, so it matches what a refresh would show.
 
 ---
 
@@ -2094,6 +2095,8 @@ curl -k -X POST https://localhost/graphql \
 
 Adds a product to the authenticated user's wishlist. Scoped strictly to the caller — the target user is always the one identified by the access token, never a client-supplied id. Idempotent: adding an already-wishlisted product is a no-op that returns the existing entry instead of creating a duplicate or erroring.
 
+On a genuine new add (not the idempotent no-op), broadcasts a `circleFeedActivity` event over the realtime gateway to every current follower of the caller — see [`circleFeed`](#circlefeedpagination).
+
 **Source:** `backend/src/modules/wishlist/`
 
 **Mutation**
@@ -2193,6 +2196,8 @@ Always `true` once the call succeeds, whether the entry existed beforehand or no
 Follows another user. Scoped strictly to the caller — the follower is always the one identified by the access token, never a client-supplied id. Idempotent: following an already-followed user is a no-op that returns `true` without creating a duplicate relationship. Following yourself is rejected.
 
 If the caller was the recipient of a conversation they'd previously [declined](#declineconversationinput) from the user they're now following, that conversation is automatically moved back to `ACCEPTED` — following is treated as forgiveness. This only triggers in that exact direction (recipient follows initiator); the initiator following the recipient back has no effect on a declined conversation.
+
+On a genuine new follow (not the idempotent no-op), broadcasts a `circleFeedActivity` event over the realtime gateway to every current follower of the caller — see [`circleFeed`](#circlefeedpagination).
 
 **Source:** `backend/src/modules/follows/`
 

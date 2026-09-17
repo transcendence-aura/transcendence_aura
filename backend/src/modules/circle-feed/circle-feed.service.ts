@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { UserStatus } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { ProductsService } from '../products/product.service';
 import { ProductType } from '../products/product.model';
 import { PublicProfileSummaryType } from '../profiles/profile.model';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import {
   CircleFeedActivityType,
   CircleFeedItemType,
@@ -25,9 +26,12 @@ const EMPTY_PAGE: CircleFeedPageType = { items: [], total: 0, hasNextPage: false
 
 @Injectable()
 export class CircleFeedService {
+  private readonly logger = new Logger(CircleFeedService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly productsService: ProductsService,
+    private readonly realtimeGateway: RealtimeGateway,
   ) {}
 
   async getFeed(
@@ -100,6 +104,77 @@ export class CircleFeedService {
       total: followTotal + wishlistTotal,
       hasNextPage: skip + page.length < followTotal + wishlistTotal,
     };
+  }
+
+  async publishNewFollow(followerId: string, followingId: string, createdAt: Date): Promise<void> {
+    try {
+      await this.publishActivity(followerId, {
+        kind: 'NEW_FOLLOW',
+        id: `follow:${followerId}:${followingId}`,
+        actorId: followerId,
+        followedUserId: followingId,
+        createdAt,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Unable to push a NEW_FOLLOW circle feed activity for actor ${followerId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  async publishNewWishlistItem(
+    wishlistId: string,
+    userId: string,
+    productId: string,
+    createdAt: Date,
+  ): Promise<void> {
+    try {
+      await this.publishActivity(userId, {
+        kind: 'WISHLIST_ITEM_ADDED',
+        id: `wishlist:${wishlistId}`,
+        actorId: userId,
+        productId,
+        createdAt,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Unable to push a WISHLIST_ITEM_ADDED circle feed activity for actor ${userId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  private async publishActivity(actorId: string, activity: RawActivity): Promise<void> {
+    const followerIds = await this.getFollowerIds(actorId);
+    if (followerIds.length === 0) {
+      return;
+    }
+
+    const [actorsById, productsById] = await Promise.all([
+      this.getActorSummaries([activity]),
+      this.getProductsById([activity]),
+    ]);
+
+    const item = this.mapActivity(activity, actorsById, productsById);
+    if (!item) {
+      return;
+    }
+
+    for (const followerId of followerIds) {
+      this.realtimeGateway.emitCircleFeedActivity(followerId, item);
+    }
+  }
+
+  private async getFollowerIds(actorId: string): Promise<string[]> {
+    const follows = await this.prisma.follow.findMany({
+      where: { followingId: actorId },
+      select: { followerId: true },
+    });
+
+    return follows.map((f) => f.followerId);
   }
 
   private async getFollowedActiveUserIds(userId: string): Promise<string[]> {

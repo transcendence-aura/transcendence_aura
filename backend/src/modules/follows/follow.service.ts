@@ -4,6 +4,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEventType, AnalyticsTargetType } from '../analytics/analytics-event-type.enum';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
+import { CircleFeedService } from '../circle-feed/circle-feed.service';
 
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
 
@@ -13,6 +14,7 @@ export class FollowService {
     private readonly prisma: PrismaService,
     private readonly analyticsService: AnalyticsService,
     private readonly realtimeGateway: RealtimeGateway,
+    private readonly circleFeedService: CircleFeedService,
   ) {}
 
   async follow(followerId: string, followingId: string): Promise<boolean> {
@@ -22,8 +24,9 @@ export class FollowService {
 
     await this.assertUserExists(followingId);
 
+    let created: { createdAt: Date };
     try {
-      await this.prisma.follow.create({ data: { followerId, followingId } });
+      created = await this.prisma.follow.create({ data: { followerId, followingId } });
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -39,6 +42,8 @@ export class FollowService {
       type: AnalyticsTargetType.USER,
       id: followingId,
     });
+
+    await this.circleFeedService.publishNewFollow(followerId, followingId, created.createdAt);
 
     await this.unblockDeclinedConversation(followerId, followingId);
 
