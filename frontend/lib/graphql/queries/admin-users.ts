@@ -64,6 +64,15 @@ export const ADMIN_SUSPEND_USER = gql`
   }
 `;
 
+export const ADMIN_REINSTATE_USER = gql`
+  mutation AdminReinstateUser($userId: String!) {
+    adminReinstateUser(userId: $userId) {
+      id
+      status
+    }
+  }
+`;
+
 export const ADMIN_DELETE_USER = gql`
   mutation AdminDeleteUser($userId: String!) {
     adminDeleteUser(userId: $userId) {

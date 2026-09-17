@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/feedback/toast';
 import { ConfirmActionDialog } from './ConfirmActionDialog';
 import {
   ADMIN_SUSPEND_USER,
+  ADMIN_REINSTATE_USER,
   ADMIN_DELETE_USER,
   type AdminUser,
 } from '@/lib/graphql/queries/admin-users';
@@ -30,6 +31,15 @@ export function UserRowActions({ user }: { user: AdminUser }) {
     },
   });
 
+  const [reinstateUser, { loading: reinstating }] = useMutation(ADMIN_REINSTATE_USER, {
+    onCompleted: () => {
+      toast({ message: 'User reinstated', variant: 'success' });
+    },
+    onError: () => {
+      toast({ message: 'Failed to reinstate user', variant: 'error' });
+    },
+  });
+
   const [deleteUser, { loading: deleting }] = useMutation(ADMIN_DELETE_USER, {
     onCompleted: () => {
       toast({ message: 'User deleted', variant: 'success' });
@@ -42,6 +52,7 @@ export function UserRowActions({ user }: { user: AdminUser }) {
   });
 
   const canSuspend = user.status === 'ACTIVE';
+  const canReinstate = user.status === 'SUSPENDED';
   const canDelete = user.status !== 'DELETED';
 
   return (
@@ -75,6 +86,18 @@ export function UserRowActions({ user }: { user: AdminUser }) {
               className="text-body-sm text-text-primary hover:bg-page w-full px-4 py-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40"
             >
               Suspend
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!canReinstate || reinstating}
+              onClick={() => {
+                setMenuOpen(false);
+                reinstateUser({ variables: { userId: user.id } });
+              }}
+              className="text-body-sm text-text-primary hover:bg-page w-full px-4 py-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Reinstate
             </button>
             <button
               type="button"
