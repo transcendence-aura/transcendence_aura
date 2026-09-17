@@ -53,7 +53,7 @@ const errorLink = new ErrorLink(({ error, operation, forward }) => {
     refreshAccessToken()
       .then((newAccessToken) => {
         if (!newAccessToken) {
-          observer.complete();
+          observer.error(error);
           return;
         }
         subscription = forward(operation).subscribe(observer);
