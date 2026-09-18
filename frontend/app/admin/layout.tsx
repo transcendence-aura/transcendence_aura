@@ -1,8 +1,7 @@
 import Link from 'next/link';
-import { Bell } from 'lucide-react';
+import { Bell, User } from 'lucide-react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { Badge } from '@/components/ui/display/badge';
-import { UserMenu } from '@/components/layout/UserMenu';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,7 +19,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <Bell className="h-5 w-5" />
           </button>
-          <UserMenu />
+          <div className="bg-brand-dark text-text-inverse flex h-8 w-8 items-center justify-center rounded-full">
+            <User className="h-4 w-4" />
+          </div>
         </div>
       </header>
 

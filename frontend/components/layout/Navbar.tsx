@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Heart, ShoppingBag, Menu, X } from 'lucide-react';
+import { Search, Heart, ShoppingBag, Menu, X, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { CartDot } from '@/components/ui/feedback/cart-dot';
-import { UserMenu } from './UserMenu';
+import { useIsAdmin } from '@/lib/auth/use-is-admin';
 
 const LANGUAGES = ['EN', 'FR', 'AR'] as const;
 type Language = (typeof LANGUAGES)[number];
@@ -14,10 +14,12 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>('EN');
   const pathname = usePathname();
+  const isAdmin = useIsAdmin();
 
-  const isAuthPage = pathname === '/login' || pathname === '/register';
-  const isAdminPage = pathname.startsWith('/admin');
-  if (isAuthPage || isAdminPage) return null;
+  /* Hide Navbar on auth routes and inside the admin shell (its own layout provides navigation) */
+  const isAuthPage =
+    pathname === '/login' || pathname === '/register' || pathname.startsWith('/admin');
+  if (isAuthPage) return null;
 
   return (
     <nav className="bg-card border-border-default flex h-16 items-center justify-between border-b px-6 md:px-8">
@@ -46,13 +48,23 @@ export function Navbar() {
         >
           About
         </Link>
+        {/* UX-only: hides the entry point for non-admins. RolesGuard is
+            what actually protects the admin data — see
+            docs/conventions/authorization.md. */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="text-text-secondary hover:text-text-primary text-xs uppercase tracking-wider transition-colors"
+          >
+            Admin
+          </Link>
+        )}
       </div>
 
       {/* Right Section: Actions & Language */}
       <div className="flex items-center gap-4">
         {/* Search */}
         <button
-          type="button"
           aria-label="Search"
           className="text-text-secondary hover:text-text-primary transition-colors"
         >
@@ -103,12 +115,17 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* User Dropdown Menu */}
-        <UserMenu />
+        {/* User Sign-in */}
+        <Link
+          href="/login"
+          className="text-text-secondary hover:text-text-primary transition-colors"
+          aria-label="Sign in"
+        >
+          <User className="h-5 w-5" />
+        </Link>
 
-        {/* Mobile Menu Trigger */}
+        {/* Mobile Menu Toggle */}
         <button
-          type="button"
           onClick={() => setMenuOpen(!menuOpen)}
           className="text-text-secondary hover:text-text-primary transition-colors md:hidden"
           aria-label="Toggle menu"
@@ -117,7 +134,7 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Drawer Menu*/}
+      {/* Mobile Drawer Menu */}
       {menuOpen && (
         <div className="bg-card border-border-default absolute inset-x-0 top-16 z-50 flex flex-col gap-4 border-b p-6 md:hidden shadow-sm">
           <Link
@@ -141,7 +158,17 @@ export function Navbar() {
           >
             About
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={() => setMenuOpen(false)}
+              className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors"
+            >
+              Admin
+            </Link>
+          )}
 
+          {/* Cart Mobile */}
           <Link
             href="/checkout"
             onClick={() => setMenuOpen(false)}
@@ -150,9 +177,35 @@ export function Navbar() {
             <ShoppingBag className="h-4 w-4" /> Cart
           </Link>
 
-          <div className="border-border-default border-t pt-4">
-            <UserMenu />
+          {/* Mobile Language Selection */}
+          <div className="flex items-center gap-2 border-t border-border-default pt-4">
+            <span className="text-[10px] uppercase tracking-wider text-text-muted mr-2">
+              Language:
+            </span>
+            {LANGUAGES.map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setCurrentLang(lang)}
+                className={`text-xs px-2 py-1 rounded border transition-colors ${
+                  currentLang === lang
+                    ? 'border-brand-dark bg-brand-dark text-white font-medium'
+                    : 'border-border-default text-text-secondary'
+                }`}
+              >
+                {lang}
+              </button>
+            ))}
           </div>
+
+          {/* Sign in link */}
+          <Link
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors border-t border-border-default pt-4"
+          >
+            Sign in
+          </Link>
         </div>
       )}
     </nav>
