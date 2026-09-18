@@ -112,30 +112,19 @@ export class ProfileService {
       throw new NotFoundException('USER_NOT_FOUND');
     }
 
-    // email/handle are required columns - a stray explicit null on either
-    // (rather than simply omitting the field) is treated as "don't touch"
-    // instead of crashing or nulling out a required field.
     const normalizedEmail = input.email ? input.email.trim().toLowerCase() : undefined;
     const normalizedHandle = input.handle ? input.handle.trim() : undefined;
 
-    // Resubmitting the caller's own current email is a no-op, not a conflict -
-    // only a genuinely different, already-taken email is rejected below.
     if (normalizedEmail !== undefined && normalizedEmail !== current.email) {
       const emailTaken = await this.prisma.user.findUnique({
         where: { email: normalizedEmail },
         select: { id: true },
       });
-      // Deliberately a generic 400 (not 409 EMAIL_ALREADY_EXISTS): confirming
-      // that a given address belongs to an existing account would let any
-      // authenticated caller enumerate other users' emails one guess at a time.
       if (emailTaken) {
         throw new BadRequestException('EMAIL_UNAVAILABLE');
       }
     }
 
-    // Unlike email, the handle is the user's public-facing username (already
-    // discoverable via userProfile(handle)), so confirming it's taken isn't a
-    // privacy leak - same 409/USERNAME_TAKEN code as registration.
     if (normalizedHandle !== undefined && normalizedHandle !== current.handle) {
       const handleTaken = await this.prisma.user.findUnique({
         where: { handle: normalizedHandle },
@@ -159,10 +148,6 @@ export class ProfileService {
 
       return { ...updated, bio: updated.bio ?? undefined };
     } catch (error: unknown) {
-      // The pre-checks above narrow this to a rare concurrent-request race
-      // (two updates picking the same free email/handle at once) rather than
-      // the common case - still converted to the same clean error instead of
-      // leaking a raw Prisma constraint failure.
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === PRISMA_UNIQUE_CONSTRAINT_ERROR

@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, Logger, UnauthorizedException } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { Prisma, UserRole, UserStatus } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
@@ -20,10 +21,9 @@ import { slugify } from '../../common/utils/slugify';
 
 const SALT_ROUNDS = 10;
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
-// User.handle is @db.VarChar(30) - base is capped to leave room for a
-// "-<suffix>" of up to 3 digits (covers up to 999 same-name collisions).
 const HANDLE_MAX_LENGTH = 30;
-const HANDLE_BASE_MAX_LENGTH = HANDLE_MAX_LENGTH - 4;
+const RANDOM_SUFFIX_BYTES = 2; // -> 4 hex chars
+const HANDLE_BASE_MAX_LENGTH = HANDLE_MAX_LENGTH - RANDOM_SUFFIX_BYTES * 2 - 1;
 
 export interface RegisteredUser {
   id: string;
@@ -70,10 +70,6 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
-    // The handle is generated (not caller-supplied) - it's the user's public
-    // pseudonym, editable later via updateMyProfile, so nobody needs to pick
-    // one at signup time. Retried on a raced collision, same pattern as
-    // AdminProductService's slug generation.
     const maxAttempts = 5;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       const handle = await this.generateUniqueHandle(name);
@@ -107,26 +103,36 @@ export class AuthService {
         ) {
           throw error;
         }
-        if (attempt === maxAttempts) {
+
+        const conflictedOnEmail = String(error.meta?.target ?? '').includes('email');
+        if (conflictedOnEmail) {
           throw new ConflictException('EMAIL_ALREADY_EXISTS');
+        }
+        if (attempt === maxAttempts) {
+          throw new ConflictException('HANDLE_GENERATION_FAILED');
         }
       }
     }
 
-    throw new ConflictException('EMAIL_ALREADY_EXISTS');
+    throw new ConflictException('HANDLE_GENERATION_FAILED');
   }
 
   private async generateUniqueHandle(name: string): Promise<string> {
     const base = slugify(name).slice(0, HANDLE_BASE_MAX_LENGTH) || 'user';
 
-    let candidate = base;
-    let suffix = 2;
-    while (await this.handleTaken(candidate)) {
-      candidate = `${base}-${suffix}`;
-      suffix += 1;
+    if (!(await this.handleTaken(base))) {
+      return base;
     }
 
-    return candidate;
+    const maxAttempts = 20;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const candidate = `${base}-${randomBytes(RANDOM_SUFFIX_BYTES).toString('hex')}`;
+      if (!(await this.handleTaken(candidate))) {
+        return candidate;
+      }
+    }
+
+    throw new ConflictException('HANDLE_GENERATION_FAILED');
   }
 
   private async handleTaken(handle: string): Promise<boolean> {
