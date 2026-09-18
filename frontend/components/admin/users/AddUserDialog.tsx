@@ -13,7 +13,7 @@ interface AddUserDialogProps {
   onClose: () => void;
 }
 
-const EMPTY_FORM = { name: '', handle: '', email: '', password: '' };
+const EMPTY_FORM = { name: '', email: '', password: '' };
 
 export function AddUserDialog({ isOpen, onClose }: AddUserDialogProps) {
   const { toast } = useToast();
@@ -48,12 +48,6 @@ export function AddUserDialog({ isOpen, onClose }: AddUserDialogProps) {
           placeholder="Full name"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
-          required
-        />
-        <Input
-          placeholder="Handle"
-          value={form.handle}
-          onChange={(e) => setForm({ ...form, handle: e.target.value })}
           required
         />
         <Input

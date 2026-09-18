@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, Logger, UnauthorizedException } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { Prisma, UserRole, UserStatus } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
@@ -16,9 +17,13 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEventType } from '../analytics/analytics-event-type.enum';
 import { VaultService } from '../../infrastructure/vault/vault.service';
 import { TotpService } from './totp.service';
+import { slugify } from '../../common/utils/slugify';
 
 const SALT_ROUNDS = 10;
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
+const HANDLE_MAX_LENGTH = 30;
+const RANDOM_SUFFIX_BYTES = 2; // -> 4 hex chars
+const HANDLE_BASE_MAX_LENGTH = HANDLE_MAX_LENGTH - RANDOM_SUFFIX_BYTES * 2 - 1;
 
 export interface RegisteredUser {
   id: string;
@@ -53,56 +58,89 @@ export class AuthService {
 
   async register(dto: RegisterDto): Promise<RegisteredUser> {
     const normalizedEmail = dto.email.trim().toLowerCase();
-    const normalizedHandle = dto.handle.trim();
-    const existing = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: normalizedEmail }, { handle: normalizedHandle }],
-      },
-      select: {
-        email: true,
-        handle: true,
-      },
+    const name = dto.name.trim();
+
+    const emailTaken = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
     });
-    if (existing?.email === normalizedEmail) {
+    if (emailTaken) {
       throw new ConflictException('EMAIL_ALREADY_EXISTS');
-    }
-    if (existing?.handle === normalizedHandle) {
-      throw new ConflictException('USERNAME_TAKEN');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
-    try {
-      const user = await this.prisma.user.create({
-        data: {
-          email: normalizedEmail,
-          name: dto.name.trim(),
-          handle: normalizedHandle,
-          passwordHash,
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          handle: true,
-          role: true,
-          status: true,
-          createdAt: true,
-        },
-      });
+    const maxAttempts = 5;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const handle = await this.generateUniqueHandle(name);
 
-      await this.analyticsService.record(AnalyticsEventType.USER_REGISTERED, user.id);
+      try {
+        const user = await this.prisma.user.create({
+          data: {
+            email: normalizedEmail,
+            name,
+            handle,
+            passwordHash,
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            handle: true,
+            role: true,
+            status: true,
+            createdAt: true,
+          },
+        });
 
-      return user;
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_UNIQUE_CONSTRAINT_ERROR
-      ) {
-        throw new ConflictException('EMAIL_OR_HANDLE_ALREADY_EXISTS');
+        await this.analyticsService.record(AnalyticsEventType.USER_REGISTERED, user.id);
+
+        return user;
+      } catch (error: unknown) {
+        if (
+          !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+          error.code !== PRISMA_UNIQUE_CONSTRAINT_ERROR
+        ) {
+          throw error;
+        }
+
+        const conflictedOnEmail = String(error.meta?.target ?? '').includes('email');
+        if (conflictedOnEmail) {
+          throw new ConflictException('EMAIL_ALREADY_EXISTS');
+        }
+        if (attempt === maxAttempts) {
+          throw new ConflictException('HANDLE_GENERATION_FAILED');
+        }
       }
-      throw error;
     }
+
+    throw new ConflictException('HANDLE_GENERATION_FAILED');
+  }
+
+  private async generateUniqueHandle(name: string): Promise<string> {
+    const base = slugify(name).slice(0, HANDLE_BASE_MAX_LENGTH) || 'user';
+
+    if (!(await this.handleTaken(base))) {
+      return base;
+    }
+
+    const maxAttempts = 20;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const candidate = `${base}-${randomBytes(RANDOM_SUFFIX_BYTES).toString('hex')}`;
+      if (!(await this.handleTaken(candidate))) {
+        return candidate;
+      }
+    }
+
+    throw new ConflictException('HANDLE_GENERATION_FAILED');
+  }
+
+  private async handleTaken(handle: string): Promise<boolean> {
+    const existing = await this.prisma.user.findUnique({
+      where: { handle },
+      select: { id: true },
+    });
+    return existing !== null;
   }
 
   private async issueAuthenticatedSession(user: {

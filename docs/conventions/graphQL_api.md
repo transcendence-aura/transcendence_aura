@@ -185,6 +185,59 @@ Some queries additionally restrict by role: `adminUsers` and `adminUser` below a
 | Valid token, account suspended or deleted             | `401 Unauthorized` |
 | Valid token, role not allowed for an admin-only query | `403 Forbidden`    |
 
+## Register
+
+`register` creates a new account. Public - no `Authorization` header required.
+
+Mutation
+
+```graphql
+mutation Register($input: RegisterDto!) {
+  register(input: $input) {
+    id
+    name
+    email
+    handle
+  }
+}
+```
+
+Variables
+
+```graphql
+{
+  "input": {
+    "email": "marie@example.com",
+    "password": "SecurePassword!",
+    "name": "Marie Laurent"
+  }
+}
+```
+
+Successful response
+
+```graphql
+{
+  "data": {
+    "register": {
+      "id": "00000000-0000-4000-8000-000000000099",
+      "name": "Marie Laurent",
+      "email": "marie@example.com",
+      "handle": "marie-laurent"
+    }
+  }
+}
+```
+
+`RegisterDto` only accepts `email`, `password` and `name` - `handle` is not a caller-supplied field. It is generated server-side from `name` (accent-stripped, lowercased, non-alphanumeric runs collapsed to `-` - the same transform used for product slugs), with automatic `-2`/`-3`/... de-duplication on collision (or a `user`/`user-2`/... fallback if the name has no alphanumeric characters at all). The handle stays editable afterward by the account owner via `updateMyProfile`.
+
+Errors
+
+| Case                                                                     | Result                       |
+| ------------------------------------------------------------------------ | ---------------------------- |
+| `email` already registered                                               | `409` `EMAIL_ALREADY_EXISTS` |
+| Invalid input (bad email format, password shorter than 8, name too long) | `400` (DTO validation)       |
+
 ## Two-Factor Authentication
 
 `setupTwoFactor` begins TOTP enrollment. The mutation generates a TOTP secret, stores it in Vault, and returns the provisioning data required by an authenticator app.
