@@ -14,6 +14,7 @@ import { TokenService } from '../auth/token.service';
 import { PrismaService } from '../../database/prisma.service';
 import { MessageType } from '../conversations/conversation.model';
 import { NotificationType } from '../notifications/notification.model';
+import { CircleFeedItemType } from '../circle-feed/circle-feed.model';
 
 interface JoinConversationPayload {
   conversationId: string;
@@ -43,6 +44,10 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
   emitNewNotification(userId: string, notification: NotificationType): void {
     this.server.to(`user:${userId}`).emit('newNotification', notification);
+  }
+
+  emitCircleFeedActivity(followerId: string, item: CircleFeedItemType): void {
+    this.server.to(`user:${followerId}`).emit('circleFeedActivity', item);
   }
 
   async handleConnection(client: Socket): Promise<void> {
