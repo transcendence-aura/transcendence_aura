@@ -26,6 +26,7 @@ import { NotificationModule } from './modules/notifications/notification.module'
 import { CommonModule } from './common/common.module';
 import { AvatarModule } from './modules/avatar/avatar.module';
 import { CircleFeedModule } from './modules/circle-feed/circle-feed.module';
+import { ApiKeyModule } from './modules/api-keys/api-key.module';
 import { createAppConfig } from './config/configuration';
 import { RequiredSecrets } from './config/required-secrets';
 
@@ -75,6 +76,7 @@ export class AppModule {
         CommonModule,
         AvatarModule,
         CircleFeedModule,
+        ApiKeyModule,
       ],
       controllers: [AppController],
       providers: [AppService],
