@@ -11,6 +11,8 @@ import { useToast } from '@/components/ui/feedback/toast';
 import { ConfirmActionDialog } from '@/components/admin/ConfirmActionDialog';
 import { VariantRow } from './VariantRow';
 import { uploadProductImage } from '@/lib/upload-product-image';
+import { parsePriceInput } from '@/lib/parse-price';
+import { getValidationErrorMessage } from '@/lib/graphql-error';
 import {
   GET_ADMIN_PRODUCTS,
   ADMIN_CREATE_PRODUCT,
@@ -138,7 +140,11 @@ export function ProductFormDialog({
         setNewVariantPrice('');
         toast({ message: 'Variant added', variant: 'success' });
       },
-      onError: () => toast({ message: 'Failed to add variant', variant: 'error' }),
+      onError: (error) =>
+        toast({
+          message: getValidationErrorMessage(error) ?? 'Failed to add variant',
+          variant: 'error',
+        }),
     },
   );
 
@@ -385,9 +391,8 @@ export function ProductFormDialog({
                   className="w-32"
                 />
                 <Input
-                  type="number"
-                  min={0}
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="Price"
                   value={newVariantPrice}
                   onChange={(e) => setNewVariantPrice(e.target.value)}
@@ -396,14 +401,19 @@ export function ProductFormDialog({
                 <Button
                   variant="ghost"
                   disabled={!newVariantLabel.trim() || !newVariantPrice || addingVariant}
-                  onClick={() =>
+                  onClick={() => {
+                    const parsedPrice = parsePriceInput(newVariantPrice);
+                    if (parsedPrice === null) {
+                      toast({ message: 'Enter a valid, non-negative price', variant: 'error' });
+                      return;
+                    }
                     addVariant({
                       variables: {
                         productId: activeProduct.id,
-                        input: { label: newVariantLabel, price: Number(newVariantPrice) },
+                        input: { label: newVariantLabel, price: parsedPrice },
                       },
-                    })
-                  }
+                    });
+                  }}
                 >
                   + Add Variant
                 </Button>

@@ -3,7 +3,7 @@ import { Pencil } from 'lucide-react';
 import type { AdminProduct } from '@/lib/graphql/queries/admin-products';
 
 function formatPrice(price: number | null): string {
-  return price === null ? '—' : `€${price.toFixed(0)}`;
+  return price === null ? '—' : `€${price.toFixed(2)}`;
 }
 
 export function ProductCard({ product, onEdit }: { product: AdminProduct; onEdit: () => void }) {

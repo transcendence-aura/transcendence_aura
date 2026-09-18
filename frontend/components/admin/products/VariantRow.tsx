@@ -6,6 +6,8 @@ import { useMutation } from '@apollo/client/react';
 import { Input } from '@/components/ui/form/input';
 import { Switch } from '@/components/ui/form/switch';
 import { useToast } from '@/components/ui/feedback/toast';
+import { parsePriceInput } from '@/lib/parse-price';
+import { getValidationErrorMessage } from '@/lib/graphql-error';
 import {
   GET_ADMIN_PRODUCTS,
   ADMIN_UPDATE_PRODUCT_VARIANT,
@@ -34,8 +36,11 @@ export function VariantRow({
       toast({ message: 'Variant updated', variant: 'success' });
       setDirty(false);
     },
-    onError: () => {
-      toast({ message: 'Failed to update variant', variant: 'error' });
+    onError: (error) => {
+      toast({
+        message: getValidationErrorMessage(error) ?? 'Failed to update variant',
+        variant: 'error',
+      });
     },
   });
 
@@ -66,9 +71,8 @@ export function VariantRow({
         className="w-32"
       />
       <Input
-        type="number"
-        min={0}
-        step="0.01"
+        type="text"
+        inputMode="decimal"
         value={price}
         onChange={(e) => markDirty(setPrice)(e.target.value)}
         placeholder="Price"
@@ -86,14 +90,19 @@ export function VariantRow({
         <button
           type="button"
           disabled={!dirty || saving}
-          onClick={() =>
+          onClick={() => {
+            const parsedPrice = parsePriceInput(price);
+            if (parsedPrice === null) {
+              toast({ message: 'Enter a valid, non-negative price', variant: 'error' });
+              return;
+            }
             updateVariant({
               variables: {
                 variantId: variant.id,
-                input: { label, price: Number(price), isAvailable },
+                input: { label, price: parsedPrice, isAvailable },
               },
-            })
-          }
+            });
+          }}
           className="text-ui-button text-text-primary border-border-default hover:bg-page border px-3 py-2 uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-40"
         >
           {saving ? 'Saving...' : 'Save'}
