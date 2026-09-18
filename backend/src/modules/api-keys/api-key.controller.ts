@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -8,19 +9,24 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { ApiKeyService } from './api-key.service';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { ApiKeyCreatedDto } from './dto/api-key-created.dto';
+import { ApiKeySummaryDto } from './dto/api-key-summary.dto';
 
 // Management endpoints for API keys, authenticated with the normal
 // JWT-based RolesGuard - not with an API key itself, since creating the
 // first key can't depend on already having one. Any authenticated user can
 // manage their own keys (the public API they gate is catalogue-only/no
 // personal data, so self-service issuance carries little risk) - ownership,
-// not role, is what's enforced on revoke.
+// not role, is what's enforced on revoke. Listing every key across every
+// account is a different concern (visibility into other accounts), so that
+// one route is restricted with its own @Roles(ADMIN) instead.
 //
 // Controller path is 'keys', not 'api-keys': nginx's `location /api/`
 // only matches paths starting with /api/ (a literal slash after "api"),
@@ -32,6 +38,24 @@ import { ApiKeyCreatedDto } from './dto/api-key-created.dto';
 @UseGuards(RolesGuard)
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
+
+  @Get()
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'List every API key (admin only)',
+    description:
+      'Metadata only - never the raw value or its hash. Includes the owning account ' +
+      '(id, handle, email) so an admin can tell whose key is whose.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All keys, most recent first.',
+    type: [ApiKeySummaryDto],
+  })
+  @ApiResponse({ status: 403, description: 'Caller is not an ADMIN.' })
+  list(): Promise<ApiKeySummaryDto[]> {
+    return this.apiKeyService.list();
+  }
 
   @Post()
   @ApiOperation({

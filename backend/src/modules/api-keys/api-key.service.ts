@@ -9,6 +9,7 @@ import { PrismaService } from '../../database/prisma.service';
 import type { AuthenticatedUser } from '../../common/types/authenticated-request';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { ApiKeyCreatedDto } from './dto/api-key-created.dto';
+import { ApiKeySummaryDto } from './dto/api-key-summary.dto';
 import { generateApiKey, hashApiKey } from './api-key.utils';
 
 @Injectable()
@@ -48,6 +49,25 @@ export class ApiKeyService {
         createdAt: apiKey.createdAt,
       };
     });
+  }
+
+  async list(): Promise<ApiKeySummaryDto[]> {
+    const apiKeys = await this.prisma.apiKey.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { owner: { select: { id: true, handle: true, email: true } } },
+    });
+
+    return apiKeys.map((apiKey) => ({
+      id: apiKey.id,
+      name: apiKey.name,
+      scopes: apiKey.scopes,
+      expiresAt: apiKey.expiresAt,
+      lastUsedAt: apiKey.lastUsedAt,
+      isRevoked: apiKey.isRevoked,
+      revokedAt: apiKey.revokedAt,
+      createdAt: apiKey.createdAt,
+      owner: apiKey.owner,
+    }));
   }
 
   async revoke(id: string, requester: AuthenticatedUser): Promise<void> {

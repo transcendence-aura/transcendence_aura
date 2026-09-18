@@ -5,6 +5,7 @@ import { ApiKeyService } from './api-key.service';
 describe('ApiKeyService', () => {
   const apiKey = {
     findFirst: jest.fn(),
+    findMany: jest.fn(),
     create: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
@@ -66,6 +67,47 @@ describe('ApiKeyService', () => {
       await expect(service.create('user-1', { name: 'replacement-key' })).resolves.toMatchObject({
         id: 'key-2',
       });
+    });
+  });
+
+  describe('list', () => {
+    it('returns metadata plus the owner, and never the hash or a raw value', async () => {
+      apiKey.findMany.mockResolvedValue([
+        {
+          id: 'key-1',
+          name: 'my-key',
+          scopes: ['read'],
+          expiresAt: null,
+          lastUsedAt: null,
+          isRevoked: false,
+          revokedAt: null,
+          createdAt: new Date('2026-01-01'),
+          keyHash: 'should-never-be-selected-but-guard-anyway',
+          owner: { id: 'user-1', handle: 'marie', email: 'marie@example.com' },
+        },
+      ]);
+
+      const result = await service.list();
+
+      expect(apiKey.findMany).toHaveBeenCalledWith({
+        orderBy: { createdAt: 'desc' },
+        include: { owner: { select: { id: true, handle: true, email: true } } },
+      });
+      expect(result).toEqual([
+        {
+          id: 'key-1',
+          name: 'my-key',
+          scopes: ['read'],
+          expiresAt: null,
+          lastUsedAt: null,
+          isRevoked: false,
+          revokedAt: null,
+          createdAt: new Date('2026-01-01'),
+          owner: { id: 'user-1', handle: 'marie', email: 'marie@example.com' },
+        },
+      ]);
+      expect(result[0]).not.toHaveProperty('keyHash');
+      expect(result[0]).not.toHaveProperty('key');
     });
   });
 
