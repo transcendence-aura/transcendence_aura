@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { slugify } from '../../common/utils/slugify';
+import { MediaStorageService } from '../../common/media/media-storage.service';
 import { ProductsService } from '../products/product.service';
 import { ProductPageType, ProductType, ProductVariantType } from '../products/product.model';
 import { ProductPaginationInput, ProductsFilterInput } from '../products/product.input';
@@ -39,6 +40,7 @@ export class AdminProductService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly productsService: ProductsService,
+    private readonly mediaStorage: MediaStorageService,
   ) {}
 
   // Unlike the public products() query, admins need to see draft (isActive:
@@ -225,9 +227,22 @@ export class AdminProductService {
   // Real deletion: variants, media and wishlist entries cascade at the DB
   // level (see schema.prisma), so this permanently removes the product and
   // everything under it. Unlike deleteProduct, there's no way back.
+  //
+  // The DB cascade only drops the Media rows - it doesn't know about the
+  // actual files on disk, so those are removed explicitly here (same
+  // pattern as AdminProductImageService.deleteImage for a single image).
   async hardDeleteProduct(id: string): Promise<boolean> {
     await this.getProductOrThrow(id);
+
+    const media = await this.prisma.media.findMany({
+      where: { productId: id },
+      select: { url: true },
+    });
+
     await this.prisma.product.delete({ where: { id } });
+
+    await Promise.all(media.map((m) => this.mediaStorage.remove(m.url)));
+
     return true;
   }
 
