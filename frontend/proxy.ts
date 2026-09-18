@@ -3,21 +3,23 @@ import { hasAdminPermission } from '@/lib/auth/decode-token';
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const ACCESS_COOKIE_NAME = '__Host-access_token';
 
-  const accessToken = request.cookies.get(ACCESS_COOKIE_NAME)?.value;
+  // Check both secure Host prefix and standard dev cookie names
+  const accessToken =
+    request.cookies.get('__Host-access_token')?.value || request.cookies.get('access_token')?.value;
+
+  // In local dev without SSR cookies, allow navigation; client-side guards & Apollo handle protection
+  if (!accessToken && process.env.NODE_ENV === 'development') {
+    return NextResponse.next();
+  }
 
   if (!accessToken) {
     const loginUrl = new URL('/login', request.url);
-
     loginUrl.searchParams.set('returnTo', pathname);
-
     return NextResponse.redirect(loginUrl);
   }
 
-  // Admin routes: UX-only gate. RolesGuard is what actually protects the
-  // data — this just avoids rendering a page that will fail to load
-  // anything, sending a logged-in-but-not-admin user back home instead.
+  // Admin routes: UX-only gate.
   if (pathname.startsWith('/admin') && !hasAdminPermission(accessToken)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
