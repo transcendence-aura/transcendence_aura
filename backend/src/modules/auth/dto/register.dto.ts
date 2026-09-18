@@ -17,9 +17,4 @@ export class RegisterDto {
   @IsString()
   @MaxLength(100)
   name!: string;
-
-  @Field()
-  @IsString()
-  @MaxLength(30)
-  handle!: string;
 }

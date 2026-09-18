@@ -16,9 +16,14 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEventType } from '../analytics/analytics-event-type.enum';
 import { VaultService } from '../../infrastructure/vault/vault.service';
 import { TotpService } from './totp.service';
+import { slugify } from '../../common/utils/slugify';
 
 const SALT_ROUNDS = 10;
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
+// User.handle is @db.VarChar(30) - base is capped to leave room for a
+// "-<suffix>" of up to 3 digits (covers up to 999 same-name collisions).
+const HANDLE_MAX_LENGTH = 30;
+const HANDLE_BASE_MAX_LENGTH = HANDLE_MAX_LENGTH - 4;
 
 export interface RegisteredUser {
   id: string;
@@ -53,56 +58,83 @@ export class AuthService {
 
   async register(dto: RegisterDto): Promise<RegisteredUser> {
     const normalizedEmail = dto.email.trim().toLowerCase();
-    const normalizedHandle = dto.handle.trim();
-    const existing = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ email: normalizedEmail }, { handle: normalizedHandle }],
-      },
-      select: {
-        email: true,
-        handle: true,
-      },
+    const name = dto.name.trim();
+
+    const emailTaken = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
     });
-    if (existing?.email === normalizedEmail) {
+    if (emailTaken) {
       throw new ConflictException('EMAIL_ALREADY_EXISTS');
-    }
-    if (existing?.handle === normalizedHandle) {
-      throw new ConflictException('USERNAME_TAKEN');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
-    try {
-      const user = await this.prisma.user.create({
-        data: {
-          email: normalizedEmail,
-          name: dto.name.trim(),
-          handle: normalizedHandle,
-          passwordHash,
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          handle: true,
-          role: true,
-          status: true,
-          createdAt: true,
-        },
-      });
+    // The handle is generated (not caller-supplied) - it's the user's public
+    // pseudonym, editable later via updateMyProfile, so nobody needs to pick
+    // one at signup time. Retried on a raced collision, same pattern as
+    // AdminProductService's slug generation.
+    const maxAttempts = 5;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const handle = await this.generateUniqueHandle(name);
 
-      await this.analyticsService.record(AnalyticsEventType.USER_REGISTERED, user.id);
+      try {
+        const user = await this.prisma.user.create({
+          data: {
+            email: normalizedEmail,
+            name,
+            handle,
+            passwordHash,
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            handle: true,
+            role: true,
+            status: true,
+            createdAt: true,
+          },
+        });
 
-      return user;
-    } catch (error: unknown) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === PRISMA_UNIQUE_CONSTRAINT_ERROR
-      ) {
-        throw new ConflictException('EMAIL_OR_HANDLE_ALREADY_EXISTS');
+        await this.analyticsService.record(AnalyticsEventType.USER_REGISTERED, user.id);
+
+        return user;
+      } catch (error: unknown) {
+        if (
+          !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+          error.code !== PRISMA_UNIQUE_CONSTRAINT_ERROR
+        ) {
+          throw error;
+        }
+        if (attempt === maxAttempts) {
+          throw new ConflictException('EMAIL_ALREADY_EXISTS');
+        }
       }
-      throw error;
     }
+
+    throw new ConflictException('EMAIL_ALREADY_EXISTS');
+  }
+
+  private async generateUniqueHandle(name: string): Promise<string> {
+    const base = slugify(name).slice(0, HANDLE_BASE_MAX_LENGTH) || 'user';
+
+    let candidate = base;
+    let suffix = 2;
+    while (await this.handleTaken(candidate)) {
+      candidate = `${base}-${suffix}`;
+      suffix += 1;
+    }
+
+    return candidate;
+  }
+
+  private async handleTaken(handle: string): Promise<boolean> {
+    const existing = await this.prisma.user.findUnique({
+      where: { handle },
+      select: { id: true },
+    });
+    return existing !== null;
   }
 
   private async issueAuthenticatedSession(user: {
