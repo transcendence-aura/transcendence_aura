@@ -1,0 +1,488 @@
+'use client';
+
+import { useRef, useState } from 'react';
+import { useMutation } from '@apollo/client/react';
+import { Star, Trash2 } from 'lucide-react';
+import { Dialog } from '@/components/ui/overlay/dialog';
+import { Input } from '@/components/ui/form/input';
+import { Textarea } from '@/components/ui/form/textarea';
+import { Button } from '@/components/ui/form/button';
+import { useToast } from '@/components/ui/feedback/toast';
+import { ConfirmActionDialog } from '@/components/admin/ConfirmActionDialog';
+import { VariantRow } from './VariantRow';
+import { uploadProductImage } from '@/lib/upload-product-image';
+import {
+  GET_ADMIN_PRODUCTS,
+  ADMIN_CREATE_PRODUCT,
+  ADMIN_UPDATE_PRODUCT,
+  ADMIN_DELETE_PRODUCT,
+  ADMIN_HARD_DELETE_PRODUCT,
+  ADMIN_ADD_PRODUCT_VARIANT,
+  ADMIN_SET_PRIMARY_PRODUCT_IMAGE,
+  ADMIN_DELETE_PRODUCT_IMAGE,
+  type AdminProduct,
+  type AdminCategory,
+  type AdminCreateProductResponse,
+  type AdminUpdateProductResponse,
+  type AdminDeactivateProductResponse,
+  type AdminAddProductVariantResponse,
+  type AdminSetPrimaryProductImageResponse,
+  type AdminDeleteProductImageResponse,
+} from '@/lib/graphql/queries/admin-products';
+
+// Mirrors the backend's BadRequestException messages from
+// admin-product-image.controller.ts / image-validation.util.ts.
+const UPLOAD_ERROR_MESSAGES: Record<string, string> = {
+  IMAGE_TYPE_NOT_ALLOWED: 'Only JPEG images are allowed.',
+  IMAGE_MUST_BE_SQUARE: 'Image must be square (equal width and height).',
+  IMAGE_FILE_REQUIRED: 'Please select an image file.',
+};
+
+interface ProductFormDialogProps {
+  isOpen: boolean;
+  product: AdminProduct | null;
+  categories: AdminCategory[];
+  onClose: () => void;
+}
+
+export function ProductFormDialog({
+  isOpen,
+  product,
+  categories,
+  onClose,
+}: ProductFormDialogProps) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [activeProduct, setActiveProduct] = useState<AdminProduct | null>(product);
+  const [name, setName] = useState(product?.name ?? '');
+  const [description, setDescription] = useState(product?.description ?? '');
+  const [categoryIds, setCategoryIds] = useState<string[]>(
+    product?.categories.map((c) => c.id) ?? [],
+  );
+  const [newVariantLabel, setNewVariantLabel] = useState('');
+  const [newVariantPrice, setNewVariantPrice] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    title: string;
+    description: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const [createProduct, { loading: creating }] = useMutation<AdminCreateProductResponse>(
+    ADMIN_CREATE_PRODUCT,
+    {
+      refetchQueries: [GET_ADMIN_PRODUCTS],
+      onCompleted: (data) => {
+        setActiveProduct(data.adminCreateProduct);
+        toast({ message: 'Product created — add variants and images below', variant: 'success' });
+      },
+      onError: () => toast({ message: 'Failed to create product', variant: 'error' }),
+    },
+  );
+
+  const [updateProduct, { loading: updating }] = useMutation<AdminUpdateProductResponse>(
+    ADMIN_UPDATE_PRODUCT,
+    {
+      refetchQueries: [GET_ADMIN_PRODUCTS],
+      onCompleted: (data) => {
+        setActiveProduct(data.adminUpdateProduct);
+        toast({ message: 'Product saved', variant: 'success' });
+      },
+      onError: () => toast({ message: 'Failed to save product', variant: 'error' }),
+    },
+  );
+
+  const [publishProduct, { loading: publishing }] = useMutation<AdminUpdateProductResponse>(
+    ADMIN_UPDATE_PRODUCT,
+    {
+      refetchQueries: [GET_ADMIN_PRODUCTS],
+      onCompleted: (data) => {
+        setActiveProduct(data.adminUpdateProduct);
+        toast({ message: 'Product published', variant: 'success' });
+      },
+      onError: () => toast({ message: 'Failed to publish product', variant: 'error' }),
+    },
+  );
+
+  const [deactivateProduct, { loading: deactivating }] =
+    useMutation<AdminDeactivateProductResponse>(ADMIN_DELETE_PRODUCT, {
+      refetchQueries: [GET_ADMIN_PRODUCTS],
+      onCompleted: (data) => {
+        setActiveProduct(data.adminDeleteProduct);
+        toast({ message: 'Product deactivated', variant: 'success' });
+      },
+      onError: () => toast({ message: 'Failed to deactivate product', variant: 'error' }),
+    });
+
+  const [hardDeleteProduct, { loading: hardDeleting }] = useMutation(ADMIN_HARD_DELETE_PRODUCT, {
+    refetchQueries: [GET_ADMIN_PRODUCTS],
+    onCompleted: () => {
+      toast({ message: 'Product permanently deleted', variant: 'success' });
+      onClose();
+    },
+    onError: () => toast({ message: 'Failed to delete product', variant: 'error' }),
+  });
+
+  const [addVariant, { loading: addingVariant }] = useMutation<AdminAddProductVariantResponse>(
+    ADMIN_ADD_PRODUCT_VARIANT,
+    {
+      refetchQueries: [GET_ADMIN_PRODUCTS],
+      onCompleted: (data) => {
+        setActiveProduct((prev) =>
+          prev ? { ...prev, variants: [...prev.variants, data.adminAddProductVariant] } : prev,
+        );
+        setNewVariantLabel('');
+        setNewVariantPrice('');
+        toast({ message: 'Variant added', variant: 'success' });
+      },
+      onError: () => toast({ message: 'Failed to add variant', variant: 'error' }),
+    },
+  );
+
+  const [setPrimaryImage] = useMutation<AdminSetPrimaryProductImageResponse>(
+    ADMIN_SET_PRIMARY_PRODUCT_IMAGE,
+    {
+      onCompleted: (data) => {
+        setActiveProduct(data.adminSetPrimaryProductImage);
+      },
+      onError: () => toast({ message: 'Failed to set primary image', variant: 'error' }),
+    },
+  );
+
+  const [deleteImage] = useMutation<AdminDeleteProductImageResponse>(ADMIN_DELETE_PRODUCT_IMAGE, {
+    onCompleted: (data) => {
+      setActiveProduct(data.adminDeleteProductImage);
+      toast({ message: 'Image removed', variant: 'success' });
+    },
+    onError: () => toast({ message: 'Failed to remove image', variant: 'error' }),
+  });
+
+  const toggleCategory = (id: string) => {
+    setCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  };
+
+  const handleSaveBaseFields = () => {
+    if (activeProduct) {
+      updateProduct({
+        variables: { id: activeProduct.id, input: { name, description, categoryIds } },
+      });
+    } else {
+      createProduct({ variables: { input: { name, description, categoryIds } } });
+    }
+  };
+
+  const handlePublish = () => {
+    if (!activeProduct) return;
+    publishProduct({ variables: { id: activeProduct.id, input: { isActive: true } } });
+  };
+
+  const handleUpload = async (file: File) => {
+    if (!activeProduct) return;
+    setUploading(true);
+    setUploadProgress(0);
+    try {
+      const media = await uploadProductImage({
+        productId: activeProduct.id,
+        file,
+        onProgress: setUploadProgress,
+      });
+      setActiveProduct((prev) => (prev ? { ...prev, media: [...prev.media, media] } : prev));
+      toast({ message: 'Image uploaded', variant: 'success' });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : undefined;
+      toast({
+        message: UPLOAD_ERROR_MESSAGES[code ?? ''] ?? 'Image upload failed',
+        variant: 'error',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // The backend fills in a synthetic "placeholder" media entry (non-UUID id,
+  // pointing at a placehold.co image) when a product has no real image yet -
+  // fine for read-only display elsewhere (ProductCard), but set-primary/
+  // delete would 400 on its non-UUID id, so it's excluded from this list.
+  const realImages = activeProduct?.media.filter((image) => image.id !== 'placeholder') ?? [];
+
+  return (
+    <>
+      <Dialog
+        isOpen={isOpen}
+        onClose={onClose}
+        title={activeProduct ? 'Edit Product' : 'Add Product'}
+      >
+        <div className="flex max-h-[70vh] flex-col gap-6 overflow-y-auto pr-1">
+          <section className="flex flex-col gap-4">
+            <div>
+              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
+                Name *
+              </label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+
+            <div>
+              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
+                Category
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {categories.map((category) => (
+                  <label
+                    key={category.id}
+                    className="text-body-sm text-text-secondary flex items-center gap-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={categoryIds.includes(category.id)}
+                      onChange={() => toggleCategory(category.id)}
+                    />
+                    {category.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
+                Description
+              </label>
+              <Textarea
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveBaseFields}
+                disabled={!name.trim() || creating || updating}
+              >
+                {creating || updating ? 'Saving...' : 'Save Product'}
+              </Button>
+            </div>
+          </section>
+
+          {activeProduct && (
+            <section className="border-border-default border-t pt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-display-subtitle font-semibold uppercase">Images</h3>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleUpload(file);
+                    e.target.value = '';
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? `Uploading... ${uploadProgress}%` : 'Upload Image'}
+                </Button>
+              </div>
+
+              {uploading && (
+                <div className="bg-border-default mb-3 h-1 w-full overflow-hidden rounded-full">
+                  <div
+                    className="bg-brand-dark h-full transition-all"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                {realImages.map((image) => (
+                  <div key={image.id} className="relative h-20 w-20 shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image.url}
+                      alt={image.altText ?? activeProduct.name}
+                      className="h-full w-full border border-border-default object-cover"
+                    />
+                    <button
+                      type="button"
+                      aria-label="Set as primary image"
+                      onClick={() =>
+                        setPrimaryImage({
+                          variables: { productId: activeProduct.id, imageId: image.id },
+                        })
+                      }
+                      className={`absolute top-1 left-1 flex h-5 w-5 items-center justify-center rounded-full ${
+                        image.isPrimary
+                          ? 'bg-brand-dark text-text-inverse'
+                          : 'bg-card text-text-muted'
+                      }`}
+                    >
+                      <Star className="h-3 w-3" fill={image.isPrimary ? 'currentColor' : 'none'} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete image"
+                      onClick={() =>
+                        setConfirmDelete({
+                          title: 'Delete image',
+                          description: 'This image will be permanently removed. Continue?',
+                          confirmLabel: 'Delete',
+                          onConfirm: () =>
+                            deleteImage({
+                              variables: { productId: activeProduct.id, imageId: image.id },
+                            }),
+                        })
+                      }
+                      className="bg-card text-status-error absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {realImages.length === 0 && (
+                  <p className="text-body-sm text-text-muted">No images yet.</p>
+                )}
+              </div>
+            </section>
+          )}
+
+          {activeProduct && (
+            <section className="border-border-default border-t pt-6">
+              <h3 className="text-display-subtitle mb-3 font-semibold uppercase">Variants</h3>
+
+              {activeProduct.variants.map((v) => (
+                <VariantRow
+                  key={v.id}
+                  variant={v}
+                  onDeleted={() =>
+                    setActiveProduct((prev) =>
+                      prev
+                        ? { ...prev, variants: prev.variants.filter((x) => x.id !== v.id) }
+                        : prev,
+                    )
+                  }
+                  onRequestDelete={(confirm) =>
+                    setConfirmDelete({
+                      title: 'Remove variant',
+                      description: `Remove "${v.label}"? This cannot be undone.`,
+                      confirmLabel: 'Delete',
+                      onConfirm: confirm,
+                    })
+                  }
+                />
+              ))}
+
+              <div className="flex items-center gap-3 pt-3">
+                <Input
+                  placeholder="Size (e.g. 50ml)"
+                  value={newVariantLabel}
+                  onChange={(e) => setNewVariantLabel(e.target.value)}
+                  className="w-32"
+                />
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="Price"
+                  value={newVariantPrice}
+                  onChange={(e) => setNewVariantPrice(e.target.value)}
+                  className="w-24"
+                />
+                <Button
+                  variant="ghost"
+                  disabled={!newVariantLabel.trim() || !newVariantPrice || addingVariant}
+                  onClick={() =>
+                    addVariant({
+                      variables: {
+                        productId: activeProduct.id,
+                        input: { label: newVariantLabel, price: Number(newVariantPrice) },
+                      },
+                    })
+                  }
+                >
+                  + Add Variant
+                </Button>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between border-t border-border-default pt-6">
+                <div>
+                  <p className="text-body-base text-text-primary font-medium">Publish</p>
+                  <p className="text-body-sm text-text-muted">
+                    {activeProduct.isActive
+                      ? 'This product is live in the storefront.'
+                      : activeProduct.variants.length > 0
+                        ? 'Makes this product visible in the storefront.'
+                        : 'Add at least one variant before publishing.'}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  disabled={
+                    activeProduct.variants.length === 0 || publishing || activeProduct.isActive
+                  }
+                  onClick={handlePublish}
+                >
+                  {activeProduct.isActive
+                    ? 'Published ✓'
+                    : publishing
+                      ? 'Publishing...'
+                      : 'Publish Product'}
+                </Button>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between border-t border-border-default pt-6">
+                <button
+                  type="button"
+                  disabled={deactivating || !activeProduct.isActive}
+                  onClick={() =>
+                    setConfirmDelete({
+                      title: 'Deactivate product',
+                      description: `${activeProduct.name} will be deactivated and hidden from the storefront. This can be undone by publishing it again. Continue?`,
+                      confirmLabel: 'Deactivate',
+                      onConfirm: () => deactivateProduct({ variables: { id: activeProduct.id } }),
+                    })
+                  }
+                  className="text-ui-button text-status-error uppercase transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Deactivate Product
+                </button>
+                <button
+                  type="button"
+                  disabled={hardDeleting}
+                  onClick={() =>
+                    setConfirmDelete({
+                      title: 'Delete product permanently',
+                      description: `${activeProduct.name} and everything under it (images, variants) will be permanently deleted from the database. This cannot be undone.`,
+                      confirmLabel: 'Delete Permanently',
+                      onConfirm: () => hardDeleteProduct({ variables: { id: activeProduct.id } }),
+                    })
+                  }
+                  className="text-ui-button bg-status-error text-text-inverse px-4 py-2 uppercase transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Delete Permanently
+                </button>
+              </div>
+            </section>
+          )}
+        </div>
+      </Dialog>
+
+      <ConfirmActionDialog
+        isOpen={confirmDelete !== null}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          confirmDelete?.onConfirm();
+          setConfirmDelete(null);
+        }}
+        title={confirmDelete?.title ?? ''}
+        description={confirmDelete?.description ?? ''}
+        confirmLabel={confirmDelete?.confirmLabel ?? 'Delete'}
+      />
+    </>
+  );
+}
