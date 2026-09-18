@@ -13,7 +13,7 @@ interface NavItem {
 
 const OVERVIEW: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard' },
-  { label: 'Analytics', icon: TrendingUp },
+  { label: 'Analytics', icon: TrendingUp, href: '/admin/analytics' },
 ];
 
 const MANAGEMENT: NavItem[] = [
