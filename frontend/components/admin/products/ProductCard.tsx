@@ -18,6 +18,11 @@ export function ProductCard({ product, onEdit }: { product: AdminProduct; onEdit
             Inactive
           </span>
         )}
+        {product.badges.length > 0 && (
+          <span className="bg-brand-dark absolute bottom-3 left-3 z-10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest text-white">
+            {product.badges[0]}
+          </span>
+        )}
         {product.primaryImage ? (
           <Image
             src={product.primaryImage.url}

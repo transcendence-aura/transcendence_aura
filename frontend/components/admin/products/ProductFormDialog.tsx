@@ -62,6 +62,8 @@ export function ProductFormDialog({
   const [categoryIds, setCategoryIds] = useState<string[]>(
     product?.categories.map((c) => c.id) ?? [],
   );
+  const [badges, setBadges] = useState<string[]>(product?.badges ?? []);
+  const [newBadge, setNewBadge] = useState('');
   const [newVariantLabel, setNewVariantLabel] = useState('');
   const [newVariantPrice, setNewVariantPrice] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -170,13 +172,24 @@ export function ProductFormDialog({
     setCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   };
 
+  const addBadge = () => {
+    const trimmed = newBadge.trim();
+    if (!trimmed || badges.includes(trimmed)) return;
+    setBadges((prev) => [...prev, trimmed]);
+    setNewBadge('');
+  };
+
+  const removeBadge = (badge: string) => {
+    setBadges((prev) => prev.filter((b) => b !== badge));
+  };
+
   const handleSaveBaseFields = () => {
     if (activeProduct) {
       updateProduct({
-        variables: { id: activeProduct.id, input: { name, description, categoryIds } },
+        variables: { id: activeProduct.id, input: { name, description, categoryIds, badges } },
       });
     } else {
-      createProduct({ variables: { input: { name, description, categoryIds } } });
+      createProduct({ variables: { input: { name, description, categoryIds, badges } } });
     }
   };
 
@@ -248,6 +261,48 @@ export function ProductFormDialog({
                     {category.name}
                   </label>
                 ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
+                Badges
+              </label>
+              <div className="mb-2 flex flex-wrap gap-2">
+                {badges.map((badge) => (
+                  <span
+                    key={badge}
+                    className="bg-page border-border-default text-text-secondary inline-flex items-center gap-1.5 border px-2 py-1 text-xs"
+                  >
+                    {badge}
+                    <button
+                      type="button"
+                      onClick={() => removeBadge(badge)}
+                      aria-label={`Remove badge ${badge}`}
+                      className="text-text-muted hover:text-status-error"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newBadge}
+                  onChange={(e) => setNewBadge(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addBadge();
+                    }
+                  }}
+                  placeholder="e.g. Bestseller"
+                  maxLength={50}
+                  className="w-40"
+                />
+                <Button variant="ghost" onClick={addBadge} disabled={!newBadge.trim()}>
+                  + Add Badge
+                </Button>
               </div>
             </div>
 
