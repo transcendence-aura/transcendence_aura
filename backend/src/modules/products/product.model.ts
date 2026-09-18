@@ -86,6 +86,9 @@ export class ProductType {
   @Field()
   name!: string;
 
+  @Field()
+  isActive!: boolean;
+
   @Field({ nullable: true })
   description?: string;
 

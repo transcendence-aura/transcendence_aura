@@ -8,7 +8,8 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { slugify } from '../../common/utils/slugify';
 import { ProductsService } from '../products/product.service';
-import { ProductType, ProductVariantType } from '../products/product.model';
+import { ProductPageType, ProductType, ProductVariantType } from '../products/product.model';
+import { ProductPaginationInput, ProductsFilterInput } from '../products/product.input';
 import {
   AdminCreateProductInput,
   AdminCreateProductVariantInput,
@@ -39,6 +40,16 @@ export class AdminProductService {
     private readonly prisma: PrismaService,
     private readonly productsService: ProductsService,
   ) {}
+
+  // Unlike the public products() query, admins need to see draft (isActive:
+  // false) products too - otherwise a product created but not yet published
+  // becomes invisible and unreachable from the admin UI.
+  listProducts(
+    filter: ProductsFilterInput,
+    pagination: ProductPaginationInput,
+  ): Promise<ProductPageType> {
+    return this.productsService.findMany(filter, pagination, true);
+  }
 
   private async assertRelationsExist(input: {
     categoryIds?: string[];
@@ -209,6 +220,15 @@ export class AdminProductService {
     });
 
     return this.productsService.findById(id);
+  }
+
+  // Real deletion: variants, media and wishlist entries cascade at the DB
+  // level (see schema.prisma), so this permanently removes the product and
+  // everything under it. Unlike deleteProduct, there's no way back.
+  async hardDeleteProduct(id: string): Promise<boolean> {
+    await this.getProductOrThrow(id);
+    await this.prisma.product.delete({ where: { id } });
+    return true;
   }
 
   async addVariant(
