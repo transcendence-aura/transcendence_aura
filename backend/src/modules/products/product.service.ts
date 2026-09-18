@@ -40,8 +40,11 @@ export class ProductsService {
   private buildSearchFilterClauses(
     filter: ProductsFilterInput,
     tsQuery: string | null,
+    includeInactive = false,
   ): Prisma.Sql[] {
-    const clauses: Prisma.Sql[] = [Prisma.sql`p."isActive" = true`];
+    const clauses: Prisma.Sql[] = includeInactive
+      ? [Prisma.sql`1 = 1`]
+      : [Prisma.sql`p."isActive" = true`];
 
     if (tsQuery) {
       clauses.push(Prisma.sql`
@@ -250,6 +253,7 @@ export class ProductsService {
   async findMany(
     filter: ProductsFilterInput,
     pagination: ProductPaginationInput,
+    includeInactive = false,
   ): Promise<ProductPageType> {
     if (
       filter.minPrice !== undefined &&
@@ -262,7 +266,7 @@ export class ProductsService {
     const skip = (pagination.page - 1) * pagination.limit;
     const tsQuery = filter.search?.trim() ? this.buildTsQuery(filter.search) : null;
 
-    const whereClauses = this.buildSearchFilterClauses(filter, tsQuery);
+    const whereClauses = this.buildSearchFilterClauses(filter, tsQuery, includeInactive);
 
     const rankExpr = tsQuery
       ? Prisma.sql`

@@ -2,15 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import {
-  LayoutDashboard,
-  TrendingUp,
-  Users,
-  Shield,
-  Package,
-  Activity,
-  ExternalLink,
-} from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Users, Package, Activity, ExternalLink } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -25,9 +17,8 @@ const OVERVIEW: NavItem[] = [
 ];
 
 const MANAGEMENT: NavItem[] = [
-  { label: 'Users', icon: Users, href: '/admin/users' },
-  { label: 'Roles & Perms', icon: Shield },
-  { label: 'Products', icon: Package },
+  { label: 'Users & Roles', icon: Users, href: '/admin/users' },
+  { label: 'Products', icon: Package, href: '/admin/products' },
 ];
 
 const SYSTEM: NavItem[] = [{ label: 'Prometheus', icon: Activity, external: true }];

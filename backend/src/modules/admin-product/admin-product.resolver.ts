@@ -1,9 +1,10 @@
 import { ParseUUIDPipe, UseGuards } from '@nestjs/common';
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UserRole } from '@prisma/client';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { ProductType, ProductVariantType } from '../products/product.model';
+import { ProductPageType, ProductType, ProductVariantType } from '../products/product.model';
+import { ProductPaginationInput, ProductsFilterInput } from '../products/product.input';
 import { AdminProductService } from './admin-product.service';
 import { AdminProductImageService } from './admin-product-image.service';
 import {
@@ -23,6 +24,19 @@ export class AdminProductResolver {
     private readonly adminProductImageService: AdminProductImageService,
   ) {}
 
+  @Query(() => ProductPageType)
+  adminProducts(
+    @Args('filter', { type: () => ProductsFilterInput, nullable: true })
+    filter?: ProductsFilterInput,
+    @Args('pagination', { type: () => ProductPaginationInput, nullable: true })
+    pagination?: ProductPaginationInput,
+  ): Promise<ProductPageType> {
+    return this.adminProductService.listProducts(
+      filter ?? {},
+      pagination ?? { page: 1, limit: 20 },
+    );
+  }
+
   @Mutation(() => ProductType)
   adminCreateProduct(@Args('input') input: AdminCreateProductInput): Promise<ProductType> {
     return this.adminProductService.createProduct(input);
@@ -39,6 +53,11 @@ export class AdminProductResolver {
   @Mutation(() => ProductType)
   adminDeleteProduct(@Args('id', ParseUUIDPipe) id: string): Promise<ProductType> {
     return this.adminProductService.deleteProduct(id);
+  }
+
+  @Mutation(() => Boolean)
+  adminHardDeleteProduct(@Args('id', ParseUUIDPipe) id: string): Promise<boolean> {
+    return this.adminProductService.hardDeleteProduct(id);
   }
 
   @Mutation(() => ProductVariantType)

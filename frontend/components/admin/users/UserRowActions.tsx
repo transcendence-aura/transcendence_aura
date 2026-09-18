@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { useMutation } from '@apollo/client/react';
 import { useToast } from '@/components/ui/feedback/toast';
-import { ConfirmActionDialog } from './ConfirmActionDialog';
+import { ConfirmActionDialog } from '@/components/admin/ConfirmActionDialog';
 import {
   ADMIN_SUSPEND_USER,
   ADMIN_REINSTATE_USER,
