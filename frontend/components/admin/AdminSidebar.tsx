@@ -12,7 +12,7 @@ interface NavItem {
 }
 
 const OVERVIEW: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard },
+  { label: 'Dashboard', icon: LayoutDashboard, href: '/admin/dashboard' },
   { label: 'Analytics', icon: TrendingUp },
 ];
 
