@@ -17,6 +17,10 @@ import {
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatComposer } from '@/components/chat/ChatComposer';
 import { ConversationItem } from '@/components/chat/ConversationItem';
+import { ProfilePanel } from '@/components/chat/ProfilePanel';
+import { OptionsPanel } from '@/components/chat/OptionsPanel';
+
+type SidePanel = 'profile' | 'options' | null;
 
 function formatRelativeTime(date: Date): string {
   const diffMs = Date.now() - date.getTime();
@@ -36,6 +40,7 @@ function getOtherParticipant(conversation: Conversation, myId: string) {
 export default function ChatPage() {
   const isAuthenticated = useIsAuthenticated();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [sidePanel, setSidePanel] = useState<SidePanel>(null);
 
   const { data: meData } = useQuery(ME_QUERY, { skip: !isAuthenticated });
   const {
@@ -114,7 +119,10 @@ export default function ChatPage() {
                   lastMessage={lastMessage?.content ?? 'No messages yet'}
                   timeLabel={lastMessage ? formatRelativeTime(new Date(lastMessage.createdAt)) : ''}
                   isActive={conversation.id === effectiveActiveId}
-                  onClick={() => setActiveConversationId(conversation.id)}
+                  onClick={() => {
+                    setActiveConversationId(conversation.id);
+                    setSidePanel(null);
+                  }}
                 />
               );
             })}
@@ -139,11 +147,25 @@ export default function ChatPage() {
                     <button
                       type="button"
                       aria-label="View profile"
-                      className="hover:text-text-primary"
+                      onClick={() =>
+                        setSidePanel((prev) => (prev === 'profile' ? null : 'profile'))
+                      }
+                      className={
+                        sidePanel === 'profile' ? 'text-text-primary' : 'hover:text-text-primary'
+                      }
                     >
                       <User className="h-5 w-5" />
                     </button>
-                    <button type="button" aria-label="Options" className="hover:text-text-primary">
+                    <button
+                      type="button"
+                      aria-label="Options"
+                      onClick={() =>
+                        setSidePanel((prev) => (prev === 'options' ? null : 'options'))
+                      }
+                      className={
+                        sidePanel === 'options' ? 'text-text-primary' : 'hover:text-text-primary'
+                      }
+                    >
                       <MoreVertical className="h-5 w-5" />
                     </button>
                   </div>
@@ -172,6 +194,18 @@ export default function ChatPage() {
           </>
         )}
       </div>
+
+      {activeConversation &&
+        myId &&
+        sidePanel &&
+        (() => {
+          const other = getOtherParticipant(activeConversation, myId);
+          return sidePanel === 'profile' ? (
+            <ProfilePanel name={other.name} onClose={() => setSidePanel(null)} />
+          ) : (
+            <OptionsPanel onClose={() => setSidePanel(null)} />
+          );
+        })()}
     </div>
   );
 }
