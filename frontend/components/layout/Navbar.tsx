@@ -5,6 +5,7 @@ import { Search, Heart, ShoppingBag, Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { CartDot } from '@/components/ui/feedback/cart-dot';
+import { RealtimeStatusDot } from '@/components/ui/feedback/realtime-status-dot';
 import { UserMenu, UserMenuMobile } from '@/components/layout/UserMenu';
 
 const LANGUAGES = ['EN', 'FR', 'AR'] as const;
@@ -104,7 +105,10 @@ export function Navbar() {
         </div>
 
         {/* User Menu */}
-        <UserMenu />
+        <div className="relative">
+          <UserMenu />
+          <RealtimeStatusDot />
+        </div>
 
         {/* Mobile Menu Toggle */}
         <button
