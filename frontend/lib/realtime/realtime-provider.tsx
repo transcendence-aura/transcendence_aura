@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { getAccessToken, subscribeToAccessToken } from '@/lib/auth/token-store';
+import { refreshAccessToken } from '@/lib/auth/refresh-access-token';
 
 export type RealtimeConnectionState = 'connecting' | 'connected' | 'disconnected';
 
@@ -83,7 +84,11 @@ export const RealtimeProvider = ({ children }: RealtimeProviderProps) => {
       if (reason === 'io server disconnect') {
         const delay = Math.min(1000 * 2 ** serverDisconnectAttempts, 5000);
         serverDisconnectAttempts += 1;
-        serverDisconnectRetryTimeout = setTimeout(() => socket.connect(), delay);
+        serverDisconnectRetryTimeout = setTimeout(async () => {
+          await refreshAccessToken();
+          if (socketRef.current !== socket) return;
+          socket.connect();
+        }, delay);
       }
     });
 
