@@ -7,6 +7,7 @@ import { Logger } from '@nestjs/common';
 import { loadSecrets } from './infrastructure/vault/vault-load-secrets';
 import { RequiredSecrets } from './config/required-secrets';
 import { PUBLIC_UPLOADS_ROOT } from './common/media/media-storage.service';
+import { setupSwagger } from './swagger';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap(): Promise<void> {
@@ -49,6 +50,8 @@ async function bootstrap(): Promise<void> {
 
     mkdirSync(PUBLIC_UPLOADS_ROOT, { recursive: true });
     app.useStaticAssets(PUBLIC_UPLOADS_ROOT, { prefix: '/uploads' });
+
+    setupSwagger(app);
 
     const port = parsePort(process.env.PORT);
 
