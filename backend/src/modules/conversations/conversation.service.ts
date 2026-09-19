@@ -116,6 +116,13 @@ export class ConversationService {
     return messages.map(mapMessage);
   }
 
+  async getParticipant(userId: string): Promise<{ id: string; name: string }> {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { id: true, name: true },
+    });
+  }
+
   async listConversations(userId: string): Promise<ConversationType[]> {
     const conversations = await this.prisma.conversation.findMany({
       where: {
