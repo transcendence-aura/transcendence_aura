@@ -6,11 +6,13 @@ export function getAccessToken(): string | null {
 }
 
 export function setAccessToken(token: string): void {
+  if (accessToken === token) return;
   accessToken = token;
   notifyListeners();
 }
 
 export function clearAccessToken(): void {
+  if (accessToken === null) return;
   accessToken = null;
   notifyListeners();
 }
@@ -19,7 +21,9 @@ export function clearAccessToken(): void {
 // a page reload, since the token itself lives outside React state.
 export function subscribeToAccessToken(listener: () => void): () => void {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 function notifyListeners(): void {

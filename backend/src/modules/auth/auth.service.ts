@@ -35,6 +35,14 @@ export interface RegisteredUser {
   createdAt: Date;
 }
 
+export interface AuthenticatedUser {
+  id: string;
+  email: string;
+  name: string;
+  handle: string;
+  bio?: string;
+}
+
 type AuthenticatedSession = {
   accessToken: string;
   refreshToken: string;
@@ -55,6 +63,33 @@ export class AuthService {
     private readonly vaultService: VaultService,
     private readonly totpService: TotpService,
   ) {}
+
+  async findById(userId: string): Promise<AuthenticatedUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        handle: true,
+        bio: true,
+        status: true,
+        deletedAt: true,
+      },
+    });
+
+    if (!user || user.status !== UserStatus.ACTIVE || user.deletedAt !== null) {
+      throw new UnauthorizedException();
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      handle: user.handle,
+      bio: user.bio ?? undefined,
+    };
+  }
 
   async register(dto: RegisterDto): Promise<RegisteredUser> {
     const normalizedEmail = dto.email.trim().toLowerCase();

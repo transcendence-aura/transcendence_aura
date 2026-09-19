@@ -1,13 +1,21 @@
-import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { UserType } from './auth.model';
 import { LoginInput } from './dto/login.input';
 import { LoginResponse, RefreshResponse } from './dto/login-response.model';
 import { RefreshTokenService } from './refresh/refresh-token.service';
-import { REFRESH_COOKIE_NAME, getRefreshCookieOptions } from './refresh/refresh-token.constants';
-import { UnauthorizedException } from '@nestjs/common';
-import { ACCESS_COOKIE_NAME, getAccessCookieOptions } from './auth.constants';
+import {
+  REFRESH_COOKIE_NAME,
+  getRefreshCookieOptions,
+  getRefreshCookieClearOptions,
+} from './refresh/refresh-token.constants';
+import { Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ACCESS_COOKIE_NAME,
+  getAccessCookieOptions,
+  getAccessCookieClearOptions,
+} from './auth.constants';
 import { AppConfiguration } from '../../config/configuration';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
@@ -22,12 +30,25 @@ import { VerifyMfaResponse } from './dto/verify-mfa-response.model';
 
 @Resolver(() => UserType)
 export class AuthResolver {
+  private readonly logger = new Logger(AuthResolver.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly refreshTokenService: RefreshTokenService,
     private readonly configService: ConfigService<AppConfiguration, true>,
     private readonly twoFactorService: TwoFactorService,
   ) {}
+
+  @UseGuards(RolesGuard)
+  @Query(() => UserType)
+  me(
+    @Context()
+    context: {
+      req: AuthenticatedRequest;
+    },
+  ): Promise<UserType> {
+    return this.authService.findById(context.req.userId!);
+  }
 
   @Mutation(() => UserType)
   register(@Args('input') dto: RegisterDto): Promise<UserType> {
@@ -104,6 +125,28 @@ export class AuthResolver {
     return {
       accessToken: result.accessToken,
     };
+  }
+
+  @Mutation(() => Boolean)
+  async logout(
+    @Context()
+    context: {
+      req: Request;
+      res: Response;
+    },
+  ): Promise<boolean> {
+    const presentedToken = context.req.cookies?.[REFRESH_COOKIE_NAME];
+
+    try {
+      if (typeof presentedToken === 'string' && presentedToken.length > 0) {
+        await this.refreshTokenService.revokeSession(presentedToken);
+      }
+    } finally {
+      context.res.clearCookie(ACCESS_COOKIE_NAME, getAccessCookieClearOptions());
+      context.res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieClearOptions());
+    }
+
+    return true;
   }
 
   @UseGuards(RolesGuard)
