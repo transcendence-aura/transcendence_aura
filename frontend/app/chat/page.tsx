@@ -1,22 +1,29 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useEffect, useState } from 'react';
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
 import { MoreVertical, User } from 'lucide-react';
 import { Avatar } from '@/components/ui/display/avatar';
 import { Input } from '@/components/ui/form/input';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
+import { useRealtime } from '@/lib/realtime/realtime-provider';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import {
+  ACCEPT_CONVERSATION_MUTATION,
   CONVERSATIONS_QUERY,
+  DECLINE_CONVERSATION_MUTATION,
+  PENDING_CONVERSATIONS_QUERY,
   SEND_MESSAGE_MUTATION,
+  type ChatMessage,
   type Conversation,
 } from '@/lib/graphql/queries/chat';
 import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatComposer } from '@/components/chat/ChatComposer';
 import { ConversationItem } from '@/components/chat/ConversationItem';
+import { ConversationRequestItem } from '@/components/chat/ConversationRequestItem';
+import { PendingConversationBar } from '@/components/chat/PendingConversationBar';
 import { ProfilePanel } from '@/components/chat/ProfilePanel';
 import { OptionsPanel } from '@/components/chat/OptionsPanel';
 
@@ -52,13 +59,70 @@ export default function ChatPage() {
     skip: !isAuthenticated,
     fetchPolicy: 'cache-and-network',
   });
+  const { data: pendingData, refetch: refetchPending } = useQuery(PENDING_CONVERSATIONS_QUERY, {
+    skip: !isAuthenticated,
+    fetchPolicy: 'cache-and-network',
+  });
   const [sendMessage] = useMutation(SEND_MESSAGE_MUTATION);
+  const [acceptConversation] = useMutation(ACCEPT_CONVERSATION_MUTATION);
+  const [declineConversation] = useMutation(DECLINE_CONVERSATION_MUTATION);
+  const client = useApolloClient();
+  const { on, joinConversation, leaveConversation } = useRealtime();
 
   const myId = meData?.me.id;
+  const pendingConversations = pendingData?.pendingConversations ?? [];
   const conversations = conversationsData?.conversations ?? [];
+  const allConversations = [...conversations, ...pendingConversations];
   const effectiveActiveId = activeConversationId ?? conversations[0]?.id ?? null;
 
-  const activeConversation = conversations.find((c) => c.id === effectiveActiveId);
+  const activeConversation = allConversations.find((c) => c.id === effectiveActiveId);
+  const conversationIds = allConversations.map((c) => c.id).join(',');
+
+  useEffect(() => {
+    if (!conversationIds) return;
+    const ids = conversationIds.split(',');
+    for (const id of ids) joinConversation(id);
+    return () => {
+      for (const id of ids) leaveConversation(id);
+    };
+  }, [conversationIds, joinConversation, leaveConversation]);
+
+  useEffect(() => {
+    return on('newMessage', (...args) => {
+      const payload = args[0] as { conversationId: string; message: ChatMessage };
+
+      client.cache.updateQuery({ query: CONVERSATIONS_QUERY }, (data) => {
+        if (!data) return data;
+        return {
+          conversations: data.conversations.map((conversation) => {
+            if (conversation.id !== payload.conversationId) return conversation;
+            const alreadyPresent = conversation.messages.some((m) => m.id === payload.message.id);
+            if (alreadyPresent) return conversation;
+            return { ...conversation, messages: [...conversation.messages, payload.message] };
+          }),
+        };
+      });
+    });
+  }, [on, client]);
+
+  useEffect(() => {
+    return on('conversationStatusChanged', () => {
+      refetch();
+      refetchPending();
+    });
+  }, [on, refetch, refetchPending]);
+
+  const handleAccept = async (conversationId: string) => {
+    await acceptConversation({ variables: { input: { conversationId } } });
+    await refetch();
+    await refetchPending();
+  };
+
+  const handleDecline = async (conversationId: string) => {
+    await declineConversation({ variables: { input: { conversationId } } });
+    await refetch();
+    await refetchPending();
+  };
 
   const handleSend = async (content: string) => {
     if (!effectiveActiveId) return;
@@ -104,6 +168,29 @@ export default function ChatPage() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
+          {myId && pendingConversations.length > 0 && (
+            <div className="border-b border-border-default pb-2">
+              <span className="block px-4 py-2 text-[9px] leading-[1.5] font-medium tracking-[0.06em] text-text-muted uppercase">
+                Requests
+              </span>
+              {pendingConversations.map((conversation) => {
+                const other = getOtherParticipant(conversation, myId);
+                return (
+                  <ConversationRequestItem
+                    key={conversation.id}
+                    name={other.name}
+                    onClick={() => {
+                      setActiveConversationId(conversation.id);
+                      setSidePanel(null);
+                    }}
+                    onAccept={() => handleAccept(conversation.id)}
+                    onDecline={() => handleDecline(conversation.id)}
+                  />
+                );
+              })}
+            </div>
+          )}
+
           {conversations.length === 0 && (
             <p className="text-body-sm text-text-muted p-4">No conversations yet.</p>
           )}
@@ -190,7 +277,16 @@ export default function ChatPage() {
               })}
             </div>
 
-            <ChatComposer onSend={handleSend} />
+            {activeConversation.status === 'PENDING' ? (
+              <PendingConversationBar
+                isInitiator={activeConversation.initiatorId === myId}
+                otherName={getOtherParticipant(activeConversation, myId).name}
+                onAccept={() => handleAccept(activeConversation.id)}
+                onDecline={() => handleDecline(activeConversation.id)}
+              />
+            ) : (
+              <ChatComposer onSend={handleSend} />
+            )}
           </>
         )}
       </div>
