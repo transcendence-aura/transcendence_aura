@@ -1,18 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
+import { PeriodSelector } from '@/components/admin/PeriodSelector';
 import { RegistrationsChart } from '@/components/admin/dashboard/RegistrationsChart';
 import {
   GET_REGISTRATIONS_OVER_TIME,
+  type AnalyticsPeriod,
   type RegistrationsOverTimeResponse,
 } from '@/lib/graphql/queries/admin-dashboard';
 
 export default function AdminDashboardPage() {
+  const [period, setPeriod] = useState<AnalyticsPeriod>('LAST_MONTH');
+
   const { data, loading, error, refetch } = useQuery<RegistrationsOverTimeResponse>(
     GET_REGISTRATIONS_OVER_TIME,
-    { variables: { period: 'LAST_MONTH' } },
+    { variables: { period } },
   );
 
   const points = data?.registrationsOverTime ?? [];
@@ -27,9 +32,7 @@ export default function AdminDashboardPage() {
       <div className="border-border-default bg-card w-full border p-6 md:w-1/2">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-display-subtitle font-semibold">Registrations</h2>
-          <span className="text-ui-label text-text-muted uppercase tracking-widest">
-            Last 30 days
-          </span>
+          <PeriodSelector value={period} onChange={setPeriod} />
         </div>
 
         {loading ? (

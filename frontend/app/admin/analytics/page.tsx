@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@apollo/client/react';
 import { ChartCard } from '@/components/admin/analytics/ChartCard';
 import { TimeSeriesChart } from '@/components/admin/analytics/TimeSeriesChart';
 import { TopWishlistedChart } from '@/components/admin/analytics/TopWishlistedChart';
+import { PeriodSelector } from '@/components/admin/PeriodSelector';
 import {
   GET_REGISTRATIONS_OVER_TIME,
+  type AnalyticsPeriod,
   type RegistrationsOverTimeResponse,
 } from '@/lib/graphql/queries/admin-dashboard';
 import {
@@ -19,24 +22,24 @@ import {
   type TopProductsByWishlistAddsResponse,
 } from '@/lib/graphql/queries/admin-analytics';
 
-const PERIOD = 'LAST_MONTH';
-
 export default function AdminAnalyticsPage() {
+  const [period, setPeriod] = useState<AnalyticsPeriod>('LAST_MONTH');
+
   const registrations = useQuery<RegistrationsOverTimeResponse>(GET_REGISTRATIONS_OVER_TIME, {
-    variables: { period: PERIOD },
+    variables: { period },
   });
   const activeUsers = useQuery<ActiveUsersOverTimeResponse>(GET_ACTIVE_USERS_OVER_TIME, {
-    variables: { period: PERIOD },
+    variables: { period },
   });
   const messages = useQuery<MessagesOverTimeResponse>(GET_MESSAGES_OVER_TIME, {
-    variables: { period: PERIOD },
+    variables: { period },
   });
   const follows = useQuery<FollowsOverTimeResponse>(GET_FOLLOWS_OVER_TIME, {
-    variables: { period: PERIOD },
+    variables: { period },
   });
   const topWishlisted = useQuery<TopProductsByWishlistAddsResponse>(
     GET_TOP_PRODUCTS_BY_WISHLIST_ADDS,
-    { variables: { period: PERIOD, limit: 5 } },
+    { variables: { period, limit: 5 } },
   );
 
   const registrationsData = registrations.data?.registrationsOverTime ?? [];
@@ -54,9 +57,7 @@ export default function AdminAnalyticsPage() {
           </p>
           <h1 className="text-h2 font-bold">Analytics</h1>
         </div>
-        <span className="text-ui-label text-text-muted uppercase tracking-widest">
-          Last 30 days
-        </span>
+        <PeriodSelector value={period} onChange={setPeriod} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
