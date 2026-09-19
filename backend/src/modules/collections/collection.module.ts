@@ -6,5 +6,6 @@ import { CollectionsService } from './collection.service';
 @Module({
   imports: [PrismaModule],
   providers: [CollectionsResolver, CollectionsService],
+  exports: [CollectionsService],
 })
 export class CollectionsModule {}
