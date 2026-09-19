@@ -8,4 +8,3 @@ export class AdminCollectionFilterInput {
   @Field({ nullable: true })
   isActive?: boolean;
 }
-

@@ -26,4 +26,3 @@ export class AdminCollectionService {
     return collections.map(mapCollection);
   }
 }
-

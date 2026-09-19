@@ -4,6 +4,7 @@ import {
   ApiOkResponse,
   ApiProperty,
   getSchemaPath,
+  ApiResponse,
   ApiResponseSchemaHost,
 } from '@nestjs/swagger';
 
@@ -57,10 +58,10 @@ export class ApiMetaDto implements ApiMeta {
 }
 
 export class ApiErrorBodyDto {
-  @ApiProperty({ example: 'PRODUCT_NOT_FOUND' })
+  @ApiProperty({ description: 'Stable machine-readable error code.' })
   code!: string;
 
-  @ApiProperty({ example: 'The requested product could not be found.' })
+  @ApiProperty({ description: 'Human-readable explanation.' })
   message!: string;
 }
 
@@ -72,7 +73,10 @@ export class ApiErrorDto {
   error!: ApiErrorBodyDto;
 }
 
-export function ApiEnvelopeResponse(model: Type<unknown>, options: { list?: boolean } = {}) {
+export function ApiEnvelopeResponse(
+  model: Type<unknown>,
+  options: { list?: boolean; description?: string } = {},
+) {
   const data = options.list
     ? { type: 'array', items: { $ref: getSchemaPath(model) } }
     : { $ref: getSchemaPath(model) };
@@ -84,6 +88,25 @@ export function ApiEnvelopeResponse(model: Type<unknown>, options: { list?: bool
 
   return applyDecorators(
     ApiExtraModels(model, ApiMetaDto),
-    ApiOkResponse({ schema: { type: 'object', properties } }),
+    ApiOkResponse({ description: options.description, schema: { type: 'object', properties } }),
+  );
+}
+
+export function ApiErrorResponse(
+  status: number,
+  description: string,
+  code: string,
+  message: string,
+) {
+  return applyDecorators(
+    ApiExtraModels(ApiErrorDto),
+    ApiResponse({
+      status,
+      description,
+      schema: {
+        allOf: [{ $ref: getSchemaPath(ApiErrorDto) }],
+        example: { success: false, error: { code, message } },
+      },
+    }),
   );
 }
