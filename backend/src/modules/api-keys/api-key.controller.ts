@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Post,
   Req,
   UseGuards,
@@ -83,9 +84,10 @@ export class ApiKeyController {
       'revoking an already-revoked key still returns 204.',
   })
   @ApiResponse({ status: 204, description: 'Revoked (or already revoked).' })
+  @ApiResponse({ status: 400, description: 'The id is not a valid UUID.' })
   @ApiResponse({ status: 403, description: 'Caller is neither the owner nor an ADMIN.' })
   @ApiResponse({ status: 404, description: 'No key with this id.' })
-  revoke(@Req() req: AuthenticatedRequest, @Param('id') id: string): Promise<void> {
+  revoke(@Req() req: AuthenticatedRequest, @Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.apiKeyService.revoke(id, req.user!);
   }
 }

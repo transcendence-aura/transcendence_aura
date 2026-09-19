@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { Prisma, UserRole } from '@prisma/client';
 import { ApiKeyService } from './api-key.service';
 
 describe('ApiKeyService', () => {
@@ -67,6 +67,29 @@ describe('ApiKeyService', () => {
       await expect(service.create('user-1', { name: 'replacement-key' })).resolves.toMatchObject({
         id: 'key-2',
       });
+    });
+  });
+
+  describe('create (concurrent race)', () => {
+    it('turns a unique-index violation from a losing concurrent call into a conflict', async () => {
+      apiKey.findFirst.mockResolvedValue(null);
+      apiKey.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+          code: 'P2002',
+          clientVersion: 'test',
+        }),
+      );
+
+      await expect(service.create('user-1', { name: 'racing-key' })).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+    });
+
+    it('rethrows unrelated errors untouched', async () => {
+      apiKey.findFirst.mockResolvedValue(null);
+      apiKey.create.mockRejectedValue(new Error('db down'));
+
+      await expect(service.create('user-1', { name: 'k' })).rejects.toThrow('db down');
     });
   });
 
