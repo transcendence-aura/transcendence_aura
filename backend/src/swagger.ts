@@ -2,6 +2,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { ApiModule } from './api/api.module';
 import { ApiKeyModule } from './modules/api-keys/api-key.module';
+import { SWAGGER_CUSTOM_CSS } from './swagger-theme';
 
 // Scoped to just the public /api/v1 surface and the key management
 // endpoints that hand out credentials for it - not the whole backend
@@ -15,11 +16,25 @@ export function setupSwagger(app: INestApplication): void {
     .setTitle('AURA Public API')
     .setDescription(
       'Catalogue-only, read-only public API. Requests to /api/v1/* require an API key ' +
-        '(see the ApiKeyAuth security scheme). Keys are self-service: authenticate with a ' +
-        'normal account (ApiKeyManagementAuth) against the /api/keys endpoints to obtain one.',
+        'sent in the X-API-Key header. Keys are self-service: log in with a normal account, ' +
+        'call POST /api/keys (ApiKeyManagementAuth) to create one, then click Authorize and ' +
+        'paste it under ApiKeyAuth to try the routes from this page.\n\n' +
+        'Every response uses the same envelope: `{ success: true, data, meta? }` on success, ' +
+        '`{ success: false, error: { code, message } }` on failure. List routes accept ' +
+        '`page` (default 1) and `limit` (default 25, max 100) and return ' +
+        '`meta: { page, limit, totalItems, totalPages }`.',
     )
     .setVersion('1.0')
-    .addApiKey({ type: 'apiKey', name: 'X-API-Key', in: 'header' }, 'ApiKeyAuth')
+    .addServer('/api', 'Public entry point (nginx strips the /api prefix)')
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'X-API-Key',
+        in: 'header',
+        description: 'API key created with POST /api/keys. Sent as the X-API-Key header.',
+      },
+      'ApiKeyAuth',
+    )
     .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'ApiKeyManagementAuth')
     .build();
 
@@ -27,5 +42,9 @@ export function setupSwagger(app: INestApplication): void {
     include: [ApiModule, ApiKeyModule],
   });
 
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, document, {
+    customSiteTitle: 'AURA Public API',
+    customfavIcon: '/favicon.ico',
+    customCss: SWAGGER_CUSTOM_CSS,
+  });
 }

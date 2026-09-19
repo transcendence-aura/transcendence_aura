@@ -10,6 +10,7 @@ import { PrismaModule } from './database/prisma.module';
 import { ProductsModule } from './modules/products/product.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CollectionsModule } from './modules/collections/collection.module';
+import { CategoriesModule } from './modules/categories/category.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { ConversationModule } from './modules/conversations/conversation.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
@@ -60,6 +61,7 @@ export class AppModule {
         ProductsModule,
         AuthModule,
         CollectionsModule,
+        CategoriesModule,
         RealtimeModule,
         ConversationModule,
         WishlistModule,

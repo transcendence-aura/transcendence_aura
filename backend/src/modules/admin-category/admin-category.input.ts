@@ -13,4 +13,3 @@ export class AdminCategoryFilterInput {
   @Field({ nullable: true })
   isActive?: boolean;
 }
-

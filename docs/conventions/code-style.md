@@ -166,11 +166,12 @@ src/
 └── main.ts
 ```
 
-modules/  # Business features
-common/   # Shared utilities and infrastructure (when needed)
-config/   # Application configuration (when needed)
+modules/ # Business features
+common/ # Shared utilities and infrastructure (when needed)
+config/ # Application configuration (when needed)
 
 Example:
+
 ```
 src/
 └── modules/
@@ -246,39 +247,43 @@ backend/
 ```
 
 `schema.prisma` will be the single source for:
- - PostgreSQL datasource configuration
- - Prisma models
- - enums
- - relations
- - indexes
- - generator configuration
 
- **Prisma models** will use singular, PascalCase.
+- PostgreSQL datasource configuration
+- Prisma models
+- enums
+- relations
+- indexes
+- generator configuration
 
- Examples:
- ```prisma
- model User {}
+**Prisma models** will use singular, PascalCase.
 
- model Product {}
+Examples:
 
- model Wishlist {}
- ```
+```prisma
+model User {}
+
+model Product {}
+
+model Wishlist {}
+```
+
 **Database tables** are mapped using `@@map`.
 
 Example:
 This creates `users` in PostgreSQL.
 
- ```prisma
- model User {
-  id String @id @default(uuid())
+```prisma
+model User {
+ id String @id @default(uuid())
 
-  @@map("users")
- }
- ```
+ @@map("users")
+}
+```
 
 **Field naming** will be camelCase and should follow TypeScript conventions.
 
 Example:
+
 ```prisma
   model User {
     id          String
@@ -295,6 +300,7 @@ Database tables use an `id` primary key.
 Foreign keys reference another model's `id` and describe the relationship they represent.
 
 **Relationship** example:
+
 ```prisma
 model Message {
   id String @id @default(uuid())
@@ -321,14 +327,18 @@ model Message {
 **Migration naming** should use `verb_description` with lowercase snake_case.
 
 Examples:
+
 ```prisma
   init
   add_products
   add_wishlist
   create_chat_messages
 ```
+
 ---
+
 ## Data Transfer Objects (DTOs) and Validation
+
 ```
 src/
 ├── modules/
@@ -345,12 +355,14 @@ src/
 │   ├── validation/
 │   └── ...
 ```
+
 Request/response DTOs must live in the module that owns the functionality they represent.
 Request DTOs should be named to describe the command or endpoint they support.
 Response DTOs should be named to describe the data they return.
 
 Example:
 `wishlist/dto/create-wishlist-item.dto.ts`
+
 ```typescript
 export class CreateWishlistItemDto {
   @IsUUID();
@@ -359,18 +371,20 @@ export class CreateWishlistItemDto {
 ```
 
 Shared DTOs should only be introduced when the following criteria are met:
- - They represent application-wide behavior or intrastructure concerns.
- - Multiple modules use the exact same contract.
- - Changes to the DTO are intended to affect all modules.
+
+- They represent application-wide behavior or intrastructure concerns.
+- Multiple modules use the exact same contract.
+- Changes to the DTO are intended to affect all modules.
 
 Validation classes are also module specific.
 Shared validation rules that are not tied to a specific domain should be placed in `src/common/validation`.
 
 DTO duplication should be avoided.
 A DTO may exist in multiple modules only when there is a documented reason, such as:
- - The DTOs represent different module boundaries.
- - The DTOs have overlapping fields, but serve different purposes.
- - The contracts are expected to evolve independently.
+
+- The DTOs represent different module boundaries.
+- The DTOs have overlapping fields, but serve different purposes.
+- The contracts are expected to evolve independently.
 
 ---
 

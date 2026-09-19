@@ -26,4 +26,3 @@ export class AdminCategoryService {
     return categories.map(mapCategory);
   }
 }
-

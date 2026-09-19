@@ -21,4 +21,3 @@ export class AdminCollectionResolver {
     return this.adminCollectionService.listCollections(filter ?? {});
   }
 }
-
