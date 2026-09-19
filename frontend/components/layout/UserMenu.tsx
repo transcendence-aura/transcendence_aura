@@ -11,6 +11,7 @@ import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { clearAccessToken } from '@/lib/auth/token-store';
 import { LOGOUT_MUTATION } from '@/lib/auth/logout.mutation';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
+import { useToast } from '@/components/ui/feedback/toast';
 
 const ITEM_CLASS =
   'text-text-secondary hover:text-text-primary hover:bg-page focus-visible:outline-border-focus flex w-full items-center gap-3 px-4 py-2.5 text-xs tracking-wider transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2';
@@ -22,16 +23,20 @@ function useLogout() {
   const router = useRouter();
   const client = useApolloClient();
   const [logout] = useMutation(LOGOUT_MUTATION);
+  const { toast } = useToast();
 
   return async () => {
     try {
       await logout();
-    } finally {
-      // Always clear local state, even if logout fails.
       clearAccessToken();
-      // Also clear the cache so the next user does not see the old `me`.
       await client.clearStore();
-      router.push('/');
+      router.push('/login');
+    } catch {
+      toast({
+        message: 'Sign out failed, please retry',
+        variant: 'error',
+        duration: 5000,
+      });
     }
   };
 }

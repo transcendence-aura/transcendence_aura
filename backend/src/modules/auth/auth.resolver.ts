@@ -5,9 +5,17 @@ import { UserType } from './auth.model';
 import { LoginInput } from './dto/login.input';
 import { LoginResponse, RefreshResponse } from './dto/login-response.model';
 import { RefreshTokenService } from './refresh/refresh-token.service';
-import { REFRESH_COOKIE_NAME, getRefreshCookieOptions } from './refresh/refresh-token.constants';
-import { UnauthorizedException } from '@nestjs/common';
-import { ACCESS_COOKIE_NAME, getAccessCookieOptions } from './auth.constants';
+import {
+  REFRESH_COOKIE_NAME,
+  getRefreshCookieOptions,
+  getRefreshCookieClearOptions,
+} from './refresh/refresh-token.constants';
+import { Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ACCESS_COOKIE_NAME,
+  getAccessCookieOptions,
+  getAccessCookieClearOptions,
+} from './auth.constants';
 import { AppConfiguration } from '../../config/configuration';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
@@ -22,6 +30,8 @@ import { VerifyMfaResponse } from './dto/verify-mfa-response.model';
 
 @Resolver(() => UserType)
 export class AuthResolver {
+  private readonly logger = new Logger(AuthResolver.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly refreshTokenService: RefreshTokenService,
@@ -127,12 +137,14 @@ export class AuthResolver {
   ): Promise<boolean> {
     const presentedToken = context.req.cookies?.[REFRESH_COOKIE_NAME];
 
-    if (typeof presentedToken === 'string' && presentedToken.length > 0) {
-      await this.refreshTokenService.revokeSession(presentedToken);
+    try {
+      if (typeof presentedToken === 'string' && presentedToken.length > 0) {
+        await this.refreshTokenService.revokeSession(presentedToken);
+      }
+    } finally {
+      context.res.clearCookie(ACCESS_COOKIE_NAME, getAccessCookieClearOptions());
+      context.res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieClearOptions());
     }
-
-    context.res.clearCookie(ACCESS_COOKIE_NAME, getAccessCookieOptions(0));
-    context.res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieOptions(0));
 
     return true;
   }
