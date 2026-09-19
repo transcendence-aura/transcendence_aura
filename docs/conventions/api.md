@@ -130,6 +130,24 @@ Example:
 }
 ```
 
+## Rate limiting
+
+The public API (`/v1`) is limited per API key: 100 requests per 60 seconds, shared across all endpoints. The values live in `API_RATE_LIMIT` (`backend/src/api/api-rate-limit.ts`). The internal GraphQL API is not rate limited.
+
+Every response carries `X-RateLimit-Limit`, `X-RateLimit-Remaining` and `X-RateLimit-Reset` (seconds until the window resets). Once the limit is exceeded, the API answers `429` with a `Retry-After` header (seconds to wait) and the standard error envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "RATE_LIMITED",
+    "message": "Too many requests."
+  }
+}
+```
+
+Requests rejected with `401` (missing or invalid key) are not counted, since they cannot be attributed to a key. Counters are kept in memory, which is correct for a single backend instance.
+
 ## End-to-end example
 
 Example Endpoint - Retrieve a product by its identifier.
