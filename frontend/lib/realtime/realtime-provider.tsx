@@ -37,19 +37,11 @@ interface RealtimeProviderProps {
 }
 
 export const RealtimeProvider = ({ children }: RealtimeProviderProps) => {
-  // Token lives outside React state (see token-store.ts); useSyncExternalStore
-  // re-renders this provider whenever login/logout changes it.
   const token = useSyncExternalStore(subscribeToAccessToken, getAccessToken, () => null);
 
-  // The socket itself is never read during render (only inside effects/
-  // callbacks below), so a ref is safe here and avoids re-rendering on
-  // every socket.io internal event.
   const socketRef = useRef<Socket | null>(null);
   const [connected, setConnected] = useState(false);
 
-  // Conversation rooms the app has asked to join. Re-emitted on every
-  // "connect" (the initial one and every reconnect after a drop), since the
-  // server doesn't remember room membership across a dropped connection.
   const joinedConversationsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
