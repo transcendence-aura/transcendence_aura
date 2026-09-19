@@ -1,6 +1,7 @@
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { ApiModule } from './api/api.module';
+import { API_RATE_LIMIT } from './api/api-rate-limit';
 import { ApiKeyModule } from './modules/api-keys/api-key.module';
 import { SWAGGER_CUSTOM_CSS } from './swagger-theme';
 
@@ -22,7 +23,11 @@ export function setupSwagger(app: INestApplication): void {
         'Every response uses the same envelope: `{ success: true, data, meta? }` on success, ' +
         '`{ success: false, error: { code, message } }` on failure. List routes accept ' +
         '`page` (default 1) and `limit` (default 25, max 100) and return ' +
-        '`meta: { page, limit, totalItems, totalPages }`.',
+        '`meta: { page, limit, totalItems, totalPages }`.\n\n' +
+        `Rate limit: ${API_RATE_LIMIT.limit} requests per ${API_RATE_LIMIT.ttlMs / 1000} seconds ` +
+        'per API key, shared across all routes. Every response carries `X-RateLimit-Limit`, ' +
+        '`X-RateLimit-Remaining` and `X-RateLimit-Reset`. Beyond the limit the API answers ' +
+        '429 `RATE_LIMITED` with a `Retry-After` header (seconds to wait).',
     )
     .setVersion('1.0')
     .addServer('/api', 'Public entry point (nginx strips the /api prefix)')

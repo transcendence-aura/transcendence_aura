@@ -7,6 +7,7 @@ import {
   ApiResponse,
   ApiResponseSchemaHost,
 } from '@nestjs/swagger';
+import { API_RATE_LIMIT } from './api-rate-limit';
 
 export interface ApiMeta {
   page: number;
@@ -73,6 +74,32 @@ export class ApiErrorDto {
   error!: ApiErrorBodyDto;
 }
 
+type ApiResponseHeaders = NonNullable<Parameters<typeof ApiResponse>[0]['headers']>;
+
+const RATE_LIMIT_WINDOW_SECONDS = API_RATE_LIMIT.ttlMs / 1000;
+
+export const RATE_LIMIT_HEADERS: ApiResponseHeaders = {
+  'X-RateLimit-Limit': {
+    description: 'Requests allowed per window for this API key.',
+    schema: { type: 'integer', example: API_RATE_LIMIT.limit },
+  },
+  'X-RateLimit-Remaining': {
+    description: 'Requests left in the current window.',
+    schema: { type: 'integer', example: API_RATE_LIMIT.limit - 1 },
+  },
+  'X-RateLimit-Reset': {
+    description: 'Seconds until the current window resets.',
+    schema: { type: 'integer', example: RATE_LIMIT_WINDOW_SECONDS },
+  },
+};
+
+export const RETRY_AFTER_HEADER: ApiResponseHeaders = {
+  'Retry-After': {
+    description: 'Seconds to wait before sending another request.',
+    schema: { type: 'integer', example: RATE_LIMIT_WINDOW_SECONDS },
+  },
+};
+
 export function ApiEnvelopeResponse(
   model: Type<unknown>,
   options: { list?: boolean; description?: string } = {},
@@ -88,7 +115,11 @@ export function ApiEnvelopeResponse(
 
   return applyDecorators(
     ApiExtraModels(model, ApiMetaDto),
-    ApiOkResponse({ description: options.description, schema: { type: 'object', properties } }),
+    ApiOkResponse({
+      description: options.description,
+      headers: RATE_LIMIT_HEADERS,
+      schema: { type: 'object', properties },
+    }),
   );
 }
 
@@ -97,12 +128,14 @@ export function ApiErrorResponse(
   description: string,
   code: string,
   message: string,
+  headers?: ApiResponseHeaders,
 ) {
   return applyDecorators(
     ApiExtraModels(ApiErrorDto),
     ApiResponse({
       status,
       description,
+      headers,
       schema: {
         allOf: [{ $ref: getSchemaPath(ApiErrorDto) }],
         example: { success: false, error: { code, message } },
