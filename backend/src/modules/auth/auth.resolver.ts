@@ -1,4 +1,4 @@
-import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { UserType } from './auth.model';
@@ -28,6 +28,17 @@ export class AuthResolver {
     private readonly configService: ConfigService<AppConfiguration, true>,
     private readonly twoFactorService: TwoFactorService,
   ) {}
+
+  @UseGuards(RolesGuard)
+  @Query(() => UserType)
+  me(
+    @Context()
+    context: {
+      req: AuthenticatedRequest;
+    },
+  ): Promise<UserType> {
+    return this.authService.findById(context.req.userId!);
+  }
 
   @Mutation(() => UserType)
   register(@Args('input') dto: RegisterDto): Promise<UserType> {
@@ -104,6 +115,26 @@ export class AuthResolver {
     return {
       accessToken: result.accessToken,
     };
+  }
+
+  @Mutation(() => Boolean)
+  async logout(
+    @Context()
+    context: {
+      req: Request;
+      res: Response;
+    },
+  ): Promise<boolean> {
+    const presentedToken = context.req.cookies?.[REFRESH_COOKIE_NAME];
+
+    if (typeof presentedToken === 'string' && presentedToken.length > 0) {
+      await this.refreshTokenService.revokeSession(presentedToken);
+    }
+
+    context.res.clearCookie(ACCESS_COOKIE_NAME, getAccessCookieOptions(0));
+    context.res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieOptions(0));
+
+    return true;
   }
 
   @UseGuards(RolesGuard)

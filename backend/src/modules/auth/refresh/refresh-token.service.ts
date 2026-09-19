@@ -214,6 +214,37 @@ export class RefreshTokenService {
     };
   }
 
+  async revokeSession(presentedToken: string): Promise<void> {
+    const presentedHash = hashRefreshToken(presentedToken);
+
+    const currentToken = await this.prisma.refreshToken.findUnique({
+      where: {
+        tokenHash: presentedHash,
+      },
+      select: {
+        userId: true,
+        familyId: true,
+      },
+    });
+
+    if (!currentToken) {
+      return;
+    }
+
+    await this.prisma.refreshToken.updateMany({
+      where: {
+        userId: currentToken.userId,
+        familyId: currentToken.familyId,
+        isRevoked: false,
+      },
+      data: {
+        isRevoked: true,
+        revokedAt: new Date(),
+        revocationReason: 'LOGOUT',
+      },
+    });
+  }
+
   async revokeAllForUser(userId: string, reason: TokenRevocationReason): Promise<void> {
     await this.prisma.refreshToken.updateMany({
       where: {
