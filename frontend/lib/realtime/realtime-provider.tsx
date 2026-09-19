@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -15,11 +16,14 @@ import { getAccessToken, subscribeToAccessToken } from '@/lib/auth/token-store';
 
 export type RealtimeConnectionState = 'connecting' | 'connected' | 'disconnected';
 
+type RealtimeHandler = (...args: unknown[]) => void;
+
 interface RealtimeContextType {
   connectionState: RealtimeConnectionState;
   emit: (event: string, payload: unknown) => void;
-  on: (event: string, handler: (...args: unknown[]) => void) => () => void;
+  on: (event: string, handler: RealtimeHandler) => () => void;
   joinConversation: (conversationId: string) => void;
+  leaveConversation: (conversationId: string) => void;
 }
 
 const RealtimeContext = createContext<RealtimeContextType | undefined>(undefined);
@@ -38,34 +42,58 @@ interface RealtimeProviderProps {
 
 export const RealtimeProvider = ({ children }: RealtimeProviderProps) => {
   const token = useSyncExternalStore(subscribeToAccessToken, getAccessToken, () => null);
+  const isAuthenticated = Boolean(token);
 
   const socketRef = useRef<Socket | null>(null);
   const [connected, setConnected] = useState(false);
 
   const joinedConversationsRef = useRef<Set<string>>(new Set());
+  const listenersRef = useRef<Map<string, Set<RealtimeHandler>>>(new Map());
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
+      joinedConversationsRef.current.clear();
       return;
     }
 
-    const socket = io({ auth: { token } });
+    const socket = io({
+      forceNew: true,
+      auth: (callback) => callback({ token: getAccessToken() ?? '' }),
+    });
     socketRef.current = socket;
 
+    for (const [event, handlers] of listenersRef.current) {
+      for (const handler of handlers) {
+        socket.on(event, handler);
+      }
+    }
+
+    let serverDisconnectAttempts = 0;
+    let serverDisconnectRetryTimeout: ReturnType<typeof setTimeout> | undefined;
+
     socket.on('connect', () => {
+      serverDisconnectAttempts = 0;
       setConnected(true);
       for (const conversationId of joinedConversationsRef.current) {
         socket.emit('joinConversation', { conversationId });
       }
     });
-    socket.on('disconnect', () => setConnected(false));
+    socket.on('disconnect', (reason) => {
+      setConnected(false);
+      if (reason === 'io server disconnect') {
+        const delay = Math.min(1000 * 2 ** serverDisconnectAttempts, 5000);
+        serverDisconnectAttempts += 1;
+        serverDisconnectRetryTimeout = setTimeout(() => socket.connect(), delay);
+      }
+    });
 
     return () => {
+      clearTimeout(serverDisconnectRetryTimeout);
       socket.close();
       socketRef.current = null;
       setConnected(false);
     };
-  }, [token]);
+  }, [isAuthenticated]);
 
   const emit = useCallback((event: string, payload: unknown) => {
     socketRef.current?.emit(event, payload);
@@ -76,9 +104,21 @@ export const RealtimeProvider = ({ children }: RealtimeProviderProps) => {
     socketRef.current?.emit('joinConversation', { conversationId });
   }, []);
 
-  const on = useCallback((event: string, handler: (...args: unknown[]) => void) => {
+  const leaveConversation = useCallback((conversationId: string) => {
+    joinedConversationsRef.current.delete(conversationId);
+  }, []);
+
+  const on = useCallback((event: string, handler: RealtimeHandler) => {
+    let handlers = listenersRef.current.get(event);
+    if (!handlers) {
+      handlers = new Set();
+      listenersRef.current.set(event, handlers);
+    }
+    handlers.add(handler);
     socketRef.current?.on(event, handler);
+
     return () => {
+      listenersRef.current.get(event)?.delete(handler);
       socketRef.current?.off(event, handler);
     };
   }, []);
@@ -89,9 +129,10 @@ export const RealtimeProvider = ({ children }: RealtimeProviderProps) => {
       ? 'connected'
       : 'connecting';
 
-  return (
-    <RealtimeContext.Provider value={{ connectionState, emit, on, joinConversation }}>
-      {children}
-    </RealtimeContext.Provider>
+  const contextValue = useMemo(
+    () => ({ connectionState, emit, on, joinConversation, leaveConversation }),
+    [connectionState, emit, on, joinConversation, leaveConversation],
   );
+
+  return <RealtimeContext.Provider value={contextValue}>{children}</RealtimeContext.Provider>;
 };

@@ -1,3 +1,5 @@
+'use client';
+
 import { useRealtime } from '@/lib/realtime/realtime-provider';
 
 interface RealtimeStatusDotProps {
