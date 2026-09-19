@@ -13,18 +13,27 @@ export interface PublicCategory {
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<PublicCategory[]> {
-    const categories = await this.prisma.category.findMany({
-      where: { isActive: true, collection: { isActive: true } },
-      include: { collection: { select: { slug: true } } },
-      orderBy: { name: 'asc' },
-    });
-    return categories.map((c) => ({
-      id: c.id,
-      slug: c.slug,
-      name: c.name,
-      description: c.description ?? undefined,
-      collectionSlug: c.collection.slug,
-    }));
+  async findPage(page: number, limit: number): Promise<{ items: PublicCategory[]; total: number }> {
+    const where = { isActive: true, collection: { isActive: true } };
+    const [categories, total] = await Promise.all([
+      this.prisma.category.findMany({
+        where,
+        include: { collection: { select: { slug: true } } },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.category.count({ where }),
+    ]);
+    return {
+      items: categories.map((c) => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        description: c.description ?? undefined,
+        collectionSlug: c.collection.slug,
+      })),
+      total,
+    };
   }
 }

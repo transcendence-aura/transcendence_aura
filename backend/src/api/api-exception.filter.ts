@@ -25,6 +25,7 @@ const STATUS_ERRORS: Record<number, { code: string; message: string }> = {
 };
 
 const INTERNAL_ERROR = { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred.' };
+const REQUEST_ERROR = { code: 'REQUEST_ERROR', message: 'The request could not be processed.' };
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
@@ -44,7 +45,9 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const body = exception.getResponse();
     const raw = typeof body === 'string' ? body : (body as { message?: unknown }).message;
-    const fallback = STATUS_ERRORS[status] ?? INTERNAL_ERROR;
+    const fallback =
+      STATUS_ERRORS[status] ??
+      (status >= HttpStatus.INTERNAL_SERVER_ERROR ? INTERNAL_ERROR : REQUEST_ERROR);
 
     let error = fallback;
     if (typeof raw === 'string' && MESSAGES[raw]) {

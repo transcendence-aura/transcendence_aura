@@ -1,8 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { ProductSortOrder } from '../../modules/products/product.input';
 import { PaginationQueryDto } from './pagination-query.dto';
+
+const toOptionalNumber = ({ value }: { value: unknown }) =>
+  value === '' || value === undefined ? undefined : Number(value);
 
 export class ListProductsQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({
@@ -37,7 +40,8 @@ export class ListProductsQueryDto extends PaginationQueryDto {
     description: 'Only products with an available variant priced at least this much.',
   })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(toOptionalNumber)
+  @IsNumber({ allowNaN: false, allowInfinity: false })
   @Min(0)
   minPrice?: number;
 
@@ -47,7 +51,8 @@ export class ListProductsQueryDto extends PaginationQueryDto {
       'Only products with an available variant priced at most this much. Must not be below minPrice.',
   })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(toOptionalNumber)
+  @IsNumber({ allowNaN: false, allowInfinity: false })
   @Min(0)
   maxPrice?: number;
 

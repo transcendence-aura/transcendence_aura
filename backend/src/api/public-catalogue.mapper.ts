@@ -7,6 +7,10 @@ import {
   PublicProductDto,
 } from './dto/public-catalogue.dto';
 
+function toReference({ id, slug, name }: { id: string; slug: string; name: string }) {
+  return { id, slug, name };
+}
+
 export function toPublicProduct(p: ProductType): PublicProductDto {
   const availablePrices = p.variants.filter((v) => v.isAvailable).map((v) => v.price);
   return {
@@ -26,9 +30,9 @@ export function toPublicProduct(p: ProductType): PublicProductDto {
       isOnSale: v.isOnSale,
       discountPercentage: v.discountPercentage,
     })),
-    categories: p.categories,
-    productFamilies: p.productFamilies,
-    collections: p.collections,
+    categories: p.categories.map(toReference),
+    productFamilies: p.productFamilies.map(toReference),
+    collections: p.collections.map(toReference),
   };
 }
 

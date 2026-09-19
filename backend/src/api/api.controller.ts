@@ -6,7 +6,7 @@ import { CollectionsService } from '../modules/collections/collection.service';
 import { ProductsService } from '../modules/products/product.service';
 import { ApiExceptionFilter } from './api-exception.filter';
 import type { ApiSuccess } from './api-response';
-import { ApiEnvelopeResponse, ApiErrorResponse, ok, paginated, slicePage } from './api-response';
+import { ApiEnvelopeResponse, ApiErrorResponse, ok, paginated } from './api-response';
 import { ListProductsQueryDto } from './dto/list-products-query.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import {
@@ -119,8 +119,8 @@ export class ApiController {
   async listCollections(
     @Query() { page, limit }: PaginationQueryDto,
   ): Promise<ApiSuccess<PublicCollectionDto[]>> {
-    const all = await this.collections.findAll();
-    return slicePage(all.map(toPublicCollection), page, limit);
+    const result = await this.collections.findPage(page, limit);
+    return paginated(result.items.map(toPublicCollection), page, limit, result.total);
   }
 
   @Get('collections/:slug')
@@ -155,7 +155,7 @@ export class ApiController {
   async listCategories(
     @Query() { page, limit }: PaginationQueryDto,
   ): Promise<ApiSuccess<PublicCategoryDto[]>> {
-    const all = await this.categories.findAll();
-    return slicePage(all.map(toPublicCategory), page, limit);
+    const result = await this.categories.findPage(page, limit);
+    return paginated(result.items.map(toPublicCategory), page, limit, result.total);
   }
 }
