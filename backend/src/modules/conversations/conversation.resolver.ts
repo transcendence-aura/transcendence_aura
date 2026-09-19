@@ -40,6 +40,11 @@ export class ConversationResolver {
   }
 
   @Query(() => [ConversationType])
+  conversations(@CurrentUser() userId: string): Promise<ConversationType[]> {
+    return this.conversationService.listConversations(userId);
+  }
+
+  @Query(() => [ConversationType])
   pendingConversations(@CurrentUser() userId: string): Promise<ConversationType[]> {
     return this.conversationService.listPendingConversations(userId);
   }
