@@ -7,6 +7,7 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { CartDot } from '@/components/ui/feedback/cart-dot';
 import { RealtimeStatusDot } from '@/components/ui/feedback/realtime-status-dot';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 import { UserMenu, UserMenuMobile } from '@/components/layout/UserMenu';
 import { SearchOverlay } from '@/components/search/SearchOverlay';
 
@@ -109,6 +110,9 @@ export function Navbar() {
             </div>
           ))}
         </div>
+
+        {/* Notifications */}
+        <NotificationBell />
 
         {/* User Menu */}
         <div className="relative">
