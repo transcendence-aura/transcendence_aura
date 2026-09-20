@@ -37,6 +37,11 @@ function mapMessage(message: Message): MessageType {
   };
 }
 
+function lastActivity(conversation: { createdAt: Date; messages: Message[] }): Date {
+  const lastMessage = conversation.messages.at(-1);
+  return lastMessage ? lastMessage.createdAt : conversation.createdAt;
+}
+
 @Injectable()
 export class ConversationService {
   constructor(
@@ -109,6 +114,38 @@ export class ConversationService {
     });
 
     return messages.map(mapMessage);
+  }
+
+  async getParticipant(userId: string): Promise<{ id: string; name: string }> {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { id: true, name: true },
+    });
+  }
+
+  async listConversations(userId: string): Promise<ConversationType[]> {
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        OR: [
+          {
+            status: ConversationStatus.ACCEPTED,
+            OR: [{ userOneId: userId }, { userTwoId: userId }],
+          },
+          {
+            status: ConversationStatus.PENDING,
+            initiatorId: userId,
+          },
+        ],
+      },
+      include: { messages: { orderBy: { createdAt: 'asc' } } },
+    });
+
+    return conversations
+      .sort((a, b) => lastActivity(b).getTime() - lastActivity(a).getTime())
+      .map((conversation) => ({
+        ...conversation,
+        messages: conversation.messages.map(mapMessage),
+      }));
   }
 
   async listPendingConversations(userId: string): Promise<ConversationType[]> {

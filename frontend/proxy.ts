@@ -28,6 +28,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     '/account/:path*',
+    '/chat/:path*',
     '/messages/:path*',
     '/notifications/:path*',
     '/wishlist/:path*',
