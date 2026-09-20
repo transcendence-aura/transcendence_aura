@@ -7,12 +7,14 @@ import Link from 'next/link';
 import { CartDot } from '@/components/ui/feedback/cart-dot';
 import { RealtimeStatusDot } from '@/components/ui/feedback/realtime-status-dot';
 import { UserMenu, UserMenuMobile } from '@/components/layout/UserMenu';
+import { SearchOverlay } from '@/components/search/SearchOverlay';
 
 const LANGUAGES = ['EN', 'FR', 'AR'] as const;
 type Language = (typeof LANGUAGES)[number];
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>('EN');
   const pathname = usePathname();
 
@@ -54,11 +56,15 @@ export function Navbar() {
       <div className="flex items-center gap-4">
         {/* Search */}
         <button
+          type="button"
           aria-label="Search"
+          aria-haspopup="dialog"
+          onClick={() => setSearchOpen(true)}
           className="text-text-secondary hover:text-text-primary transition-colors"
         >
           <Search className="h-5 w-5" />
         </button>
+        <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
         {/* Wishlist */}
         <Link
