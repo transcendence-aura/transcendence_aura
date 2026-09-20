@@ -5,8 +5,16 @@ import { CategoriesService } from '../modules/categories/category.service';
 import { CollectionsService } from '../modules/collections/collection.service';
 import { ProductsService } from '../modules/products/product.service';
 import { ApiExceptionFilter } from './api-exception.filter';
+import { ApiKeyThrottlerGuard } from './api-key-throttler.guard';
+import { API_RATE_LIMIT } from './api-rate-limit';
 import type { ApiSuccess } from './api-response';
-import { ApiEnvelopeResponse, ApiErrorResponse, ok, paginated } from './api-response';
+import {
+  ApiEnvelopeResponse,
+  ApiErrorResponse,
+  ok,
+  paginated,
+  RETRY_AFTER_HEADER,
+} from './api-response';
 import { ListProductsQueryDto } from './dto/list-products-query.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import {
@@ -30,13 +38,20 @@ import { toPublicCategory, toPublicCollection, toPublicProduct } from './public-
   'A valid API key is required.',
 )
 @ApiErrorResponse(
+  429,
+  `Rate limit exceeded: ${API_RATE_LIMIT.limit} requests per ${API_RATE_LIMIT.ttlMs / 1000} seconds per API key. The Retry-After header gives the seconds to wait.`,
+  'RATE_LIMITED',
+  'Too many requests.',
+  RETRY_AFTER_HEADER,
+)
+@ApiErrorResponse(
   500,
   'Unexpected server error.',
   'INTERNAL_ERROR',
   'An unexpected error occurred.',
 )
 @Controller('v1')
-@UseGuards(ApiKeyGuard)
+@UseGuards(ApiKeyGuard, ApiKeyThrottlerGuard)
 @UseFilters(ApiExceptionFilter)
 export class ApiController {
   constructor(
