@@ -22,7 +22,7 @@ export class ProfileService {
     private readonly productsService: ProductsService,
   ) {}
 
-  async getProfile(handle: string): Promise<PublicProfileType> {
+  async getProfile(handle: string, viewerId?: string): Promise<PublicProfileType> {
     const user = await this.prisma.user.findUnique({
       where: { handle },
       select: { id: true, name: true, handle: true, bio: true, status: true, deletedAt: true },
@@ -33,12 +33,14 @@ export class ProfileService {
       throw new NotFoundException('USER_NOT_FOUND');
     }
 
-    const [followersCount, followingCount, recentFollows, recentWishlistAdds] = await Promise.all([
-      this.getFollowersCount(user.id),
-      this.getFollowingCount(user.id),
-      this.getRecentFollows(user.id),
-      this.getRecentWishlistAdds(user.id),
-    ]);
+    const [followersCount, followingCount, isFollowing, recentFollows, recentWishlistAdds] =
+      await Promise.all([
+        this.getFollowersCount(user.id),
+        this.getFollowingCount(user.id),
+        this.isFollowedBy(viewerId, user.id),
+        this.getRecentFollows(user.id),
+        this.getRecentWishlistAdds(user.id),
+      ]);
 
     return {
       id: user.id,
@@ -47,9 +49,24 @@ export class ProfileService {
       bio: user.bio ?? undefined,
       followersCount,
       followingCount,
+      isFollowing,
       recentFollows,
       recentWishlistAdds,
     };
+  }
+
+  // Anonymous visitors and the profile owner never "follow" the profile: skip the query.
+  private async isFollowedBy(viewerId: string | undefined, profileId: string): Promise<boolean> {
+    if (!viewerId || viewerId === profileId) {
+      return false;
+    }
+
+    const follow = await this.prisma.follow.findUnique({
+      where: { followerId_followingId: { followerId: viewerId, followingId: profileId } },
+      select: { followerId: true },
+    });
+
+    return follow !== null;
   }
 
   // Counts are scoped to visible (active, non-deleted) accounts on the other

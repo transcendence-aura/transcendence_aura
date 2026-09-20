@@ -33,6 +33,11 @@ export class PublicProfileType {
   @Field(() => Int)
   followingCount!: number;
 
+  // Whether the authenticated viewer follows this profile. False for anonymous
+  // visitors, invalid tokens and the viewer's own profile.
+  @Field()
+  isFollowing!: boolean;
+
   @Field(() => [PublicProfileSummaryType])
   recentFollows!: PublicProfileSummaryType[];
 
