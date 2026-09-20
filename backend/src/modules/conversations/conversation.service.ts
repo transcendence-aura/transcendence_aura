@@ -126,8 +126,16 @@ export class ConversationService {
   async listConversations(userId: string): Promise<ConversationType[]> {
     const conversations = await this.prisma.conversation.findMany({
       where: {
-        status: ConversationStatus.ACCEPTED,
-        OR: [{ userOneId: userId }, { userTwoId: userId }],
+        OR: [
+          {
+            status: ConversationStatus.ACCEPTED,
+            OR: [{ userOneId: userId }, { userTwoId: userId }],
+          },
+          {
+            status: ConversationStatus.PENDING,
+            initiatorId: userId,
+          },
+        ],
       },
       include: { messages: { orderBy: { createdAt: 'asc' } } },
     });

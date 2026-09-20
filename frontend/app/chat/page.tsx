@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useRealtime } from '@/lib/realtime/realtime-provider';
+import { useToast } from '@/components/ui/feedback/toast';
 import { getLastSeen, markConversationSeen } from '@/lib/chat/last-seen';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import {
@@ -67,7 +68,11 @@ export default function ChatPage() {
     skip: !isAuthenticated,
     fetchPolicy: 'cache-and-network',
   });
-  const { data: pendingData, refetch: refetchPending } = useQuery(PENDING_CONVERSATIONS_QUERY, {
+  const {
+    data: pendingData,
+    error: pendingError,
+    refetch: refetchPending,
+  } = useQuery(PENDING_CONVERSATIONS_QUERY, {
     skip: !isAuthenticated,
     fetchPolicy: 'cache-and-network',
   });
@@ -76,6 +81,7 @@ export default function ChatPage() {
   const [declineConversation] = useMutation(DECLINE_CONVERSATION_MUTATION);
   const client = useApolloClient();
   const { on, joinConversation, leaveConversation } = useRealtime();
+  const { toast } = useToast();
 
   const myId = meData?.me.id;
   const pendingConversations = pendingData?.pendingConversations ?? [];
@@ -99,23 +105,26 @@ export default function ChatPage() {
     return on('newMessage', (...args) => {
       const payload = args[0] as { conversationId: string; message: ChatMessage };
 
-      client.cache.updateQuery({ query: CONVERSATIONS_QUERY }, (data) => {
-        if (!data) return data;
-        return {
-          conversations: data.conversations.map((conversation) => {
-            if (conversation.id !== payload.conversationId) return conversation;
-            const alreadyPresent = conversation.messages.some((m) => m.id === payload.message.id);
-            if (alreadyPresent) return conversation;
-            return { ...conversation, messages: [...conversation.messages, payload.message] };
-          }),
-        };
-      });
+      const appendMessage = (list: Conversation[]): Conversation[] =>
+        list.map((conversation) => {
+          if (conversation.id !== payload.conversationId) return conversation;
+          const alreadyPresent = conversation.messages.some((m) => m.id === payload.message.id);
+          if (alreadyPresent) return conversation;
+          return { ...conversation, messages: [...conversation.messages, payload.message] };
+        });
+
+      client.cache.updateQuery({ query: CONVERSATIONS_QUERY }, (data) =>
+        data ? { conversations: appendMessage(data.conversations) } : data,
+      );
+      client.cache.updateQuery({ query: PENDING_CONVERSATIONS_QUERY }, (data) =>
+        data ? { pendingConversations: appendMessage(data.pendingConversations) } : data,
+      );
     });
   }, [on, client]);
 
   useEffect(() => {
     if (effectiveActiveId) markConversationSeen(effectiveActiveId);
-  }, [effectiveActiveId]);
+  }, [effectiveActiveId, activeConversation?.messages.length]);
 
   useEffect(() => {
     return on('conversationStatusChanged', () => {
@@ -124,24 +133,44 @@ export default function ChatPage() {
     });
   }, [on, refetch, refetchPending]);
 
+  useEffect(() => {
+    return on('newNotification', () => {
+      refetch();
+      refetchPending();
+    });
+  }, [on, refetch, refetchPending]);
+
   const handleAccept = async (conversationId: string) => {
-    await acceptConversation({ variables: { input: { conversationId } } });
-    await refetch();
-    await refetchPending();
+    try {
+      await acceptConversation({ variables: { input: { conversationId } } });
+      await refetch();
+      await refetchPending();
+    } catch {
+      toast({ message: 'Could not accept this request, please retry', variant: 'error' });
+    }
   };
 
   const handleDecline = async (conversationId: string) => {
-    await declineConversation({ variables: { input: { conversationId } } });
-    await refetch();
-    await refetchPending();
+    try {
+      await declineConversation({ variables: { input: { conversationId } } });
+      await refetch();
+      await refetchPending();
+    } catch {
+      toast({ message: 'Could not decline this request, please retry', variant: 'error' });
+    }
   };
 
   const handleSend = async (content: string) => {
     if (!effectiveActiveId) return;
-    await sendMessage({
-      variables: { input: { conversationId: effectiveActiveId, content } },
-    });
-    await refetch();
+    try {
+      await sendMessage({
+        variables: { input: { conversationId: effectiveActiveId, content } },
+      });
+      await refetch();
+    } catch (err) {
+      toast({ message: 'Could not send your message, please retry', variant: 'error' });
+      throw err;
+    }
   };
 
   if (loading && conversations.length === 0) {
@@ -152,7 +181,7 @@ export default function ChatPage() {
     );
   }
 
-  if (error) {
+  if (error && conversations.length === 0) {
     return (
       <div className="flex h-[calc(100vh_-_64px)] w-full flex-col items-center justify-center gap-4 bg-card">
         <p className="text-text-secondary text-xs">Failed to load conversations</p>
@@ -180,6 +209,12 @@ export default function ChatPage() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
+          {pendingError && (
+            <p className="px-4 py-2 text-[9px] leading-[1.5] tracking-[0.06em] text-status-error">
+              Failed to load requests
+            </p>
+          )}
+
           {myId && pendingConversations.length > 0 && (
             <div className="border-b border-border-default pb-2">
               <span className="block px-4 py-2 text-[9px] leading-[1.5] font-medium tracking-[0.06em] text-text-muted uppercase">
@@ -217,7 +252,7 @@ export default function ChatPage() {
                   name={other.name}
                   lastMessage={lastMessage?.content ?? 'No messages yet'}
                   timeLabel={lastMessage ? formatRelativeTime(new Date(lastMessage.createdAt)) : ''}
-                  unreadCount={isConversationUnread(conversation, myId) ? 1 : 0}
+                  isUnread={isConversationUnread(conversation, myId)}
                   isActive={conversation.id === effectiveActiveId}
                   onClick={() => {
                     setActiveConversationId(conversation.id);

@@ -5,7 +5,7 @@ interface ConversationItemProps {
   avatarUrl?: string;
   lastMessage: string;
   timeLabel: string;
-  unreadCount?: number;
+  isUnread?: boolean;
   isOnline?: boolean;
   isActive?: boolean;
   onClick?: () => void;
@@ -16,7 +16,7 @@ export const ConversationItem = ({
   avatarUrl,
   lastMessage,
   timeLabel,
-  unreadCount = 0,
+  isUnread = false,
   isOnline = false,
   isActive = false,
   onClick,
@@ -42,10 +42,8 @@ export const ConversationItem = ({
         <span className="text-[9px] leading-[1.5] font-light tracking-[0.06em] text-text-muted">
           {timeLabel}
         </span>
-        {unreadCount > 0 && (
-          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-dark px-1 text-[8px] font-medium tracking-[0.08em] text-text-inverse">
-            {unreadCount}
-          </span>
+        {isUnread && (
+          <span className="h-2 w-2 rounded-full bg-brand-dark" role="status" aria-label="Unread" />
         )}
       </div>
     </button>

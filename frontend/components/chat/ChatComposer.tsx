@@ -5,18 +5,27 @@ import { Paperclip, Send, ShoppingBag } from 'lucide-react';
 import { Input } from '@/components/ui/form/input';
 
 interface ChatComposerProps {
-  onSend: (content: string) => void;
+  onSend: (content: string) => Promise<void>;
 }
 
 export const ChatComposer = ({ onSend }: ChatComposerProps) => {
   const [value, setValue] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = value.trim();
-    if (!trimmed) return;
-    onSend(trimmed);
-    setValue('');
+    if (!trimmed || sending) return;
+
+    setSending(true);
+    try {
+      await onSend(trimmed);
+      setValue('');
+    } catch {
+      /* empty */
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -44,12 +53,13 @@ export const ChatComposer = ({ onSend }: ChatComposerProps) => {
         onChange={(e) => setValue(e.target.value)}
         placeholder="Write a message..."
         className="py-2"
+        disabled={sending}
       />
 
       <button
         type="submit"
         aria-label="Send"
-        disabled={!value.trim()}
+        disabled={!value.trim() || sending}
         className="text-text-secondary hover:text-text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Send className="h-5 w-5" />
