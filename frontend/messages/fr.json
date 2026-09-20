@@ -1,0 +1,39 @@
+{
+  "Navbar": {
+    "shop": "Boutique",
+    "journal": "Journal",
+    "about": "À propos",
+    "search": "Rechercher",
+    "wishlist": "Favoris",
+    "cart": "Panier",
+    "cartMobile": "Panier",
+    "toggleMenu": "Ouvrir le menu",
+    "language": "Langue"
+  },
+  "UserMenu": {
+    "accountMenu": "Menu du compte",
+    "signIn": "Se connecter",
+    "status": "Statut",
+    "connected": "Connecté",
+    "settings": "Paramètres",
+    "admin": "Admin",
+    "signOut": "Se déconnecter",
+    "signOutFailed": "Échec de la déconnexion, veuillez réessayer"
+  },
+  "Footer": {
+    "tagline": "Des formulations botaniques pures pour des rituels de soin attentifs.",
+    "shop": "Boutique",
+    "shopSerums": "Sérums & huiles",
+    "shopFaceCare": "Soin du visage",
+    "shopRitualSets": "Coffrets rituels",
+    "support": "Aide",
+    "supportFaq": "FAQ",
+    "supportShipping": "Livraison & retours",
+    "supportContact": "Contact",
+    "about": "À propos",
+    "aboutStory": "Notre histoire",
+    "aboutSustainability": "Durabilité",
+    "aboutJournal": "Journal",
+    "copyright": "© 2026 Aura. Tous droits réservés."
+  }
+}

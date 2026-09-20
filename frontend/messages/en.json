@@ -1,0 +1,39 @@
+{
+  "Navbar": {
+    "shop": "Shop",
+    "journal": "Journal",
+    "about": "About",
+    "search": "Search",
+    "wishlist": "Wishlist",
+    "cart": "Shopping cart",
+    "cartMobile": "Cart",
+    "toggleMenu": "Toggle menu",
+    "language": "Language"
+  },
+  "UserMenu": {
+    "accountMenu": "Account menu",
+    "signIn": "Sign in",
+    "status": "Status",
+    "connected": "Connected",
+    "settings": "Settings",
+    "admin": "Admin",
+    "signOut": "Sign out",
+    "signOutFailed": "Sign out failed, please retry"
+  },
+  "Footer": {
+    "tagline": "Pure botanical formulations for mindful skin rituals.",
+    "shop": "Shop",
+    "shopSerums": "Serums & Oils",
+    "shopFaceCare": "Face Care",
+    "shopRitualSets": "Ritual Sets",
+    "support": "Support",
+    "supportFaq": "FAQ",
+    "supportShipping": "Shipping & Returns",
+    "supportContact": "Contact",
+    "about": "About",
+    "aboutStory": "Our Story",
+    "aboutSustainability": "Sustainability",
+    "aboutJournal": "Journal",
+    "copyright": "© 2026 Aura. All rights reserved."
+  }
+}

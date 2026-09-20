@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Bell } from 'lucide-react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { Badge } from '@/components/ui/display/badge';

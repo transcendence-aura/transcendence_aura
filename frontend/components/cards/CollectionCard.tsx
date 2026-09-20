@@ -2,7 +2,7 @@
 
 import { forwardRef, type HTMLAttributes } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/display/badge';
 
 interface Collection {

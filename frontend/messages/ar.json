@@ -1,0 +1,39 @@
+{
+  "Navbar": {
+    "shop": "المتجر",
+    "journal": "المجلة",
+    "about": "من نحن",
+    "search": "بحث",
+    "wishlist": "المفضلة",
+    "cart": "سلة التسوق",
+    "cartMobile": "السلة",
+    "toggleMenu": "فتح القائمة",
+    "language": "اللغة"
+  },
+  "UserMenu": {
+    "accountMenu": "قائمة الحساب",
+    "signIn": "تسجيل الدخول",
+    "status": "الحالة",
+    "connected": "متصل",
+    "settings": "الإعدادات",
+    "admin": "الإدارة",
+    "signOut": "تسجيل الخروج",
+    "signOutFailed": "فشل تسجيل الخروج، يرجى المحاولة مرة أخرى"
+  },
+  "Footer": {
+    "tagline": "تركيبات نباتية نقية لطقوس عناية واعية بالبشرة.",
+    "shop": "المتجر",
+    "shopSerums": "السيرومات والزيوت",
+    "shopFaceCare": "العناية بالوجه",
+    "shopRitualSets": "أطقم الطقوس",
+    "support": "المساعدة",
+    "supportFaq": "الأسئلة الشائعة",
+    "supportShipping": "الشحن والإرجاع",
+    "supportContact": "اتصل بنا",
+    "about": "من نحن",
+    "aboutStory": "قصتنا",
+    "aboutSustainability": "الاستدامة",
+    "aboutJournal": "المجلة",
+    "copyright": "© 2026 أورا. جميع الحقوق محفوظة."
+  }
+}

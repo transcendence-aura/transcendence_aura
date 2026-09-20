@@ -1,7 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import { usePathname } from '@/i18n/navigation';
+import { Link } from '@/i18n/navigation';
 import { LayoutDashboard, TrendingUp, Users, Package, Activity, ExternalLink } from 'lucide-react';
 
 interface NavItem {

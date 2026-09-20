@@ -2,7 +2,7 @@
 
 import { forwardRef, type HTMLAttributes, type MouseEvent } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Heart } from 'lucide-react';
 import { PriceDisplay } from '@/components/ui/display/PriceDisplay';
 import { useCart } from '@/lib/hooks/useCart';
@@ -116,7 +116,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
       <article
         ref={ref}
         className={`group cursor-pointer flex flex-col h-full outline-none transition-all duration-300 ${
-          !isAvailable ? 'opacity-60 grayscale-[35%]' : ''
+          !isAvailable ? 'opacity-60 grayscale-35' : ''
         } ${className}`}
         {...props}
       >

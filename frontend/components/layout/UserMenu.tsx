@@ -2,16 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { Link, useRouter } from '@/i18n/navigation';
 import { LogOut, Settings, Shield, User } from 'lucide-react';
 import { Avatar } from '@/components/ui/display/avatar';
+import { useToast } from '@/components/ui/feedback/toast';
 import { useIsAdmin } from '@/lib/auth/use-is-admin';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { clearAccessToken } from '@/lib/auth/token-store';
 import { LOGOUT_MUTATION } from '@/lib/auth/logout.mutation';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
-import { useToast } from '@/components/ui/feedback/toast';
 
 const ITEM_CLASS =
   'text-text-secondary hover:text-text-primary hover:bg-page focus-visible:outline-border-focus flex w-full items-center gap-3 px-4 py-2.5 text-xs tracking-wider transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2';
@@ -24,6 +24,7 @@ function useLogout() {
   const client = useApolloClient();
   const [logout] = useMutation(LOGOUT_MUTATION);
   const { toast } = useToast();
+  const t = useTranslations('UserMenu');
 
   return async () => {
     try {
@@ -33,7 +34,7 @@ function useLogout() {
       router.push('/login');
     } catch {
       toast({
-        message: 'Sign out failed, please retry',
+        message: t('signOutFailed'),
         variant: 'error',
         duration: 5000,
       });
@@ -44,6 +45,7 @@ function useLogout() {
 export function UserMenu() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations('UserMenu');
   const isAuthenticated = useIsAuthenticated();
   const isAdmin = useIsAdmin();
   const handleLogout = useLogout();
@@ -75,7 +77,7 @@ export function UserMenu() {
       <Link
         href="/login"
         className="text-text-secondary hover:text-text-primary transition-colors"
-        aria-label="Sign in"
+        aria-label={t('signIn')}
       >
         <User className="h-5 w-5" />
       </Link>
@@ -89,7 +91,7 @@ export function UserMenu() {
         onClick={() => setOpen(!open)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Account menu"
+        aria-label={t('accountMenu')}
         className="focus-visible:outline-border-focus flex cursor-pointer items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <Avatar name={data?.me.name.charAt(0) ?? ''} size="sm" />
@@ -101,8 +103,10 @@ export function UserMenu() {
           className="bg-card border-border-default shadow-modal absolute inset-e-0 top-10 z-50 w-56 border py-2"
         >
           <div className="pb-2">
-            <p className="text-text-muted px-4 text-[10px] uppercase tracking-wider">Status</p>
-            <p className="text-text-primary px-4 text-xs font-medium">Connected</p>
+            <p className="text-text-muted px-4 text-[10px] uppercase tracking-wider">
+              {t('status')}
+            </p>
+            <p className="text-text-primary px-4 text-xs font-medium">{t('connected')}</p>
           </div>
 
           <div className="border-border-default border-t pt-2">
@@ -112,7 +116,7 @@ export function UserMenu() {
               onClick={() => setOpen(false)}
               className={ITEM_CLASS}
             >
-              <Settings className="h-4 w-4" /> Settings
+              <Settings className="h-4 w-4" /> {t('settings')}
             </Link>
 
             {isAdmin && (
@@ -122,7 +126,7 @@ export function UserMenu() {
                 onClick={() => setOpen(false)}
                 className={ITEM_CLASS}
               >
-                <Shield className="h-4 w-4" /> Admin
+                <Shield className="h-4 w-4" /> {t('admin')}
               </Link>
             )}
           </div>
@@ -134,7 +138,7 @@ export function UserMenu() {
               onClick={handleLogout}
               className={`${ITEM_CLASS} text-status-error hover:text-status-error cursor-pointer`}
             >
-              <LogOut className="h-4 w-4" /> Sign out
+              <LogOut className="h-4 w-4" /> {t('signOut')}
             </button>
           </div>
         </div>
@@ -145,6 +149,7 @@ export function UserMenu() {
 
 /* Drawer variant */
 export function UserMenuMobile({ onNavigate }: { onNavigate: () => void }) {
+  const t = useTranslations('UserMenu');
   const isAuthenticated = useIsAuthenticated();
   const isAdmin = useIsAdmin();
   const handleLogout = useLogout();
@@ -156,7 +161,7 @@ export function UserMenuMobile({ onNavigate }: { onNavigate: () => void }) {
         onClick={onNavigate}
         className={`${MOBILE_ITEM_CLASS} border-border-default border-t pt-4`}
       >
-        Sign in
+        {t('signIn')}
       </Link>
     );
   }
@@ -164,11 +169,11 @@ export function UserMenuMobile({ onNavigate }: { onNavigate: () => void }) {
   return (
     <div className="border-border-default flex flex-col gap-4 border-t pt-4">
       <Link href="/settings" onClick={onNavigate} className={MOBILE_ITEM_CLASS}>
-        Settings
+        {t('settings')}
       </Link>
       {isAdmin && (
         <Link href="/admin" onClick={onNavigate} className={MOBILE_ITEM_CLASS}>
-          Admin
+          {t('admin')}
         </Link>
       )}
       <button
@@ -176,7 +181,7 @@ export function UserMenuMobile({ onNavigate }: { onNavigate: () => void }) {
         onClick={handleLogout}
         className={`${MOBILE_ITEM_CLASS} text-status-error cursor-pointer text-start`}
       >
-        Sign out
+        {t('signOut')}
       </button>
     </div>
   );

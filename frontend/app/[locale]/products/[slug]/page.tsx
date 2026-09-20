@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useState, use } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { SizeSelector } from '@/components/product/SizeSelector';

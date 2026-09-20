@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { LayoutGrid, List, Heart } from 'lucide-react';
 import { CatalogueSidebar } from '@/components/catalogue/CatalogueSidebar';
 import { ProductCard } from '@/components/cards/ProductCard';

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
 import { useCart } from '@/lib/hooks/useCart';
