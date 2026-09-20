@@ -1760,17 +1760,17 @@ The `Authorization` header is optional: without it the query works the same, wit
 
 **Response type: `PublicProfileType`**
 
-| Field                | Type                         | Nullable | Description                                                                                                                       |
-| -------------------- | ---------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                 | `String`                     | No       | UUID                                                                                                                              |
-| `name`               | `String`                     | No       | Display name                                                                                                                      |
-| `handle`             | `String`                     | No       | Public handle                                                                                                                     |
-| `bio`                | `String`                     | Yes      | Profile bio                                                                                                                       |
-| `followersCount`     | `Int`                        | No       | Number of active accounts following this user                                                                                     |
-| `followingCount`     | `Int`                        | No       | Number of active accounts this user follows                                                                                       |
-| `isFollowing`        | `Boolean`                    | No       | `true` if the authenticated viewer follows this user. `false` for anonymous visitors, invalid tokens and the viewer's own profile |
-| `recentFollows`      | `[PublicProfileSummaryType]` | No       | Up to 5 most recently followed users, newest first                                                                                |
-| `recentWishlistAdds` | `[ProductType]`              | No       | Up to 5 most recently wishlisted products, newest first                                                                           |
+| Field                | Type                         | Nullable | Description                                                                                                                                                     |
+| -------------------- | ---------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | `String`                     | No       | UUID                                                                                                                                                            |
+| `name`               | `String`                     | No       | Display name                                                                                                                                                    |
+| `handle`             | `String`                     | No       | Public handle                                                                                                                                                   |
+| `bio`                | `String`                     | Yes      | Profile bio                                                                                                                                                     |
+| `followersCount`     | `Int`                        | No       | Number of active accounts following this user                                                                                                                   |
+| `followingCount`     | `Int`                        | No       | Number of active accounts this user follows                                                                                                                     |
+| `isFollowing`        | `Boolean`                    | No       | `true` if the authenticated viewer follows this user. `false` for anonymous visitors, invalid tokens, suspended or deleted viewers and the viewer's own profile |
+| `recentFollows`      | `[PublicProfileSummaryType]` | No       | Up to 5 most recently followed users, newest first                                                                                                              |
+| `recentWishlistAdds` | `[ProductType]`              | No       | Up to 5 most recently wishlisted products, newest first                                                                                                         |
 
 No other `User` field is exposed — in particular no `email`, `role`, `status`, password hash, refresh tokens or API keys.
 

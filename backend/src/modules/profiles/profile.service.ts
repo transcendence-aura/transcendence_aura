@@ -56,13 +56,19 @@ export class ProfileService {
   }
 
   // Anonymous visitors and the profile owner never "follow" the profile: skip the query.
+  // Same visibility rule as followersCount: a suspended or deleted viewer does not count
+  // as a follower, so a token that is still valid for a few minutes must not show them as one.
   private async isFollowedBy(viewerId: string | undefined, profileId: string): Promise<boolean> {
     if (!viewerId || viewerId === profileId) {
       return false;
     }
 
-    const follow = await this.prisma.follow.findUnique({
-      where: { followerId_followingId: { followerId: viewerId, followingId: profileId } },
+    const follow = await this.prisma.follow.findFirst({
+      where: {
+        followerId: viewerId,
+        followingId: profileId,
+        follower: { status: UserStatus.ACTIVE, deletedAt: null },
+      },
       select: { followerId: true },
     });
 

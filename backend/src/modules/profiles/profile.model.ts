@@ -34,7 +34,7 @@ export class PublicProfileType {
   followingCount!: number;
 
   // Whether the authenticated viewer follows this profile. False for anonymous
-  // visitors, invalid tokens and the viewer's own profile.
+  // visitors, invalid tokens, suspended or deleted viewers and the viewer's own profile.
   @Field()
   isFollowing!: boolean;
 
