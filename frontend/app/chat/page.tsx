@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useRealtime } from '@/lib/realtime/realtime-provider';
+import { getLastSeen, markConversationSeen } from '@/lib/chat/last-seen';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import {
   ACCEPT_CONVERSATION_MUTATION,
@@ -42,6 +43,13 @@ function formatRelativeTime(date: Date): string {
 
 function getOtherParticipant(conversation: Conversation, myId: string) {
   return conversation.userOne.id === myId ? conversation.userTwo : conversation.userOne;
+}
+
+function isConversationUnread(conversation: Conversation, myId: string): boolean {
+  const lastMessage = conversation.messages.at(-1);
+  if (!lastMessage || lastMessage.senderId === myId) return false;
+  const lastSeen = getLastSeen(conversation.id);
+  return !lastSeen || new Date(lastMessage.createdAt) > new Date(lastSeen);
 }
 
 export default function ChatPage() {
@@ -104,6 +112,10 @@ export default function ChatPage() {
       });
     });
   }, [on, client]);
+
+  useEffect(() => {
+    if (effectiveActiveId) markConversationSeen(effectiveActiveId);
+  }, [effectiveActiveId]);
 
   useEffect(() => {
     return on('conversationStatusChanged', () => {
@@ -205,9 +217,11 @@ export default function ChatPage() {
                   name={other.name}
                   lastMessage={lastMessage?.content ?? 'No messages yet'}
                   timeLabel={lastMessage ? formatRelativeTime(new Date(lastMessage.createdAt)) : ''}
+                  unreadCount={isConversationUnread(conversation, myId) ? 1 : 0}
                   isActive={conversation.id === effectiveActiveId}
                   onClick={() => {
                     setActiveConversationId(conversation.id);
+                    markConversationSeen(conversation.id);
                     setSidePanel(null);
                   }}
                 />

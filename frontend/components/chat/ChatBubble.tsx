@@ -31,7 +31,9 @@ export const ChatBubble = ({
   product,
 }: ChatBubbleProps) => {
   return (
-    <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+    <div
+      className={`flex flex-col ${isOwn ? 'items-end rtl:items-start' : 'items-start rtl:items-end'}`}
+    >
       {variant === 'product' && product ? (
         <div className="flex w-64 gap-3 rounded-sm border border-border-default bg-card p-3 shadow-card">
           <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-sm bg-page">
@@ -62,7 +64,11 @@ export const ChatBubble = ({
         </div>
       )}
 
-      <div className={`mt-1 flex items-center gap-1.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div
+        className={`mt-1 flex items-center gap-1.5 ${
+          isOwn ? 'flex-row-reverse rtl:flex-row' : 'flex-row rtl:flex-row-reverse'
+        }`}
+      >
         <Avatar name={senderName} src={senderAvatarUrl} size="sm" />
         <span className="text-[9px] leading-[1.5] font-light tracking-[0.06em] text-text-muted">
           {formatTime(createdAt)}
