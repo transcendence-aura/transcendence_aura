@@ -38,7 +38,12 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
       if (event.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    // Browser Back/Forward changes the page under the panel: close it instead of leaving it stuck.
+    window.addEventListener('popstate', onClose);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', onClose);
+    };
   }, [onClose]);
 
   const search = (raw: string) => {
