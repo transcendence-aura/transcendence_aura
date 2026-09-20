@@ -53,7 +53,7 @@ export const ChatComposer = ({ onSend }: ChatComposerProps) => {
         onChange={(e) => setValue(e.target.value)}
         placeholder="Write a message..."
         className="py-2"
-        disabled={sending}
+        readOnly={sending}
       />
 
       <button
