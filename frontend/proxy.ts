@@ -5,7 +5,15 @@ import { routing } from '@/i18n/routing';
 
 const handleI18nRouting = createMiddleware(routing);
 
-const PROTECTED_SEGMENTS = ['account', 'chat', 'messages', 'notifications', 'wishlist', 'admin'];
+const PROTECTED_SEGMENTS = [
+  'account',
+  'chat',
+  'messages',
+  'notifications',
+  'settings',
+  'wishlist',
+  'admin',
+];
 
 function decodeSegment(segment: string): string {
   try {
