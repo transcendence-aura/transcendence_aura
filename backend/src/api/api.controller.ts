@@ -1,9 +1,33 @@
-import { Controller, Get, Param, Query, UseFilters, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiParam,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ApiKeyGuard } from '../common/guards/api-key.guard';
+import type { AuthenticatedRequest } from '../common/types/authenticated-request';
 import { CategoriesService } from '../modules/categories/category.service';
 import { CollectionsService } from '../modules/collections/collection.service';
 import { ProductsService } from '../modules/products/product.service';
+import { ProfileService } from '../modules/profiles/profile.service';
+import { WishlistService } from '../modules/wishlist/wishlist.service';
 import { ApiExceptionFilter } from './api-exception.filter';
 import { ApiKeyThrottlerGuard } from './api-key-throttler.guard';
 import { API_RATE_LIMIT } from './api-rate-limit';
@@ -23,6 +47,12 @@ import {
   PublicProductDto,
   PublicStatusDto,
 } from './dto/public-catalogue.dto';
+import {
+  AddWishlistItemDto,
+  PublicProfileDto,
+  PublicWishlistItemDto,
+  UpdateProfileDto,
+} from './dto/public-user.dto';
 import { toPublicCategory, toPublicCollection, toPublicProduct } from './public-catalogue.mapper';
 
 // Controller path is 'v1', not 'api/v1': nginx's `location /api/` strips
@@ -58,6 +88,8 @@ export class ApiController {
     private readonly products: ProductsService,
     private readonly collections: CollectionsService,
     private readonly categories: CategoriesService,
+    private readonly wishlist: WishlistService,
+    private readonly profiles: ProfileService,
   ) {}
 
   @Get('status')
@@ -172,5 +204,92 @@ export class ApiController {
   ): Promise<ApiSuccess<PublicCategoryDto[]>> {
     const result = await this.categories.findPage(page, limit);
     return paginated(result.items.map(toPublicCategory), page, limit, result.total);
+  }
+
+  @Post('users/me/wishlist')
+  @ApiOperation({
+    summary: 'Add a product to the key owner wishlist',
+    description:
+      '"me" is the owner of the API key. Adding a product that is already in the wishlist ' +
+      'returns the existing entry.',
+  })
+  @ApiEnvelopeResponse(PublicWishlistItemDto, { created: true, description: 'The wishlist entry.' })
+  @ApiErrorResponse(
+    400,
+    'Invalid or unknown body property, or productId is not a UUID.',
+    'VALIDATION_ERROR',
+    'productId must be a UUID',
+  )
+  @ApiErrorResponse(
+    404,
+    'PRODUCT_NOT_FOUND: no product has this id.',
+    'PRODUCT_NOT_FOUND',
+    'The requested product could not be found.',
+  )
+  async addWishlistItem(
+    @Req() req: AuthenticatedRequest,
+    @Body() { productId }: AddWishlistItemDto,
+  ): Promise<ApiSuccess<PublicWishlistItemDto>> {
+    const { id, createdAt } = await this.wishlist.addItem(req.apiKey!.ownerId, productId);
+    return ok({ id, productId, createdAt });
+  }
+
+  @Delete('users/me/wishlist/:productId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Remove a product from the key owner wishlist',
+    description: 'Idempotent: removing a product that is not in the wishlist still returns 204.',
+  })
+  @ApiParam({
+    name: 'productId',
+    format: 'uuid',
+    description: 'Id of the product to remove.',
+    example: '6f1c1f0e-5b1a-4b8e-9d0c-2a3f4e5d6c7b',
+  })
+  @ApiNoContentResponse({ description: 'Removed (or was not in the wishlist).' })
+  @ApiErrorResponse(
+    400,
+    'productId is not a UUID.',
+    'VALIDATION_ERROR',
+    'Validation failed (uuid is expected)',
+  )
+  @ApiErrorResponse(
+    404,
+    'PRODUCT_NOT_FOUND: no product has this id.',
+    'PRODUCT_NOT_FOUND',
+    'The requested product could not be found.',
+  )
+  async removeWishlistItem(
+    @Req() req: AuthenticatedRequest,
+    @Param('productId', ParseUUIDPipe) productId: string,
+  ): Promise<void> {
+    await this.wishlist.removeItem(req.apiKey!.ownerId, productId);
+  }
+
+  @Put('users/me/profile')
+  @ApiOperation({
+    summary: 'Update the key owner bio',
+    description:
+      'Only the bio can be changed; email and handle are rejected so a leaked key cannot ' +
+      'take over the account.',
+  })
+  @ApiEnvelopeResponse(PublicProfileDto, { description: 'The updated profile.' })
+  @ApiErrorResponse(
+    400,
+    'Missing or too long bio, or an unknown body property (e.g. email, handle).',
+    'VALIDATION_ERROR',
+    'bio must be shorter than or equal to 500 characters',
+  )
+  async updateProfile(
+    @Req() req: AuthenticatedRequest,
+    @Body() { bio }: UpdateProfileDto,
+  ): Promise<ApiSuccess<PublicProfileDto>> {
+    const profile = await this.profiles.updateProfile(req.apiKey!.ownerId, { bio });
+    return ok({
+      id: profile.id,
+      handle: profile.handle,
+      name: profile.name,
+      bio: profile.bio ?? null,
+    });
   }
 }

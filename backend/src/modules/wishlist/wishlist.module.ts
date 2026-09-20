@@ -9,5 +9,6 @@ import { WishlistService } from './wishlist.service';
 @Module({
   imports: [AuthModule, ProductsModule, AnalyticsModule, CircleFeedModule],
   providers: [WishlistResolver, WishlistService],
+  exports: [WishlistService],
 })
 export class WishlistModule {}
