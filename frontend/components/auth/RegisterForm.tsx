@@ -1,9 +1,34 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMutation } from '@apollo/client/react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/form/button';
+import { getValidationErrorMessage } from '@/lib/graphql-error';
+import { LOGIN_MUTATION } from '@/lib/auth/login.mutation';
+import { REGISTER_MUTATION } from '@/lib/auth/register.mutation';
+import type {
+  LoginMutationData,
+  LoginMutationVariables,
+  RegisterMutationData,
+  RegisterMutationVariables,
+} from '@/lib/auth/auth.types';
+import { setAccessToken } from '@/lib/auth/token-store';
 import { PasswordStrength } from './PasswordStrength';
+
+// The backend stores a single `name` (max 100 characters).
+const MAX_NAME_LENGTH = 100;
+// Sign-in rejects passwords over 128 characters, while registration does not check it:
+// without this limit an account could be created that can never sign in.
+const MAX_PASSWORD_LENGTH = 128;
+
+function getRegisterErrorMessage(error: unknown): string {
+  const message = getValidationErrorMessage(error);
+
+  if (message === 'EMAIL_ALREADY_EXISTS') return 'An account with this email already exists.';
+  return message ?? 'Unable to create your account. Please try again.';
+}
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,7 +38,16 @@ export function RegisterForm() {
   const [password, setPassword] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // One flag for the whole submit (register, then sign-in): the two mutations' own loading
+  // flags leave a gap between them where the button would be enabled again.
   const [isLoading, setIsLoading] = useState(false);
+  const [register] = useMutation<RegisterMutationData, RegisterMutationVariables>(
+    REGISTER_MUTATION,
+  );
+  const [login] = useMutation<LoginMutationData, LoginMutationVariables>(LOGIN_MUTATION);
+  const router = useRouter();
+
+  const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
   const validateForm = (): boolean => {
     if (!firstName.trim()) {
@@ -22,6 +56,10 @@ export function RegisterForm() {
     }
     if (!lastName.trim()) {
       setError('Last name is required.');
+      return false;
+    }
+    if (fullName.length > MAX_NAME_LENGTH) {
+      setError(`First and last name must not exceed ${MAX_NAME_LENGTH} characters in total.`);
       return false;
     }
     if (!email.trim()) {
@@ -40,6 +78,10 @@ export function RegisterForm() {
       setError('Password must contain at least 8 characters.');
       return false;
     }
+    if (password.length > MAX_PASSWORD_LENGTH) {
+      setError(`Password must not exceed ${MAX_PASSWORD_LENGTH} characters.`);
+      return false;
+    }
     if (!agreedToTerms) {
       setError('You must accept the Terms of Service and Privacy Policy.');
       return false;
@@ -47,17 +89,41 @@ export function RegisterForm() {
     return true;
   };
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
     if (!validateForm()) return;
 
+    const credentials = { email: email.trim(), password };
+
     setIsLoading(true);
-    /* TODO: Connect GraphQL register mutation */
-    setTimeout(() => {
+
+    try {
+      await register({ variables: { input: { ...credentials, name: fullName } } });
+    } catch (registerError) {
+      setError(getRegisterErrorMessage(registerError));
       setIsLoading(false);
-    }, 800);
+      return;
+    }
+
+    // The account exists now: sign the user in with the same credentials.
+    try {
+      const { data } = await login({ variables: { input: credentials } });
+      const result = data?.login;
+
+      if (result && !result.requiresMfa) {
+        setAccessToken(result.accessToken);
+        setPassword('');
+        router.replace('/');
+        router.refresh();
+        return;
+      }
+    } catch {
+      // Fall through: the sign-in page tells the user the account was created.
+    }
+
+    router.replace('/login?registered=1');
   };
 
   return (

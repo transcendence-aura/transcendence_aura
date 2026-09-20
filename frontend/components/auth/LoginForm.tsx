@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/form/button';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@apollo/client/react';
 import { LOGIN_MUTATION } from '@/lib/auth/login.mutation';
 import {
-  LoginResponse,
+  LoginMutationData,
+  LoginMutationVariables,
   VerifyMfaMutationData,
   VerifyMfaMutationVariables,
 } from '@/lib/auth/auth.types';
@@ -16,18 +17,9 @@ import { VERIFY_MFA_MUTATION } from '@/lib/auth/two-factor.mutations';
 
 type LoginStep = 'credentials' | 'mfa';
 
-type LoginMutationData = {
-  login: LoginResponse;
-};
-
-type LoginMutationVariables = {
-  input: {
-    email: string;
-    password: string;
-  };
-};
-
 export function LoginForm() {
+  // Set by the register form when the account was created but the automatic sign-in failed.
+  const justRegistered = useSearchParams().get('registered') === '1';
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -213,6 +205,9 @@ export function LoginForm() {
       <p className="mb-6 text-xs leading-relaxed text-text-secondary">
         Sign in to access your ritual, orders and wishlist.
       </p>
+      {justRegistered && (
+        <p className="mb-4 text-xs text-status-online">Account created. Please sign in.</p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email */}
