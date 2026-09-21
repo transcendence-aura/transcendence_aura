@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@apollo/client/react';
 import { Badge } from '@/components/ui/display/badge';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { Switch } from '@/components/ui/form/switch';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import { EmailChangeDialog } from './EmailChangeDialog';
