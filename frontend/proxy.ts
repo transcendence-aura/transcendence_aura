@@ -16,7 +16,8 @@ function decodeSegment(segment: string): string {
 }
 
 function splitLocale(pathname: string): { locale: string; segments: string[] } {
-  const segments = pathname.split('/').filter(Boolean).map(decodeSegment);
+  const decoded = pathname.split('/').map(decodeSegment).join('/');
+  const segments = new URL(`http://localhost${decoded}`).pathname.split('/').filter(Boolean);
   const candidate = segments[0]?.toLowerCase();
   const isLocale = (routing.locales as readonly string[]).includes(candidate);
 
