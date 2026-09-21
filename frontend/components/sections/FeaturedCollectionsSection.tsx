@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+import { useTranslations } from 'next-intl';
 import { CollectionCard } from '@/components/cards/CollectionCard';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 
@@ -8,29 +9,26 @@ import { Skeleton } from '@/components/ui/feedback/skeleton';
 const FEATURED_COLLECTIONS = [
   {
     id: 'col-1',
-    name: 'Skincare & Oils',
+    key: 'skincareOils',
     slug: 'skincare-oils',
-    description: 'Natural skincare and nourishing oils for your daily ritual.',
     productCount: 8,
     imagePlaceholder: 'https://placehold.co/400x400?text=Skincare',
   },
   {
     id: 'col-2',
-    name: 'Face Care',
+    key: 'faceCare',
     slug: 'face-care',
-    description: 'Targeted treatments and serums for radiant and healthy skin.',
     productCount: 12,
     imagePlaceholder: 'https://placehold.co/400x400?text=FaceCare',
   },
   {
     id: 'col-3',
-    name: 'Rituals & Sun',
+    key: 'ritualsSun',
     slug: 'rituals-sun',
-    description: 'Complete your routine with our sun care and ritual sets.',
     productCount: 6,
     imagePlaceholder: 'https://placehold.co/400x400?text=Rituals',
   },
-];
+] as const;
 
 /* Skeleton loading card for collections grid */
 const SkeletonCard = () => (
@@ -43,12 +41,14 @@ const SkeletonCard = () => (
 
 /* Collections grid component */
 export const FeaturedCollectionsSection = () => {
+  const t = useTranslations('FeaturedCollections');
+
   return (
     <section className="bg-subtle py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-4 md:px-8">
         <div className="mb-12">
           <h2 className="text-display-title font-cormorant text-text-primary uppercase tracking-wider">
-            Shop by Category
+            {t('title')}
           </h2>
         </div>
 
@@ -63,13 +63,13 @@ export const FeaturedCollectionsSection = () => {
                 key={collection.id}
                 collection={{
                   id: collection.id,
-                  name: collection.name,
+                  name: t(`${collection.key}.name`),
                   slug: collection.slug,
-                  description: collection.description,
+                  description: t(`${collection.key}.description`),
                   productCount: collection.productCount,
                   image: {
                     url: collection.imagePlaceholder,
-                    altText: collection.name,
+                    altText: t(`${collection.key}.name`),
                   },
                 }}
               />

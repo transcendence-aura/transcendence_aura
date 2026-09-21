@@ -35,5 +35,40 @@
     "aboutSustainability": "Durabilité",
     "aboutJournal": "Journal",
     "copyright": "© 2026 Aura. Tous droits réservés."
+  },
+  "Hero": {
+    "titleLine1": "Votre peau,",
+    "titleLine2": "naturellement",
+    "titleLine3": "sublimée.",
+    "tagline": "L'essentiel de la beauté, pensé pour votre peau.",
+    "discover": "Découvrir le rituel",
+    "story": "Notre histoire",
+    "imageAlt": "Texture de crème étalée sur un fond beige"
+  },
+  "FeaturedCollections": {
+    "title": "Nos univers",
+    "skincareOils": {
+      "name": "Soins & huiles",
+      "description": "Soins naturels et huiles nourrissantes pour votre rituel du quotidien."
+    },
+    "faceCare": {
+      "name": "Soins du visage",
+      "description": "Sérums et soins ciblés pour une peau saine et lumineuse."
+    },
+    "ritualsSun": {
+      "name": "Rituels & protections solaires",
+      "description": "Complétez votre routine avec nos soins solaires et nos coffrets rituels."
+    }
+  },
+  "Newsletter": {
+    "eyebrow": "Newsletter",
+    "title": "Rejoignez le cercle Aura",
+    "subtitle": "Nos nouveautés, nos conseils beauté et -10 % sur votre première commande.",
+    "placeholder": "votre@email.com",
+    "subscribe": "Je m'inscris"
+  },
+  "CollectionCard": {
+    "itemCount": "{count, plural, one {# produit} other {# produits}}",
+    "shop": "Découvrir"
   }
 }

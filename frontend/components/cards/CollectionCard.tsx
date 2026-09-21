@@ -2,6 +2,7 @@
 
 import { forwardRef, type HTMLAttributes } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Badge } from '@/components/ui/display/badge';
 
@@ -24,6 +25,7 @@ interface CollectionCardProps extends HTMLAttributes<HTMLDivElement> {
 
 export const CollectionCard = forwardRef<HTMLDivElement, CollectionCardProps>(
   ({ collection, href = `/collections/${collection.slug}`, className = '', ...props }, ref) => {
+    const t = useTranslations('CollectionCard');
     const cardContent = (
       <article
         ref={ref}
@@ -54,13 +56,13 @@ export const CollectionCard = forwardRef<HTMLDivElement, CollectionCardProps>(
 
           {collection.productCount && (
             <p className="text-body-sm text-text-muted">
-              {collection.productCount} {collection.productCount === 1 ? 'item' : 'items'}
+              {t('itemCount', { count: collection.productCount })}
             </p>
           )}
         </div>
 
         <div className="inline-block">
-          <Badge variant="dark">Shop Collection</Badge>
+          <Badge variant="dark">{t('shop')}</Badge>
         </div>
       </article>
     );
