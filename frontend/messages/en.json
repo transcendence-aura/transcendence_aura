@@ -136,5 +136,20 @@
     "handleTaken": "This username is already taken.",
     "updateFailed": "Unable to update your profile. Please try again.",
     "handleInvalid": "Use only letters, numbers, hyphens and underscores."
+  },
+  "ProfileHeader": {
+    "following": "Following",
+    "followers": "Followers"
+  },
+  "AvatarUpload": {
+    "changePhoto": "Change photo",
+    "uploading": "Uploading avatar",
+    "updated": "Avatar updated",
+    "notAnImage": "Please choose an image file.",
+    "unreadable": "This image could not be read. Try another one.",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "network": "Network error. Check your connection and try again.",
+    "unusable": "This image cannot be used as an avatar. Try another one.",
+    "failed": "Upload failed. Please try again."
   }
 }

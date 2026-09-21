@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { TEXT_BODY_SM, TEXT_LABEL, TEXT_STAT, TEXT_SUBTITLE } from '@/lib/typography';
 
@@ -15,9 +16,11 @@ interface ProfileHeaderProps {
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
+  const format = useFormatter();
+
   return (
     <p className="flex items-baseline gap-2">
-      <span className={`text-text-primary ${TEXT_STAT}`}>{value.toLocaleString('en-US')}</span>
+      <span className={`text-text-primary ${TEXT_STAT}`}>{format.number(value)}</span>
       <span className={`text-text-muted ${TEXT_LABEL}`}>{label}</span>
     </p>
   );
@@ -33,6 +36,7 @@ export function ProfileHeader({
   avatar,
   status,
 }: ProfileHeaderProps) {
+  const t = useTranslations('ProfileHeader');
   const hasCounts = followingCount !== undefined && followersCount !== undefined;
 
   return (
@@ -49,9 +53,9 @@ export function ProfileHeader({
 
           {hasCounts && (
             <div className="flex items-center gap-4">
-              <Stat value={followingCount} label="Following" />
+              <Stat value={followingCount} label={t('following')} />
               <span aria-hidden="true" className="bg-border-default h-4 w-px" />
-              <Stat value={followersCount} label="Followers" />
+              <Stat value={followersCount} label={t('followers')} />
             </div>
           )}
 

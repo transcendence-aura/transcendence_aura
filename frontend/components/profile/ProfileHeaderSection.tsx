@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@apollo/client/react';
 import { Progress } from '@/components/ui/feedback/progress';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
@@ -12,6 +13,7 @@ import { ProfileHeader, ProfileHeaderSkeleton } from './ProfileHeader';
 
 // The header of the /settings page: the signed-in user's profile, with a way to change the avatar.
 export function ProfileHeaderSection() {
+  const t = useTranslations('AvatarUpload');
   const isAuthenticated = useIsAuthenticated();
   // The same `me` query as the form below: Apollo serves both from one request.
   const { data: meData, error: meError } = useQuery(ME_QUERY, { skip: !isAuthenticated });
@@ -50,7 +52,7 @@ export function ProfileHeaderSection() {
       status={
         <>
           {progress !== null && (
-            <Progress value={progress} label="Uploading avatar" className="max-w-56" />
+            <Progress value={progress} label={t('uploading')} className="max-w-56" />
           )}
           {error && (
             <p role="alert" className={`text-status-error ${TEXT_BODY_SM}`}>

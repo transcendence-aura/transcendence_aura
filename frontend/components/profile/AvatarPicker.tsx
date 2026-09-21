@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, RefObject } from 'react';
 import { Camera } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Avatar } from '@/components/ui/display/avatar';
 
 interface AvatarPickerProps {
@@ -22,13 +23,15 @@ export function AvatarPicker({
   onPick,
   onFileChange,
 }: AvatarPickerProps) {
+  const t = useTranslations('AvatarUpload');
+
   return (
     <div className="relative shrink-0">
       <button
         type="button"
         onClick={onPick}
         disabled={isBusy}
-        aria-label="Change photo"
+        aria-label={t('changePhoto')}
         className="group focus-visible:outline-border-focus relative flex w-fit cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed"
       >
         {/* New key when the source changes: the Avatar remembers a failed load otherwise. */}

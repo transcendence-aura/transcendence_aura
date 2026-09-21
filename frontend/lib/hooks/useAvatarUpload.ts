@@ -1,30 +1,32 @@
 'use client';
 
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { useToast } from '@/components/ui/feedback/toast';
 import { AvatarImageError, cropToSquareJpeg } from '@/lib/avatar/crop-to-square-jpeg';
 import { AvatarUploadError, uploadAvatar } from '@/lib/avatar/upload-avatar';
 
-function getImageErrorMessage(error: unknown): string {
+type Translate = ReturnType<typeof useTranslations<'AvatarUpload'>>;
+
+function getImageErrorMessage(error: unknown, t: Translate): string {
   if (error instanceof AvatarImageError && error.code === 'NOT_AN_IMAGE') {
-    return 'Please choose an image file.';
+    return t('notAnImage');
   }
-  return 'This image could not be read. Try another one.';
+  return t('unreadable');
 }
 
-function getUploadErrorMessage(error: unknown): string {
-  if (!(error instanceof AvatarUploadError)) return 'Upload failed. Please try again.';
-  if (error.status === 401) return 'Your session has expired. Please sign in again.';
-  if (error.code === 'NETWORK_ERROR') {
-    return 'Network error. Check your connection and try again.';
-  }
+function getUploadErrorMessage(error: unknown, t: Translate): string {
+  if (!(error instanceof AvatarUploadError)) return t('failed');
+  if (error.status === 401) return t('sessionExpired');
+  if (error.code === 'NETWORK_ERROR') return t('network');
   if (['IMAGE_TYPE_NOT_ALLOWED', 'IMAGE_MUST_BE_SQUARE', 'FILE_TOO_LARGE'].includes(error.code)) {
-    return 'This image cannot be used as an avatar. Try another one.';
+    return t('unusable');
   }
-  return 'Upload failed. Please try again.';
+  return t('failed');
 }
 
 export function useAvatarUpload(userId: string | undefined) {
+  const t = useTranslations('AvatarUpload');
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   // The cropped image, shown as a preview during the upload and kept once it succeeded.
@@ -56,7 +58,7 @@ export function useAvatarUpload(userId: string | undefined) {
       try {
         image = await cropToSquareJpeg(file);
       } catch (imageError) {
-        setError(getImageErrorMessage(imageError));
+        setError(getImageErrorMessage(imageError, t));
         return;
       }
 
@@ -65,11 +67,11 @@ export function useAvatarUpload(userId: string | undefined) {
 
       try {
         await uploadAvatar(image, setProgress);
-        toast({ message: 'Avatar updated', variant: 'success' });
+        toast({ message: t('updated'), variant: 'success' });
       } catch (uploadError) {
         // Back to the picture the server holds.
         setLocalUrl(null);
-        setError(getUploadErrorMessage(uploadError));
+        setError(getUploadErrorMessage(uploadError, t));
       }
     } finally {
       setProgress(null);
