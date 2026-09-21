@@ -92,7 +92,19 @@ export class ConversationService {
         include: { messages: { orderBy: { createdAt: 'asc' } } },
       });
 
-      return { ...conversation, messages: conversation.messages.map(mapMessage) };
+      const mapped = { ...conversation, messages: conversation.messages.map(mapMessage) };
+      // Emit only the declared ConversationType shape - `conversation` also
+      // carries raw Prisma columns (e.g. userOneDeletedAt) that GraphQL would
+      // normally strip, but socket.io has no schema to filter against.
+      this.realtimeGateway.emitConversationStarted(otherUserId, {
+        id: mapped.id,
+        userOneId: mapped.userOneId,
+        userTwoId: mapped.userTwoId,
+        initiatorId: mapped.initiatorId,
+        status: mapped.status,
+        messages: mapped.messages,
+      });
+      return mapped;
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
