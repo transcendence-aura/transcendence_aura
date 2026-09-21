@@ -45,7 +45,7 @@ function EmailChangeForm({ currentEmail, onClose }: { currentEmail: string; onCl
       setError(tFields(validationError.code, { max: validationError.max ?? 0 }));
       return;
     }
-    if (email.trim().toLowerCase() === currentEmail) {
+    if (email.trim().toLowerCase() === currentEmail.toLowerCase()) {
       setError(t('sameEmail'));
       return;
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@apollo/client/react';
 import { Badge } from '@/components/ui/display/badge';
@@ -50,12 +50,20 @@ export function ProfileSettings() {
   const { data, loading, error, refetch } = useQuery(ME_QUERY, { skip: !isAuthenticated });
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  // Whether the user was signed in while this page was on screen.
+  const wasAuthenticated = useRef(isAuthenticated);
 
   // The app only renders pages once the session restore has finished (AuthProvider), so a missing
   // token here means the session is gone: send them to sign in instead of an endless skeleton.
-  // Not when they just signed out: the sign-out already navigates to /login by itself.
+  // Not when they signed out from this very page: the sign-out already navigates to /login by
+  // itself. Arriving here without a session (a link, or a click after signing out) always redirects.
   useEffect(() => {
-    if (!isAuthenticated && !wasSignedOutByUser()) router.replace('/login?returnTo=%2Fsettings');
+    if (isAuthenticated) {
+      wasAuthenticated.current = true;
+      return;
+    }
+    if (wasAuthenticated.current && wasSignedOutByUser()) return;
+    router.replace('/login?returnTo=%2Fsettings');
   }, [isAuthenticated, router]);
 
   const handleRetry = async () => {
