@@ -226,11 +226,16 @@ export default function ChatPage() {
             </p>
           )}
 
-          {myId && pendingConversations.length > 0 && (
+          {myId && (
             <div className="border-b border-border-default pb-2">
               <span className="block px-4 py-2 text-[9px] leading-[1.5] font-medium tracking-[0.06em] text-text-muted uppercase">
                 Requests
               </span>
+              {pendingConversations.length === 0 && (
+                <p className="text-[11px] italic leading-[1.6] text-text-muted px-4 py-4">
+                  No pending requests.
+                </p>
+              )}
               {pendingConversations.map((conversation) => {
                 const other = getOtherParticipant(conversation, myId);
                 return (

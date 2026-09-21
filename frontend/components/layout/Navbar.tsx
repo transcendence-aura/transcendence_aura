@@ -70,7 +70,7 @@ export function Navbar() {
         {/* Chat */}
         <Link
           href="/chat"
-          aria-label="Messages"
+          aria-label={t('chat')}
           className="text-text-secondary hover:text-text-primary transition-colors"
         >
           <MessageCircle className="h-5 w-5" />
@@ -170,7 +170,7 @@ export function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors flex items-center gap-2"
           >
-            <MessageCircle className="h-4 w-4" /> Messages
+            <MessageCircle className="h-4 w-4" /> {t('chat')}
           </Link>
 
           {/* Cart Mobile */}

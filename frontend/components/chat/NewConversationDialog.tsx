@@ -10,6 +10,7 @@ import {
   START_CONVERSATION_MUTATION,
   type Conversation,
 } from '@/lib/graphql/queries/chat';
+import { getValidationErrorMessage } from '@/lib/graphql-error';
 
 interface NewConversationDialogProps {
   isOpen: boolean;
@@ -37,11 +38,13 @@ export const NewConversationDialog = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = handle.trim().replace(/^@/, '');
+    const trimmed = handle.trim().replace(/^@/, '').toLowerCase();
     if (!trimmed) return;
 
     setSubmitting(true);
     setError(null);
+
+    let otherUserId: string;
 
     try {
       const { data } = await client.query({
@@ -55,16 +58,28 @@ export const NewConversationDialog = ({
         return;
       }
 
+      otherUserId = data.userProfile.id;
+    } catch {
+      setError('Could not find that user');
+      setSubmitting(false);
+      return;
+    }
+
+    try {
       const result = await startConversation({
-        variables: { input: { otherUserId: data.userProfile.id } },
+        variables: { input: { otherUserId } },
       });
 
       if (result.data) {
         onStarted(result.data.startConversation);
         handleClose();
       }
-    } catch {
-      setError('Could not find that user');
+    } catch (err) {
+      setError(
+        getValidationErrorMessage(err) === 'CONVERSATION_DECLINED'
+          ? "You can't message this person"
+          : 'Could not start a conversation',
+      );
     } finally {
       setSubmitting(false);
     }
