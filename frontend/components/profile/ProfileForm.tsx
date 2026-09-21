@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/feedback/toast';
 import {
   BIO_MAX_LENGTH,
   getProfileServerError,
+  normalizeHandle,
   type FieldError,
   splitName,
   validateBio,
@@ -43,7 +44,7 @@ function hasErrors(errors: FieldErrors): boolean {
 // Only what differs from the saved profile.
 function getChanges(initial: ProfileValues, values: ProfileValues): UpdateMyProfileInput {
   const changes: UpdateMyProfileInput = {};
-  const handle = values.handle.trim();
+  const handle = normalizeHandle(values.handle);
 
   if (handle !== initial.handle) changes.handle = handle;
   if (values.bio !== initial.bio) changes.bio = values.bio;
@@ -94,7 +95,7 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
       if (serverError.field === 'handle') {
         setErrors({ handle: serverError.error });
       } else {
-        setGeneralError(serverError.detail ?? errorText(serverError.error) ?? null);
+        setGeneralError(errorText(serverError.error) ?? null);
       }
     }
   };
@@ -127,7 +128,7 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
           <Input
             id="profile-handle"
             type="text"
-            autoComplete="username"
+            autoComplete="off"
             value={values.handle}
             onChange={(event) => handleChange('handle', event.target.value.replace(/^@+/, ''))}
             error={Boolean(errors.handle)}

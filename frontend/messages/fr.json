@@ -102,7 +102,8 @@
     "newsletter": "Newsletter",
     "dangerZone": "Zone de danger",
     "deleteAccount": "Supprimer mon compte",
-    "comingSoon": "Bientôt disponible"
+    "comingSoon": "Bientôt disponible",
+    "retrying": "Nouvelle tentative..."
   },
   "ProfileForm": {
     "firstName": "Prénom",
@@ -133,6 +134,7 @@
     "bioTooLong": "La bio ne doit pas dépasser {max} caractères.",
     "emailUnavailable": "Cette adresse e-mail est déjà utilisée.",
     "handleTaken": "Ce nom d'utilisateur est déjà pris.",
-    "updateFailed": "Impossible de mettre à jour votre profil. Veuillez réessayer."
+    "updateFailed": "Impossible de mettre à jour votre profil. Veuillez réessayer.",
+    "handleInvalid": "Utilisez uniquement des lettres, des chiffres, des tirets et des tirets bas."
   }
 }

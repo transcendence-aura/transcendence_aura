@@ -29,7 +29,7 @@ function useLogout() {
   return async () => {
     try {
       await logout();
-      clearAccessToken();
+      clearAccessToken({ byUser: true });
       await client.clearStore();
       router.push('/login');
     } catch {

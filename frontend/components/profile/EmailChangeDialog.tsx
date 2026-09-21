@@ -55,8 +55,8 @@ function EmailChangeForm({ currentEmail, onClose }: { currentEmail: string; onCl
       toast({ message: t('updated'), variant: 'success' });
       onClose();
     } catch (serverError) {
-      const { error: fieldError, detail } = getProfileServerError(serverError);
-      setError(detail ?? tFields(fieldError.code, { max: fieldError.max ?? 0 }));
+      const { error: fieldError } = getProfileServerError(serverError);
+      setError(tFields(fieldError.code, { max: fieldError.max ?? 0 }));
     }
   };
 

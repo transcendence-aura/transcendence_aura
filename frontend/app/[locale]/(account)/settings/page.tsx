@@ -7,7 +7,7 @@ export default async function SettingsPage() {
 
   return (
     // Full-width background (the root layout already provides the <main> landmark).
-    <div className={`bg-page min-h-screen ${FONT_SANS}`}>
+    <div className={`bg-page ${FONT_SANS}`}>
       <div className="w-full px-6 py-10 md:px-8">
         <p className={`text-text-muted ${TEXT_LABEL}`}>{t('eyebrow')}</p>
         <h1 className={`text-text-primary ${TEXT_TITLE}`}>{t('title')}</h1>

@@ -102,7 +102,8 @@
     "newsletter": "Newsletter",
     "dangerZone": "Danger zone",
     "deleteAccount": "Delete my account",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "retrying": "Retrying..."
   },
   "ProfileForm": {
     "firstName": "First name",
@@ -133,6 +134,7 @@
     "bioTooLong": "Bio must not exceed {max} characters.",
     "emailUnavailable": "This email is already in use.",
     "handleTaken": "This username is already taken.",
-    "updateFailed": "Unable to update your profile. Please try again."
+    "updateFailed": "Unable to update your profile. Please try again.",
+    "handleInvalid": "Use only letters, numbers, hyphens and underscores."
   }
 }

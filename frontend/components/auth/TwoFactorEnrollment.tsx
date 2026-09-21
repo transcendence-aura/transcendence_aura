@@ -184,7 +184,11 @@ export function TwoFactorEnrollment() {
 
         <div className="mt-3 bg-bg-subtle p-3">
           <p className="mb-1.5 text-xs text-text-secondary">
-            Please download the Google Authenticator app.
+            Enter this setup URI manually in your authenticator app:
+          </p>
+
+          <p className="break-all text-[11px] leading-relaxed text-text-muted">
+            {setup.provisioningUri}
           </p>
         </div>
       </details>

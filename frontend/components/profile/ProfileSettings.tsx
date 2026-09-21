@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { Switch } from '@/components/ui/form/switch';
 import { Link, useRouter } from '@/i18n/navigation';
+import { wasSignedOutByUser } from '@/lib/auth/token-store';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import { EmailChangeDialog } from './EmailChangeDialog';
@@ -48,19 +49,32 @@ export function ProfileSettings() {
   const isAuthenticated = useIsAuthenticated();
   const { data, loading, error, refetch } = useQuery(ME_QUERY, { skip: !isAuthenticated });
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   // The app only renders pages once the session restore has finished (AuthProvider), so a missing
-  // token here means the user is signed out: send them to sign in instead of an endless skeleton.
+  // token here means the session is gone: send them to sign in instead of an endless skeleton.
+  // Not when they just signed out: the sign-out already navigates to /login by itself.
   useEffect(() => {
-    if (!isAuthenticated) router.replace('/login?returnTo=%2Fsettings');
+    if (!isAuthenticated && !wasSignedOutByUser()) router.replace('/login?returnTo=%2Fsettings');
   }, [isAuthenticated, router]);
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await refetch();
+    } catch {
+      // Still failing: the error state above stays on screen.
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   if (error) {
     return (
       <div className="flex flex-col items-start gap-4">
         <p className={`text-text-muted ${TEXT_BODY}`}>{t('loadFailed')}</p>
-        <Button onClick={() => refetch()} className={TEXT_BUTTON}>
-          {t('retry')}
+        <Button onClick={handleRetry} disabled={isRetrying} className={TEXT_BUTTON}>
+          {isRetrying ? t('retrying') : t('retry')}
         </Button>
       </div>
     );
