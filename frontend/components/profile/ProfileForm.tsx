@@ -30,10 +30,12 @@ export interface ProfileValues {
 
 type FieldErrors = Partial<Record<keyof ProfileValues, FieldError | undefined>>;
 
-function validate(values: ProfileValues): FieldErrors {
+// Only the fields being changed: a saved value that predates a rule (an older handle, say) must
+// not block saving something else.
+function validate(changes: UpdateMyProfileInput): FieldErrors {
   return {
-    handle: validateHandle(values.handle),
-    bio: validateBio(values.bio),
+    handle: changes.handle !== undefined ? validateHandle(changes.handle) : undefined,
+    bio: changes.bio !== undefined ? validateBio(changes.bio) : undefined,
   };
 }
 
@@ -44,9 +46,9 @@ function hasErrors(errors: FieldErrors): boolean {
 // Only what differs from the saved profile.
 function getChanges(initial: ProfileValues, values: ProfileValues): UpdateMyProfileInput {
   const changes: UpdateMyProfileInput = {};
-  const handle = normalizeHandle(values.handle);
 
-  if (handle !== initial.handle) changes.handle = handle;
+  // Compared as typed first: an untouched handle is left alone, even one that normalizing would alter.
+  if (values.handle.trim() !== initial.handle) changes.handle = normalizeHandle(values.handle);
   if (values.bio !== initial.bio) changes.bio = values.bio;
 
   return changes;
@@ -80,7 +82,7 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
     event.preventDefault();
     setGeneralError(null);
 
-    const validationErrors = validate(values);
+    const validationErrors = validate(changes);
     if (hasErrors(validationErrors)) {
       setErrors(validationErrors);
       return;
