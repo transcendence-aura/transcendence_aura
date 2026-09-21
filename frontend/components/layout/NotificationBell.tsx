@@ -89,7 +89,7 @@ export function NotificationBell() {
     const nextOpen = !open;
 
     if (nextOpen) {
-      setDisplayedNotifications(notifications);
+      setDisplayedNotifications(data ? notifications : null);
     } else {
       setDisplayedNotifications(null);
     }
@@ -135,7 +135,7 @@ export function NotificationBell() {
         className="text-text-secondary hover:text-text-primary relative transition-colors"
       >
         <Bell className="h-5 w-5" />
-        <NotificationBadge count={unreadCount} />
+        <NotificationBadge count={open ? 0 : unreadCount} />
       </button>
 
       {open && (
