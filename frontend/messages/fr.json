@@ -20,6 +20,15 @@
     "signOut": "Se déconnecter",
     "signOutFailed": "Échec de la déconnexion, veuillez réessayer"
   },
+  "Notifications": {
+    "label": "Notifications",
+    "empty": "Aucune notification pour le moment.",
+    "newMessage": "{name} vous a envoyé un message",
+    "fallback": "Nouvelle notification",
+    "now": "maintenant",
+    "markReadFailed": "Impossible de marquer les notifications comme lues",
+    "unreadCount": "{count, plural, one {# notification non lue} other {# notifications non lues}}"
+  },
   "Footer": {
     "tagline": "Des formulations botaniques pures pour des rituels de soin attentifs.",
     "shop": "Boutique",

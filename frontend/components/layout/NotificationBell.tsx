@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
-import Link from 'next/link';
 import { Bell } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useRealtime } from '@/lib/realtime/realtime-provider';
 import { useToast } from '@/components/ui/feedback/toast';
@@ -21,17 +22,10 @@ function targetHref(notification: Notification): string {
   return '#';
 }
 
-function notificationText(notification: Notification): string {
-  if (notification.type === 'MESSAGE' && notification.actor) {
-    return `${notification.actor.name} sent you a message`;
-  }
-  return notification.title ?? notification.body ?? 'New notification';
-}
-
-function formatRelativeTime(iso: string): string {
+function formatRelativeTime(iso: string, nowLabel: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const diffMinutes = Math.floor(diffMs / 60_000);
-  if (diffMinutes < 1) return 'now';
+  if (diffMinutes < 1) return nowLabel;
   if (diffMinutes < 60) return `${diffMinutes}m`;
   const diffHours = Math.floor(diffMinutes / 60);
   if (diffHours < 24) return `${diffHours}h`;
@@ -46,6 +40,14 @@ export function NotificationBell() {
   const client = useApolloClient();
   const { on } = useRealtime();
   const { toast } = useToast();
+  const t = useTranslations('Notifications');
+
+  const notificationText = (notification: Notification): string => {
+    if (notification.type === 'MESSAGE' && notification.actor) {
+      return t('newMessage', { name: notification.actor.name });
+    }
+    return notification.title ?? notification.body ?? t('fallback');
+  };
 
   const { data, refetch } = useQuery(NOTIFICATIONS_QUERY, {
     variables: QUERY_VARIABLES,
@@ -118,7 +120,7 @@ export function NotificationBell() {
           data: snapshot,
         });
       }
-      toast({ message: 'Could not mark notifications as read', variant: 'error' });
+      toast({ message: t('markReadFailed'), variant: 'error' });
     }
   };
 
@@ -131,7 +133,7 @@ export function NotificationBell() {
         onClick={handleToggle}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Notifications"
+        aria-label={t('label')}
         className="text-text-secondary hover:text-text-primary relative transition-colors"
       >
         <Bell className="h-5 w-5" />
@@ -144,9 +146,7 @@ export function NotificationBell() {
           className="bg-card border-border-default shadow-modal absolute inset-e-0 top-10 z-50 max-h-96 w-80 overflow-y-auto border py-2"
         >
           {visibleNotifications.length === 0 ? (
-            <p className="text-body-sm text-text-muted px-4 py-6 text-center">
-              No notifications yet.
-            </p>
+            <p className="text-body-sm text-text-muted px-4 py-6 text-center">{t('empty')}</p>
           ) : (
             visibleNotifications.map((notification) => (
               <Link
@@ -159,7 +159,7 @@ export function NotificationBell() {
                   {notificationText(notification)}
                 </span>
                 <span className="text-[9px] leading-[1.5] tracking-[0.06em] text-text-muted">
-                  {formatRelativeTime(notification.createdAt)}
+                  {formatRelativeTime(notification.createdAt, t('now'))}
                 </span>
               </Link>
             ))

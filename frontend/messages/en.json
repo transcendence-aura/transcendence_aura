@@ -20,6 +20,15 @@
     "signOut": "Sign out",
     "signOutFailed": "Sign out failed, please retry"
   },
+  "Notifications": {
+    "label": "Notifications",
+    "empty": "No notifications yet.",
+    "newMessage": "{name} sent you a message",
+    "fallback": "New notification",
+    "now": "now",
+    "markReadFailed": "Could not mark notifications as read",
+    "unreadCount": "{count, plural, one {# unread notification} other {# unread notifications}}"
+  },
   "Footer": {
     "tagline": "Pure botanical formulations for mindful skin rituals.",
     "shop": "Shop",
