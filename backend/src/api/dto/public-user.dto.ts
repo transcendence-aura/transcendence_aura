@@ -16,7 +16,9 @@ export class AddWishlistItemDto {
 export class UpdateProfileDto {
   @ApiProperty({
     maxLength: PROFILE_BIO_MAX_LENGTH,
-    description: 'New bio. An empty string clears it. No other profile field can be changed.',
+    description:
+      'New bio, replacing the current one (an empty string sets an empty bio). ' +
+      'No other profile field can be changed.',
     example: 'Skincare enthusiast.',
   })
   @IsString()
