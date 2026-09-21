@@ -136,5 +136,20 @@
     "handleTaken": "Ce nom d'utilisateur est déjà pris.",
     "updateFailed": "Impossible de mettre à jour votre profil. Veuillez réessayer.",
     "handleInvalid": "Utilisez uniquement des lettres, des chiffres, des tirets et des tirets bas."
+  },
+  "ProfileHeader": {
+    "following": "Abonnements",
+    "followers": "Abonnés"
+  },
+  "AvatarUpload": {
+    "changePhoto": "Changer de photo",
+    "uploading": "Envoi de l'avatar en cours",
+    "updated": "Avatar mis à jour",
+    "notAnImage": "Veuillez choisir un fichier image.",
+    "unreadable": "Cette image n'a pas pu être lue. Essayez-en une autre.",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
+    "unusable": "Cette image ne peut pas être utilisée comme avatar. Essayez-en une autre.",
+    "failed": "Échec de l'envoi. Veuillez réessayer."
   }
 }
