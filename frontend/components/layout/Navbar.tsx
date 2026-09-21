@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Heart, ShoppingBag, Menu, X } from 'lucide-react';
+import { Search, Heart, MessageCircle, ShoppingBag, Menu, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
@@ -66,6 +66,15 @@ export function Navbar() {
           <Search className="h-5 w-5" />
         </button>
         <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
+        {/* Chat */}
+        <Link
+          href="/chat"
+          aria-label="Messages"
+          className="text-text-secondary hover:text-text-primary transition-colors"
+        >
+          <MessageCircle className="h-5 w-5" />
+        </Link>
 
         {/* Wishlist */}
         <Link
@@ -153,6 +162,15 @@ export function Navbar() {
             className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors"
           >
             {t('about')}
+          </Link>
+
+          {/* Chat Mobile */}
+          <Link
+            href="/chat"
+            onClick={() => setMenuOpen(false)}
+            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors flex items-center gap-2"
+          >
+            <MessageCircle className="h-4 w-4" /> Messages
           </Link>
 
           {/* Cart Mobile */}
