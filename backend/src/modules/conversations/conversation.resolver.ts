@@ -1,16 +1,16 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { ConversationService } from './conversation.service';
-import { ConversationType, MessageType } from './conversation.model';
+import { ConversationParticipantType, ConversationType, MessageType } from './conversation.model';
 import {
   RespondToConversationInput,
   SendMessageInput,
   StartConversationInput,
 } from './conversation.input';
 
-@Resolver()
+@Resolver(() => ConversationType)
 @UseGuards(GqlAuthGuard)
 export class ConversationResolver {
   constructor(private readonly conversationService: ConversationService) {}
@@ -40,6 +40,11 @@ export class ConversationResolver {
   }
 
   @Query(() => [ConversationType])
+  conversations(@CurrentUser() userId: string): Promise<ConversationType[]> {
+    return this.conversationService.listConversations(userId);
+  }
+
+  @Query(() => [ConversationType])
   pendingConversations(@CurrentUser() userId: string): Promise<ConversationType[]> {
     return this.conversationService.listPendingConversations(userId);
   }
@@ -66,5 +71,15 @@ export class ConversationResolver {
     @Args('input') input: RespondToConversationInput,
   ): Promise<ConversationType> {
     return this.conversationService.declineConversation(userId, input.conversationId);
+  }
+
+  @ResolveField(() => ConversationParticipantType)
+  userOne(@Parent() conversation: ConversationType): Promise<ConversationParticipantType> {
+    return this.conversationService.getParticipant(conversation.userOneId);
+  }
+
+  @ResolveField(() => ConversationParticipantType)
+  userTwo(@Parent() conversation: ConversationType): Promise<ConversationParticipantType> {
+    return this.conversationService.getParticipant(conversation.userTwoId);
   }
 }

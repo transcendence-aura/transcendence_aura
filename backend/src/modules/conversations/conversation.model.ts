@@ -19,6 +19,15 @@ export class MessageType {
 }
 
 @ObjectType()
+export class ConversationParticipantType {
+  @Field()
+  id!: string;
+
+  @Field()
+  name!: string;
+}
+
+@ObjectType()
 export class ConversationType {
   @Field()
   id!: string;

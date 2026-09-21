@@ -8,12 +8,14 @@ import { routing } from '@/i18n/routing';
 import { CartDot } from '@/components/ui/feedback/cart-dot';
 import { RealtimeStatusDot } from '@/components/ui/feedback/realtime-status-dot';
 import { UserMenu, UserMenuMobile } from '@/components/layout/UserMenu';
+import { SearchOverlay } from '@/components/search/SearchOverlay';
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const t = useTranslations('Navbar');
   const locale = useLocale();
   const router = useRouter();
+  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
 
   /* Hide Navbar on auth routes and inside theadmin shell (its own layout provides navigation) */
@@ -54,11 +56,15 @@ export function Navbar() {
       <div className="flex items-center gap-4">
         {/* Search */}
         <button
+          type="button"
           aria-label={t('search')}
+          aria-haspopup="dialog"
+          onClick={() => setSearchOpen(true)}
           className="text-text-secondary hover:text-text-primary transition-colors"
         >
           <Search className="h-5 w-5" />
         </button>
+        <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
         {/* Wishlist */}
         <Link

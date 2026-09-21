@@ -33,7 +33,10 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {}
 
   emitNewMessage(conversationId: string, message: MessageType): void {
-    this.server.to(`conversation:${conversationId}`).emit('newMessage', message);
+    this.server.to(`conversation:${conversationId}`).emit('newMessage', {
+      conversationId,
+      message,
+    });
   }
 
   emitConversationStatusChanged(conversationId: string, status: ConversationStatus): void {

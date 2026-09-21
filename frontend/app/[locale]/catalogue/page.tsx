@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { Suspense, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import { LayoutGrid, List, Heart } from 'lucide-react';
 import { CatalogueSidebar } from '@/components/catalogue/CatalogueSidebar';
 import { ProductCard } from '@/components/cards/ProductCard';
+import { SearchResults } from '@/components/search/SearchResults';
 import { useCart } from '@/lib/hooks/useCart';
 import { useToast } from '@/components/ui/feedback/toast';
 
@@ -396,9 +398,10 @@ const sortProducts = (products: Product[], sortBy: SortOrder): Product[] => {
   }
 };
 
-export default function CataloguePage() {
+function CatalogueContent() {
   const { addItem } = useCart();
   const { toast } = useToast();
+  const searchTerm = useSearchParams().get('q')?.trim() ?? '';
 
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [sortBy, setSortBy] = useState<SortOrder>('featured');
@@ -493,6 +496,9 @@ export default function CataloguePage() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return sortedProducts.slice(start, start + ITEMS_PER_PAGE);
   }, [sortedProducts, currentPage]);
+
+  // A search term in the URL (?q=) swaps the browsing view for the search results.
+  if (searchTerm) return <SearchResults key={searchTerm} term={searchTerm} />;
 
   return (
     <div className="bg-page min-h-screen">
@@ -808,5 +814,14 @@ export default function CataloguePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams needs a Suspense boundary for static rendering.
+export default function CataloguePage() {
+  return (
+    <Suspense fallback={null}>
+      <CatalogueContent />
+    </Suspense>
   );
 }

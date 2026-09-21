@@ -33,7 +33,10 @@ export function Footer() {
 
   /* Hide Footer on auth routes and inside the admin shell to respect minimal layout - NEW */
   const isAuthPage =
-    pathname === '/login' || pathname === '/register' || pathname.startsWith('/admin');
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/chat' ||
+    pathname.startsWith('/admin');
   if (isAuthPage) return null;
 
   return (

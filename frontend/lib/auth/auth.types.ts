@@ -15,6 +15,26 @@ export type LoginResponse =
       expiresIn: number;
     };
 
+export type LoginMutationData = {
+  login: LoginResponse;
+};
+
+export type LoginMutationVariables = {
+  input: LoginCredentials;
+};
+
+export type RegisterMutationData = {
+  register: {
+    id: string;
+    email: string;
+    name: string;
+  };
+};
+
+export type RegisterMutationVariables = {
+  input: LoginCredentials & { name: string };
+};
+
 export type VerifyMfaResponse = {
   accessToken: string;
   expiresIn: number;

@@ -5,7 +5,14 @@ import { routing } from '@/i18n/routing';
 
 const handleI18nRouting = createMiddleware(routing);
 
-const PROTECTED_PREFIXES = ['/account', '/messages', '/notifications', '/wishlist', '/admin'];
+const PROTECTED_PREFIXES = [
+  '/account',
+  '/chat',
+  '/messages',
+  '/notifications',
+  '/wishlist',
+  '/admin',
+];
 
 function splitLocale(pathname: string): { locale: string; rest: string } {
   const [, maybeLocale, ...segments] = pathname.split('/');
