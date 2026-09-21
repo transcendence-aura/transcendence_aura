@@ -40,7 +40,7 @@ export class ApiKeyGuard implements CanActivate {
       data: { lastUsedAt: new Date() },
     });
 
-    request.apiKey = { id: apiKey.id, ownerId: apiKey.ownerId, scopes: apiKey.scopes };
+    request.apiKey = { id: apiKey.id, ownerId: apiKey.ownerId };
 
     return true;
   }

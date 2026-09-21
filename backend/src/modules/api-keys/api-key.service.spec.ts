@@ -27,7 +27,6 @@ describe('ApiKeyService', () => {
       apiKey.create.mockResolvedValue({
         id: 'key-1',
         name: 'my-key',
-        scopes: [],
         expiresAt: null,
         createdAt: new Date('2026-01-01'),
       });
@@ -59,7 +58,6 @@ describe('ApiKeyService', () => {
       apiKey.create.mockResolvedValue({
         id: 'key-2',
         name: 'replacement-key',
-        scopes: [],
         expiresAt: null,
         createdAt: new Date('2026-01-02'),
       });
@@ -99,7 +97,6 @@ describe('ApiKeyService', () => {
         {
           id: 'key-1',
           name: 'my-key',
-          scopes: ['read'],
           expiresAt: null,
           lastUsedAt: null,
           isRevoked: false,
@@ -120,7 +117,6 @@ describe('ApiKeyService', () => {
         {
           id: 'key-1',
           name: 'my-key',
-          scopes: ['read'],
           expiresAt: null,
           lastUsedAt: null,
           isRevoked: false,
