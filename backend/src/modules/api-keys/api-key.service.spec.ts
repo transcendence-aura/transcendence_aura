@@ -130,6 +130,56 @@ describe('ApiKeyService', () => {
     });
   });
 
+  describe('listMine', () => {
+    it("returns only the caller's keys, revoked ones included, and never the hash or a raw value", async () => {
+      apiKey.findMany.mockResolvedValue([
+        {
+          id: 'key-2',
+          name: 'new-key',
+          expiresAt: null,
+          lastUsedAt: null,
+          isRevoked: false,
+          revokedAt: null,
+          createdAt: new Date('2026-02-01'),
+          keyHash: 'should-never-be-selected-but-guard-anyway',
+          ownerId: 'user-1',
+        },
+        {
+          id: 'key-1',
+          name: 'old-key',
+          expiresAt: null,
+          lastUsedAt: new Date('2026-01-15'),
+          isRevoked: true,
+          revokedAt: new Date('2026-01-20'),
+          createdAt: new Date('2026-01-01'),
+          keyHash: 'should-never-be-selected-but-guard-anyway',
+          ownerId: 'user-1',
+        },
+      ]);
+
+      const result = await service.listMine('user-1');
+
+      expect(apiKey.findMany).toHaveBeenCalledWith({
+        where: { ownerId: 'user-1' },
+        orderBy: { createdAt: 'desc' },
+      });
+      expect(result.map((key) => key.id)).toEqual(['key-2', 'key-1']);
+      expect(result[1]).toMatchObject({ isRevoked: true, revokedAt: new Date('2026-01-20') });
+      for (const key of result) {
+        expect(key).not.toHaveProperty('keyHash');
+        expect(key).not.toHaveProperty('key');
+        expect(key).not.toHaveProperty('ownerId');
+        expect(key).not.toHaveProperty('owner');
+      }
+    });
+
+    it('returns an empty list when the caller has no key', async () => {
+      apiKey.findMany.mockResolvedValue([]);
+
+      await expect(service.listMine('user-1')).resolves.toEqual([]);
+    });
+  });
+
   describe('revoke', () => {
     it('throws NotFoundException when the key does not exist', async () => {
       apiKey.findUnique.mockResolvedValue(null);

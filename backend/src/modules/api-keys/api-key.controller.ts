@@ -19,6 +19,7 @@ import { ApiKeyService } from './api-key.service';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { ApiKeyCreatedDto } from './dto/api-key-created.dto';
 import { ApiKeySummaryDto } from './dto/api-key-summary.dto';
+import { ApiKeyOwnSummaryDto } from './dto/api-key-own-summary.dto';
 
 // Management endpoints for API keys, authenticated with the normal
 // JWT-based RolesGuard - not with an API key itself, since creating the
@@ -56,6 +57,22 @@ export class ApiKeyController {
   @ApiResponse({ status: 403, description: 'Caller is not an ADMIN.' })
   list(): Promise<ApiKeySummaryDto[]> {
     return this.apiKeyService.list();
+  }
+
+  @Get('me')
+  @ApiOperation({
+    summary: "List the caller's own API keys",
+    description:
+      'Metadata only - never the raw value or its hash. Includes revoked keys, most recent ' +
+      'first, so a client can tell whether the caller currently has an active one.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: "The caller's keys, most recent first.",
+    type: [ApiKeyOwnSummaryDto],
+  })
+  listMine(@Req() req: AuthenticatedRequest): Promise<ApiKeyOwnSummaryDto[]> {
+    return this.apiKeyService.listMine(req.userId!);
   }
 
   @Post()
