@@ -72,6 +72,9 @@ export class ConversationService {
     const existing = await this.findConversationRow(userOneId, userTwoId);
 
     if (existing) {
+      if (existing.status === ConversationStatus.DECLINED) {
+        throw new ForbiddenException('CONVERSATION_DECLINED');
+      }
       return { ...existing, messages: existing.messages.map(mapMessage) };
     }
 
