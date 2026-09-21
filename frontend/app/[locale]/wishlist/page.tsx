@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useQuery } from '@apollo/client/react';
 // import { useRouter } from 'next/navigation'; // TODO: Uncomment once auth is functionnal
 import { GET_WISHLIST } from '@/lib/graphql/queries/wishlist';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useMutation } from '@apollo/client/react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/form/button';

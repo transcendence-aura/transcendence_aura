@@ -1,10 +1,12 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { usePathname } from '@/i18n/navigation';
 
-const SHOP = ['Serums & Oils', 'Face Care', 'Ritual Sets'];
-const SUPPORT = ['FAQ', 'Shipping & Returns', 'Contact'];
-const ABOUT = ['Our Story', 'Sustainability', 'Journal'];
+const SHOP = ['shopSerums', 'shopFaceCare', 'shopRitualSets'] as const;
+const SUPPORT = ['supportFaq', 'supportShipping', 'supportContact'] as const;
+const ABOUT = ['aboutStory', 'aboutSustainability', 'aboutJournal'] as const;
+
 const SOCIALS = ['Instagram', 'Pinterest', 'TikTok'];
 
 function FooterColumn({ label, links }: { label: string; links: string[] }) {
@@ -26,6 +28,7 @@ function FooterColumn({ label, links }: { label: string; links: string[] }) {
 }
 
 export function Footer() {
+  const t = useTranslations('Footer');
   const pathname = usePathname();
 
   /* Hide Footer on auth routes and inside the admin shell to respect minimal layout - NEW */
@@ -41,18 +44,16 @@ export function Footer() {
       <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="col-span-2 md:col-span-1">
           <p className="font-cormorant text-footer-text mb-2 text-lg tracking-widest">Aura</p>
-          <p className="text-body-sm text-footer-muted max-w-xs">
-            Pure botanical formulations for mindful skin rituals.
-          </p>
+          <p className="text-body-sm text-footer-muted max-w-xs">{t('tagline')}</p>
         </div>
 
-        <FooterColumn label="Shop" links={SHOP} />
-        <FooterColumn label="Support" links={SUPPORT} />
-        <FooterColumn label="About" links={ABOUT} />
+        <FooterColumn label={t('shop')} links={SHOP.map((key) => t(key))} />
+        <FooterColumn label={t('support')} links={SUPPORT.map((key) => t(key))} />
+        <FooterColumn label={t('about')} links={ABOUT.map((key) => t(key))} />
       </div>
 
       <div className="border-footer-subtle flex flex-col gap-3 border-t pt-6 sm:flex-row sm:justify-between">
-        <span className="text-ui-lang text-footer-subtle">© 2026 Aura. All rights reserved.</span>
+        <span className="text-ui-lang text-footer-subtle">{t('copyright')}</span>
         <div className="flex gap-6">
           {SOCIALS.map((s) => (
             <span

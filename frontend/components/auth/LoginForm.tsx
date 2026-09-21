@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/form/button';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useMutation } from '@apollo/client/react';
 import { LOGIN_MUTATION } from '@/lib/auth/login.mutation';
 import {

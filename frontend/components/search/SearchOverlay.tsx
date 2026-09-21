@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { X } from 'lucide-react';
 import { SearchInput } from '@/components/ui/form/search-input';
 import {

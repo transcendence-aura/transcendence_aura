@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&family=Noto+Sans+Arabic:wght@300;400;500&display=swap');
 
 @import 'tailwindcss';
 
@@ -6,6 +6,7 @@
   /* Fonts */
   --font-family-cormorant: 'Cormorant Garamond', serif;
   --font-family-jost: 'Jost', sans-serif;
+  --font-family-noto-arabic: 'Noto Sans Arabic', sans-serif;
 
   /* Display Typography */
   --font-size-display-hero: 48px;
@@ -135,4 +136,8 @@
   --shadow-card: 0 1px 4px rgb(44 36 32 / 0.06);
   --shadow-card-hover: 0 4px 16px rgb(44 36 32 / 0.1);
   --shadow-modal: 0 8px 32px rgb(44 36 32 / 0.14);
+}
+
+:lang(ar) {
+  --font-family-jost: 'Noto Sans Arabic', sans-serif;
 }

@@ -1,0 +1,74 @@
+{
+  "Navbar": {
+    "shop": "المتجر",
+    "journal": "المجلة",
+    "about": "من نحن",
+    "search": "بحث",
+    "wishlist": "المفضلة",
+    "cart": "سلة التسوق",
+    "cartMobile": "السلة",
+    "toggleMenu": "فتح القائمة",
+    "language": "اللغة"
+  },
+  "UserMenu": {
+    "accountMenu": "قائمة الحساب",
+    "signIn": "تسجيل الدخول",
+    "status": "الحالة",
+    "connected": "متصل",
+    "settings": "الإعدادات",
+    "admin": "الإدارة",
+    "signOut": "تسجيل الخروج",
+    "signOutFailed": "فشل تسجيل الخروج، يرجى المحاولة مرة أخرى"
+  },
+  "Footer": {
+    "tagline": "تركيبات نباتية نقية لطقوس عناية واعية بالبشرة.",
+    "shop": "المتجر",
+    "shopSerums": "السيرومات والزيوت",
+    "shopFaceCare": "العناية بالوجه",
+    "shopRitualSets": "أطقم الطقوس",
+    "support": "المساعدة",
+    "supportFaq": "الأسئلة الشائعة",
+    "supportShipping": "الشحن والإرجاع",
+    "supportContact": "اتصل بنا",
+    "about": "من نحن",
+    "aboutStory": "قصتنا",
+    "aboutSustainability": "الاستدامة",
+    "aboutJournal": "المجلة",
+    "copyright": "© 2026 أورا. جميع الحقوق محفوظة."
+  },
+  "Hero": {
+    "titleLine1": "بشرتك،",
+    "titleLine2": "مُستعادة",
+    "titleLine3": "بكل جمال.",
+    "tagline": "أساسيات جمال نظيفة مصممة لبشرتك.",
+    "discover": "اكتشف الطقوس",
+    "story": "قصتنا",
+    "imageAlt": "قوام كريم على سطح بيج"
+  },
+  "FeaturedCollections": {
+    "title": "تسوّق حسب الفئة",
+    "skincareOils": {
+      "name": "العناية بالبشرة والزيوت",
+      "description": "عناية طبيعية بالبشرة وزيوت مغذية لطقوسك اليومية."
+    },
+    "faceCare": {
+      "name": "العناية بالوجه",
+      "description": "علاجات مركزة وسيرومات لبشرة صحية ومشرقة."
+    },
+    "ritualsSun": {
+      "name": "الطقوس والشمس",
+      "description": "أكمل روتينك مع منتجات الحماية من الشمس وأطقم الطقوس."
+    }
+  },
+  "Newsletter": {
+    "eyebrow": "انضم إلى الدائرة",
+    "title": "انضم إلى طقوس أورا",
+    "subtitle": "إصدارات جديدة، أدلة للعناية بالبشرة، وخصم 10٪ على طلبك الأول.",
+    "placeholder": "your@email.com",
+    "subscribe": "اشترك"
+  },
+  "CollectionCard": {
+    "itemCount": "{count, plural, zero {لا منتجات} one {منتج واحد} two {منتجان} few {# منتجات} many {# منتجًا} other {# منتج}}",
+    "shop": "تسوّق المجموعة"
+  }
+}

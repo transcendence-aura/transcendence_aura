@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { useQuery } from '@apollo/client/react';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { Skeleton } from '@/components/ui/feedback/skeleton';

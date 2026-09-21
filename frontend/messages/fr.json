@@ -1,0 +1,74 @@
+{
+  "Navbar": {
+    "shop": "Boutique",
+    "journal": "Journal",
+    "about": "À propos",
+    "search": "Rechercher",
+    "wishlist": "Favoris",
+    "cart": "Panier",
+    "cartMobile": "Panier",
+    "toggleMenu": "Ouvrir le menu",
+    "language": "Langue"
+  },
+  "UserMenu": {
+    "accountMenu": "Menu du compte",
+    "signIn": "Se connecter",
+    "status": "Statut",
+    "connected": "Connecté",
+    "settings": "Paramètres",
+    "admin": "Admin",
+    "signOut": "Se déconnecter",
+    "signOutFailed": "Échec de la déconnexion, veuillez réessayer"
+  },
+  "Footer": {
+    "tagline": "Des formulations botaniques pures pour des rituels de soin attentifs.",
+    "shop": "Boutique",
+    "shopSerums": "Sérums & huiles",
+    "shopFaceCare": "Soin du visage",
+    "shopRitualSets": "Coffrets rituels",
+    "support": "Aide",
+    "supportFaq": "FAQ",
+    "supportShipping": "Livraison & retours",
+    "supportContact": "Contact",
+    "about": "À propos",
+    "aboutStory": "Notre histoire",
+    "aboutSustainability": "Durabilité",
+    "aboutJournal": "Journal",
+    "copyright": "© 2026 Aura. Tous droits réservés."
+  },
+  "Hero": {
+    "titleLine1": "Votre peau,",
+    "titleLine2": "naturellement",
+    "titleLine3": "sublimée.",
+    "tagline": "L'essentiel de la beauté, pensé pour votre peau.",
+    "discover": "Découvrir le rituel",
+    "story": "Notre histoire",
+    "imageAlt": "Texture de crème étalée sur un fond beige"
+  },
+  "FeaturedCollections": {
+    "title": "Nos univers",
+    "skincareOils": {
+      "name": "Soins & huiles",
+      "description": "Soins naturels et huiles nourrissantes pour votre rituel du quotidien."
+    },
+    "faceCare": {
+      "name": "Soins du visage",
+      "description": "Sérums et soins ciblés pour une peau saine et lumineuse."
+    },
+    "ritualsSun": {
+      "name": "Rituels & protections solaires",
+      "description": "Complétez votre routine avec nos soins solaires et nos coffrets rituels."
+    }
+  },
+  "Newsletter": {
+    "eyebrow": "Newsletter",
+    "title": "Rejoignez le cercle Aura",
+    "subtitle": "Nos nouveautés, nos conseils beauté et -10 % sur votre première commande.",
+    "placeholder": "votre@email.com",
+    "subscribe": "Je m'inscris"
+  },
+  "CollectionCard": {
+    "itemCount": "{count, plural, one {# produit} other {# produits}}",
+    "shop": "Découvrir"
+  }
+}
