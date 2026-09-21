@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation } from '@apollo/client/react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/form/button';
 
 import {
@@ -166,8 +167,14 @@ export function TwoFactorEnrollment() {
         Scan the QR code with your authenticator app, then enter the 6-digit code it generates.
       </p>
 
-      <div className="border-border-default flex h-56 items-center justify-center border bg-bg-page p-5">
-        <p className="text-xs text-text-muted">Coming soon</p>
+      <div className="border-border-default flex justify-center border bg-bg-page p-5">
+        <Image
+          src={setup.qrCode}
+          alt="QR code for two-factor authentication setup"
+          width={224}
+          height={224}
+          unoptimized
+        />
       </div>
 
       <details className="mt-4">
@@ -177,11 +184,7 @@ export function TwoFactorEnrollment() {
 
         <div className="mt-3 bg-bg-subtle p-3">
           <p className="mb-1.5 text-xs text-text-secondary">
-            Enter this setup URI manually in your authenticator app:
-          </p>
-
-          <p className="break-all text-[11px] leading-relaxed text-text-muted">
-            {setup.provisioningUri}
+            Please download the Google Authenticator app.
           </p>
         </div>
       </details>
