@@ -5,32 +5,34 @@ import { routing } from '@/i18n/routing';
 
 const handleI18nRouting = createMiddleware(routing);
 
-const PROTECTED_PREFIXES = [
-  '/account',
-  '/chat',
-  '/messages',
-  '/notifications',
-  '/wishlist',
-  '/admin',
-];
+const PROTECTED_SEGMENTS = ['account', 'chat', 'messages', 'notifications', 'wishlist', 'admin'];
 
-function splitLocale(pathname: string): { locale: string; rest: string } {
-  const [, maybeLocale, ...segments] = pathname.split('/');
-  const candidate = maybeLocale?.toLowerCase();
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+function splitLocale(pathname: string): { locale: string; segments: string[] } {
+  const segments = pathname.split('/').filter(Boolean).map(decodeSegment);
+  const candidate = segments[0]?.toLowerCase();
   const isLocale = (routing.locales as readonly string[]).includes(candidate);
 
   return {
     locale: isLocale ? candidate : routing.defaultLocale,
-    rest: isLocale ? `/${segments.join('/')}` : pathname,
+    segments: isLocale ? segments.slice(1) : segments,
   };
 }
 
 export function proxy(request: NextRequest) {
   const response = handleI18nRouting(request);
 
-  const { locale, rest } = splitLocale(request.nextUrl.pathname);
+  const { locale, segments } = splitLocale(request.nextUrl.pathname);
+  const section = segments[0];
 
-  if (!PROTECTED_PREFIXES.some((prefix) => rest.startsWith(prefix))) {
+  if (!section || !PROTECTED_SEGMENTS.includes(section)) {
     return response;
   }
 
@@ -40,7 +42,7 @@ export function proxy(request: NextRequest) {
   if (!accessToken) {
     const loginUrl = new URL(`/${locale}/login`, request.url);
 
-    loginUrl.searchParams.set('returnTo', rest);
+    loginUrl.searchParams.set('returnTo', `/${segments.join('/')}`);
 
     return NextResponse.redirect(loginUrl);
   }
@@ -48,7 +50,7 @@ export function proxy(request: NextRequest) {
   // Admin routes: UX-only gate. RolesGuard is what actually protects the
   // data — this just avoids rendering a page that will fail to load
   // anything, sending a logged-in-but-not-admin user back home instead.
-  if (rest.startsWith('/admin') && !hasAdminPermission(accessToken)) {
+  if (section === 'admin' && !hasAdminPermission(accessToken)) {
     return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 
