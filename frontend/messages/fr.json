@@ -79,5 +79,60 @@
   "CollectionCard": {
     "itemCount": "{count, plural, one {# produit} other {# produits}}",
     "shop": "Découvrir"
+  },
+  "SettingsPage": {
+    "eyebrow": "Compte",
+    "title": "Paramètres"
+  },
+  "ProfileSettings": {
+    "loadFailed": "Impossible de charger votre profil",
+    "retry": "Réessayer",
+    "profileInformation": "Informations du profil",
+    "security": "Sécurité",
+    "emailAddress": "Adresse e-mail",
+    "changeEmail": "Modifier",
+    "password": "Mot de passe",
+    "twoFactor": "Authentification à deux facteurs",
+    "twoFactorDescription": "Sécurisez votre compte avec une application d'authentification",
+    "manage": "Gérer",
+    "notifications": "Notifications",
+    "notificationsHint": "Les préférences de notification ne sont pas encore disponibles.",
+    "newMessages": "Nouveaux messages",
+    "newFollowers": "Nouveaux abonnés",
+    "newsletter": "Newsletter",
+    "dangerZone": "Zone de danger",
+    "deleteAccount": "Supprimer mon compte",
+    "comingSoon": "Bientôt disponible"
+  },
+  "ProfileForm": {
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "nameLocked": "Votre nom ne peut pas encore être modifié.",
+    "username": "Nom d'utilisateur",
+    "bio": "Bio",
+    "save": "Enregistrer les modifications",
+    "saving": "Enregistrement...",
+    "updated": "Profil mis à jour"
+  },
+  "EmailChangeDialog": {
+    "title": "Modifier l'adresse e-mail",
+    "description": "Saisissez la nouvelle adresse e-mail de votre compte.",
+    "emailAddress": "Adresse e-mail",
+    "sameEmail": "C'est déjà votre adresse e-mail.",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "updated": "Adresse e-mail mise à jour"
+  },
+  "ProfileFields": {
+    "emailRequired": "L'adresse e-mail est obligatoire.",
+    "emailInvalid": "Veuillez saisir une adresse e-mail valide.",
+    "emailTooLong": "L'adresse e-mail ne doit pas dépasser {max} caractères.",
+    "handleRequired": "Le nom d'utilisateur est obligatoire.",
+    "handleTooLong": "Le nom d'utilisateur ne doit pas dépasser {max} caractères.",
+    "bioTooLong": "La bio ne doit pas dépasser {max} caractères.",
+    "emailUnavailable": "Cette adresse e-mail est déjà utilisée.",
+    "handleTaken": "Ce nom d'utilisateur est déjà pris.",
+    "updateFailed": "Impossible de mettre à jour votre profil. Veuillez réessayer."
   }
 }

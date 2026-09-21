@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation } from '@apollo/client/react';
 import { Button } from '@/components/ui/form/button';
 import { FormField } from '@/components/ui/form/form-field';
@@ -10,6 +11,7 @@ import { useToast } from '@/components/ui/feedback/toast';
 import {
   BIO_MAX_LENGTH,
   getProfileServerError,
+  type FieldError,
   splitName,
   validateBio,
   validateHandle,
@@ -25,7 +27,7 @@ export interface ProfileValues {
   bio: string;
 }
 
-type FieldErrors = Partial<Record<keyof ProfileValues, string>>;
+type FieldErrors = Partial<Record<keyof ProfileValues, FieldError | undefined>>;
 
 function validate(values: ProfileValues): FieldErrors {
   return {
@@ -53,6 +55,8 @@ function getChanges(initial: ProfileValues, values: ProfileValues): UpdateMyProf
 // so the fields always start from what the server stored.
 // The name is shown but not editable: the backend has no way to change it yet.
 export function ProfileForm({ initial, name }: { initial: ProfileValues; name: string }) {
+  const t = useTranslations('ProfileForm');
+  const tFields = useTranslations('ProfileFields');
   const { toast } = useToast();
   const [updateProfile, { loading: isSaving }] = useMutation(UPDATE_MY_PROFILE_MUTATION);
   const [values, setValues] = useState<ProfileValues>(initial);
@@ -60,6 +64,8 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
   const [generalError, setGeneralError] = useState<string | null>(null);
 
   const { firstName, lastName } = splitName(name);
+  const errorText = (error?: FieldError) =>
+    error ? tFields(error.code, { max: error.max ?? 0 }) : undefined;
   const changes = getChanges(initial, values);
   const isDirty = Object.keys(changes).length > 0;
 
@@ -81,14 +87,14 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
 
     try {
       await updateProfile({ variables: { input: changes } });
-      toast({ message: 'Profile updated', variant: 'success' });
+      toast({ message: t('updated'), variant: 'success' });
     } catch (error) {
       const serverError = getProfileServerError(error);
 
       if (serverError.field === 'handle') {
-        setErrors({ handle: serverError.message });
+        setErrors({ handle: serverError.error });
       } else {
-        setGeneralError(serverError.message);
+        setGeneralError(serverError.detail ?? errorText(serverError.error) ?? null);
       }
     }
   };
@@ -96,7 +102,7 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <FormField label="First name" htmlFor="profile-first-name">
+        <FormField label={t('firstName')} htmlFor="profile-first-name">
           <Input
             id="profile-first-name"
             value={firstName}
@@ -105,16 +111,12 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
             className={TEXT_BODY}
           />
         </FormField>
-        <FormField
-          label="Last name"
-          htmlFor="profile-last-name"
-          hint="Your name can't be changed yet."
-        >
+        <FormField label={t('lastName')} htmlFor="profile-last-name" hint={t('nameLocked')}>
           <Input id="profile-last-name" value={lastName} disabled readOnly className={TEXT_BODY} />
         </FormField>
       </div>
 
-      <FormField label="Username" htmlFor="profile-handle" error={errors.handle}>
+      <FormField label={t('username')} htmlFor="profile-handle" error={errorText(errors.handle)}>
         <div className="relative">
           <span
             aria-hidden="true"
@@ -137,9 +139,9 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
       </FormField>
 
       <FormField
-        label="Bio"
+        label={t('bio')}
         htmlFor="profile-bio"
-        error={errors.bio}
+        error={errorText(errors.bio)}
         hint={`${values.bio.length}/${BIO_MAX_LENGTH}`}
       >
         <Textarea
@@ -167,7 +169,7 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
           disabled={isSaving || !isDirty}
           className={TEXT_BUTTON}
         >
-          {isSaving ? 'Saving...' : 'Save changes'}
+          {isSaving ? t('saving') : t('save')}
         </Button>
       </div>
     </form>

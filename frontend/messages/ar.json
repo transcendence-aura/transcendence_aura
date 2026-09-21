@@ -79,5 +79,60 @@
   "CollectionCard": {
     "itemCount": "{count, plural, zero {لا منتجات} one {منتج واحد} two {منتجان} few {# منتجات} many {# منتجًا} other {# منتج}}",
     "shop": "تسوّق المجموعة"
+  },
+  "SettingsPage": {
+    "eyebrow": "الحساب",
+    "title": "الإعدادات"
+  },
+  "ProfileSettings": {
+    "loadFailed": "تعذّر تحميل ملفك الشخصي",
+    "retry": "إعادة المحاولة",
+    "profileInformation": "معلومات الملف الشخصي",
+    "security": "الأمان",
+    "emailAddress": "البريد الإلكتروني",
+    "changeEmail": "تغيير",
+    "password": "كلمة المرور",
+    "twoFactor": "المصادقة الثنائية",
+    "twoFactorDescription": "أمّن حسابك باستخدام تطبيق مصادقة",
+    "manage": "إدارة",
+    "notifications": "الإشعارات",
+    "notificationsHint": "تفضيلات الإشعارات غير متاحة بعد.",
+    "newMessages": "رسائل جديدة",
+    "newFollowers": "متابعون جدد",
+    "newsletter": "النشرة الإخبارية",
+    "dangerZone": "منطقة الخطر",
+    "deleteAccount": "حذف حسابي",
+    "comingSoon": "قريبًا"
+  },
+  "ProfileForm": {
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "nameLocked": "لا يمكن تغيير اسمك حاليًا.",
+    "username": "اسم المستخدم",
+    "bio": "نبذة",
+    "save": "حفظ التغييرات",
+    "saving": "جارٍ الحفظ...",
+    "updated": "تم تحديث الملف الشخصي"
+  },
+  "EmailChangeDialog": {
+    "title": "تغيير البريد الإلكتروني",
+    "description": "أدخل عنوان البريد الإلكتروني الجديد لحسابك.",
+    "emailAddress": "البريد الإلكتروني",
+    "sameEmail": "هذا هو بريدك الإلكتروني الحالي.",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "saving": "جارٍ الحفظ...",
+    "updated": "تم تحديث البريد الإلكتروني"
+  },
+  "ProfileFields": {
+    "emailRequired": "البريد الإلكتروني مطلوب.",
+    "emailInvalid": "يرجى إدخال بريد إلكتروني صالح.",
+    "emailTooLong": "يجب ألا يتجاوز البريد الإلكتروني {max} حرفًا.",
+    "handleRequired": "اسم المستخدم مطلوب.",
+    "handleTooLong": "يجب ألا يتجاوز اسم المستخدم {max} حرفًا.",
+    "bioTooLong": "يجب ألا تتجاوز النبذة {max} حرفًا.",
+    "emailUnavailable": "هذا البريد الإلكتروني مستخدم بالفعل.",
+    "handleTaken": "اسم المستخدم هذا مأخوذ بالفعل.",
+    "updateFailed": "تعذّر تحديث ملفك الشخصي. يرجى المحاولة مرة أخرى."
   }
 }

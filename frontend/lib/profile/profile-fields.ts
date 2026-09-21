@@ -7,48 +7,65 @@ export const BIO_MAX_LENGTH = 500;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function validateEmail(value: string): string | undefined {
+// Keys of the `ProfileFields` messages: the components translate them, so nothing here is
+// tied to a language.
+export type FieldErrorCode =
+  | 'emailRequired'
+  | 'emailInvalid'
+  | 'emailTooLong'
+  | 'handleRequired'
+  | 'handleTooLong'
+  | 'bioTooLong'
+  | 'emailUnavailable'
+  | 'handleTaken'
+  | 'updateFailed';
+
+export interface FieldError {
+  code: FieldErrorCode;
+  // The limit, for the messages that mention it.
+  max?: number;
+}
+
+export function validateEmail(value: string): FieldError | undefined {
   const email = value.trim();
 
-  if (!email) return 'Email is required.';
-  if (!EMAIL_PATTERN.test(email)) return 'Please enter a valid email address.';
-  if (email.length > EMAIL_MAX_LENGTH) {
-    return `Email must not exceed ${EMAIL_MAX_LENGTH} characters.`;
-  }
+  if (!email) return { code: 'emailRequired' };
+  if (!EMAIL_PATTERN.test(email)) return { code: 'emailInvalid' };
+  if (email.length > EMAIL_MAX_LENGTH) return { code: 'emailTooLong', max: EMAIL_MAX_LENGTH };
   return undefined;
 }
 
-export function validateHandle(value: string): string | undefined {
+export function validateHandle(value: string): FieldError | undefined {
   const handle = value.trim();
 
-  if (!handle) return 'Handle is required.';
-  if (handle.length > HANDLE_MAX_LENGTH) {
-    return `Handle must not exceed ${HANDLE_MAX_LENGTH} characters.`;
-  }
+  if (!handle) return { code: 'handleRequired' };
+  if (handle.length > HANDLE_MAX_LENGTH) return { code: 'handleTooLong', max: HANDLE_MAX_LENGTH };
   return undefined;
 }
 
-export function validateBio(value: string): string | undefined {
-  if (value.length > BIO_MAX_LENGTH) return `Bio must not exceed ${BIO_MAX_LENGTH} characters.`;
+export function validateBio(value: string): FieldError | undefined {
+  if (value.length > BIO_MAX_LENGTH) return { code: 'bioTooLong', max: BIO_MAX_LENGTH };
   return undefined;
 }
 
 export interface ProfileServerError {
   // The field the error belongs to, when the server said which one.
   field?: 'email' | 'handle';
-  message: string;
+  error: FieldError;
+  // A validation message written by the backend (English only), shown as is when there is one.
+  detail?: string;
 }
 
 export function getProfileServerError(error: unknown): ProfileServerError {
   const message = getValidationErrorMessage(error);
 
   if (message === 'EMAIL_UNAVAILABLE') {
-    return { field: 'email', message: 'This email is already in use.' };
+    return { field: 'email', error: { code: 'emailUnavailable' } };
   }
   if (message === 'USERNAME_TAKEN') {
-    return { field: 'handle', message: 'This handle is already taken.' };
+    return { field: 'handle', error: { code: 'handleTaken' } };
   }
-  return { message: message ?? 'Unable to update your profile. Please try again.' };
+  return { error: { code: 'updateFailed' }, detail: message };
 }
 
 // The backend stores a single `name`: shown split in two fields, as in the design.

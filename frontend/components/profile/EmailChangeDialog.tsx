@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation } from '@apollo/client/react';
 import { Button } from '@/components/ui/form/button';
 import { FormField } from '@/components/ui/form/form-field';
@@ -19,19 +20,18 @@ interface EmailChangeDialogProps {
 
 // The dialog renders nothing while closed, so the form (and its state) starts fresh each time.
 export function EmailChangeDialog({ isOpen, onClose, currentEmail }: EmailChangeDialogProps) {
+  const t = useTranslations('EmailChangeDialog');
+
   return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Change email address"
-      description="Enter the new email address for your account."
-    >
+    <Dialog isOpen={isOpen} onClose={onClose} title={t('title')} description={t('description')}>
       <EmailChangeForm currentEmail={currentEmail} onClose={onClose} />
     </Dialog>
   );
 }
 
 function EmailChangeForm({ currentEmail, onClose }: { currentEmail: string; onClose: () => void }) {
+  const t = useTranslations('EmailChangeDialog');
+  const tFields = useTranslations('ProfileFields');
   const { toast } = useToast();
   const [updateProfile, { loading: isSaving }] = useMutation(UPDATE_MY_PROFILE_MUTATION);
   const [email, setEmail] = useState(currentEmail);
@@ -42,26 +42,27 @@ function EmailChangeForm({ currentEmail, onClose }: { currentEmail: string; onCl
 
     const validationError = validateEmail(email);
     if (validationError) {
-      setError(validationError);
+      setError(tFields(validationError.code, { max: validationError.max ?? 0 }));
       return;
     }
     if (email.trim().toLowerCase() === currentEmail) {
-      setError('This is already your email address.');
+      setError(t('sameEmail'));
       return;
     }
 
     try {
       await updateProfile({ variables: { input: { email: email.trim() } } });
-      toast({ message: 'Email address updated', variant: 'success' });
+      toast({ message: t('updated'), variant: 'success' });
       onClose();
     } catch (serverError) {
-      setError(getProfileServerError(serverError).message);
+      const { error: fieldError, detail } = getProfileServerError(serverError);
+      setError(detail ?? tFields(fieldError.code, { max: fieldError.max ?? 0 }));
     }
   };
 
   return (
     <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-6">
-      <FormField label="Email address" htmlFor="email-change" error={error ?? undefined}>
+      <FormField label={t('emailAddress')} htmlFor="email-change" error={error ?? undefined}>
         <Input
           id="email-change"
           type="email"
@@ -80,10 +81,10 @@ function EmailChangeForm({ currentEmail, onClose }: { currentEmail: string; onCl
 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="ghost" onClick={onClose} className={TEXT_BUTTON}>
-          Cancel
+          {t('cancel')}
         </Button>
         <Button type="submit" disabled={isSaving} className={TEXT_BUTTON}>
-          {isSaving ? 'Saving...' : 'Save'}
+          {isSaving ? t('saving') : t('save')}
         </Button>
       </div>
     </form>

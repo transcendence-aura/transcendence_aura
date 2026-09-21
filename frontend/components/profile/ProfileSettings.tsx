@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useQuery } from '@apollo/client/react';
 import { Badge } from '@/components/ui/display/badge';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
@@ -14,15 +15,18 @@ import { TEXT_BADGE, TEXT_BODY, TEXT_BODY_SM, TEXT_BUTTON } from '@/lib/typograp
 import { ProfileForm } from './ProfileForm';
 import { SettingsRow, SettingsSection } from './SettingsSection';
 
-const NOTIFICATION_PREFERENCES = ['New messages', 'New followers', 'Newsletter'];
+// Keys of the `ProfileSettings` messages.
+const NOTIFICATION_PREFERENCES = ['newMessages', 'newFollowers', 'newsletter'] as const;
 
 // Same look as Button's "link" variant, for a navigation link.
 const LINK_CLASS = `text-text-primary underline underline-offset-4 hover:opacity-70 ${TEXT_BUTTON}`;
 
 function ComingSoon() {
+  const t = useTranslations('ProfileSettings');
+
   return (
     <Badge variant="muted" className={TEXT_BADGE}>
-      Coming soon
+      {t('comingSoon')}
     </Badge>
   );
 }
@@ -39,6 +43,7 @@ function SettingsSkeleton() {
 }
 
 export function ProfileSettings() {
+  const t = useTranslations('ProfileSettings');
   const router = useRouter();
   const isAuthenticated = useIsAuthenticated();
   const { data, loading, error, refetch } = useQuery(ME_QUERY, { skip: !isAuthenticated });
@@ -53,9 +58,9 @@ export function ProfileSettings() {
   if (error) {
     return (
       <div className="flex flex-col items-start gap-4">
-        <p className={`text-text-muted ${TEXT_BODY}`}>Failed to load your profile</p>
+        <p className={`text-text-muted ${TEXT_BODY}`}>{t('loadFailed')}</p>
         <Button onClick={() => refetch()} className={TEXT_BUTTON}>
-          Try Again
+          {t('retry')}
         </Button>
       </div>
     );
@@ -70,7 +75,7 @@ export function ProfileSettings() {
 
   return (
     <div className="flex flex-col gap-10">
-      <SettingsSection title="Profile information">
+      <SettingsSection title={t('profileInformation')}>
         {/* Keyed on the saved values only: changing the email must not reset the form. */}
         <ProfileForm
           key={`${handle}|${bio ?? ''}`}
@@ -79,9 +84,9 @@ export function ProfileSettings() {
         />
       </SettingsSection>
 
-      <SettingsSection title="Security">
+      <SettingsSection title={t('security')}>
         <div>
-          <SettingsRow label="Email address">
+          <SettingsRow label={t('emailAddress')}>
             <span className={`text-text-secondary break-all ${TEXT_BODY_SM}`}>{email}</span>
             <Button
               type="button"
@@ -89,35 +94,32 @@ export function ProfileSettings() {
               onClick={() => setIsEmailDialogOpen(true)}
               className={TEXT_BUTTON}
             >
-              Change
+              {t('changeEmail')}
             </Button>
           </SettingsRow>
-          <SettingsRow label="Password">
+          <SettingsRow label={t('password')}>
             <ComingSoon />
           </SettingsRow>
-          <SettingsRow
-            label="Two-factor authentication"
-            description="Secure your account with an authenticator app"
-          >
+          <SettingsRow label={t('twoFactor')} description={t('twoFactorDescription')}>
             <Link href="/settings/security" className={LINK_CLASS}>
-              Manage
+              {t('manage')}
             </Link>
           </SettingsRow>
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Notifications" hint="Notification preferences are not available yet.">
+      <SettingsSection title={t('notifications')} hint={t('notificationsHint')}>
         <div>
-          {NOTIFICATION_PREFERENCES.map((label) => (
-            <SettingsRow key={label} label={label}>
-              <Switch disabled aria-label={label} className="opacity-50" />
+          {NOTIFICATION_PREFERENCES.map((preference) => (
+            <SettingsRow key={preference} label={t(preference)}>
+              <Switch disabled aria-label={t(preference)} className="opacity-50" />
             </SettingsRow>
           ))}
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Danger zone">
-        <SettingsRow label="Delete my account">
+      <SettingsSection title={t('dangerZone')}>
+        <SettingsRow label={t('deleteAccount')}>
           <ComingSoon />
         </SettingsRow>
       </SettingsSection>

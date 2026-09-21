@@ -79,5 +79,60 @@
   "CollectionCard": {
     "itemCount": "{count, plural, one {# item} other {# items}}",
     "shop": "Shop Collection"
+  },
+  "SettingsPage": {
+    "eyebrow": "Account",
+    "title": "Settings"
+  },
+  "ProfileSettings": {
+    "loadFailed": "Failed to load your profile",
+    "retry": "Try Again",
+    "profileInformation": "Profile information",
+    "security": "Security",
+    "emailAddress": "Email address",
+    "changeEmail": "Change",
+    "password": "Password",
+    "twoFactor": "Two-factor authentication",
+    "twoFactorDescription": "Secure your account with an authenticator app",
+    "manage": "Manage",
+    "notifications": "Notifications",
+    "notificationsHint": "Notification preferences are not available yet.",
+    "newMessages": "New messages",
+    "newFollowers": "New followers",
+    "newsletter": "Newsletter",
+    "dangerZone": "Danger zone",
+    "deleteAccount": "Delete my account",
+    "comingSoon": "Coming soon"
+  },
+  "ProfileForm": {
+    "firstName": "First name",
+    "lastName": "Last name",
+    "nameLocked": "Your name can't be changed yet.",
+    "username": "Username",
+    "bio": "Bio",
+    "save": "Save changes",
+    "saving": "Saving...",
+    "updated": "Profile updated"
+  },
+  "EmailChangeDialog": {
+    "title": "Change email address",
+    "description": "Enter the new email address for your account.",
+    "emailAddress": "Email address",
+    "sameEmail": "This is already your email address.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "updated": "Email address updated"
+  },
+  "ProfileFields": {
+    "emailRequired": "Email is required.",
+    "emailInvalid": "Please enter a valid email address.",
+    "emailTooLong": "Email must not exceed {max} characters.",
+    "handleRequired": "Username is required.",
+    "handleTooLong": "Username must not exceed {max} characters.",
+    "bioTooLong": "Bio must not exceed {max} characters.",
+    "emailUnavailable": "This email is already in use.",
+    "handleTaken": "This username is already taken.",
+    "updateFailed": "Unable to update your profile. Please try again."
   }
 }
