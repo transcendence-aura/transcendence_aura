@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 @InputType()
 export class UpdateProfileInput {
@@ -13,6 +13,9 @@ export class UpdateProfileInput {
   @IsString()
   @IsNotEmpty()
   @MaxLength(30)
+  @Matches(/^[a-z0-9_-]+$/, {
+    message: 'handle must contain only lowercase letters, numbers, hyphens and underscores',
+  })
   @Field({ nullable: true })
   handle?: string;
 
