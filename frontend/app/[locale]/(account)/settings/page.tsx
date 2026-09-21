@@ -1,8 +1,21 @@
-export default function SettingsPage() {
+import { getTranslations } from 'next-intl/server';
+import { ProfileSettings } from '@/components/profile/ProfileSettings';
+import { FONT_SANS, TEXT_LABEL, TEXT_TITLE } from '@/lib/typography';
+
+export default async function SettingsPage() {
+  const t = await getTranslations('SettingsPage');
+
   return (
-    <main className="bg-page flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-      <h1 className="font-cormorant text-text-primary text-display-title">Profile settings</h1>
-      <p className="text-body-base text-text-secondary mt-4">This page is coming soon.</p>
-    </main>
+    // Full-width background (the root layout already provides the <main> landmark).
+    <div className={`bg-page ${FONT_SANS}`}>
+      <div className="w-full px-6 py-10 md:px-8">
+        <p className={`text-text-muted ${TEXT_LABEL}`}>{t('eyebrow')}</p>
+        <h1 className={`text-text-primary ${TEXT_TITLE}`}>{t('title')}</h1>
+
+        <div className="mt-8">
+          <ProfileSettings />
+        </div>
+      </div>
+    </div>
   );
 }

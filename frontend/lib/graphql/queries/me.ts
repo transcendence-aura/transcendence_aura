@@ -6,6 +6,7 @@ export interface MeQueryData {
     name: string;
     email: string;
     handle: string;
+    bio: string | null;
   };
 }
 
@@ -16,6 +17,7 @@ export const ME_QUERY: TypedDocumentNode<MeQueryData> = gql`
       name
       email
       handle
+      bio
     }
   }
 `;

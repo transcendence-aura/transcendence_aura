@@ -13,6 +13,7 @@ import {
   VerifyMfaMutationData,
   VerifyMfaMutationVariables,
 } from '@/lib/auth/auth.types';
+import { getSafeReturnTo } from '@/lib/auth/return-to';
 import { setAccessToken } from '@/lib/auth/token-store';
 import { VERIFY_MFA_MUTATION } from '@/lib/auth/two-factor.mutations';
 
@@ -20,7 +21,9 @@ type LoginStep = 'credentials' | 'mfa';
 
 export function LoginForm() {
   // Set by the register form when the account was created but the automatic sign-in failed.
-  const justRegistered = useSearchParams().get('registered') === '1';
+  const searchParams = useSearchParams();
+  const justRegistered = searchParams.get('registered') === '1';
+  const returnTo = getSafeReturnTo(searchParams.get('returnTo'));
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -86,7 +89,7 @@ export function LoginForm() {
       setAccessToken(result.accessToken);
 
       setPassword('');
-      router.replace('/');
+      router.replace(returnTo);
       router.refresh();
     } catch {
       setError('Unable to sign in. Please check your credentials and try again.');
@@ -127,7 +130,7 @@ export function LoginForm() {
       setAccessToken(result.accessToken);
       setMfaCode('');
       setMfaPendingToken(null);
-      router.replace('/');
+      router.replace(returnTo);
       router.refresh();
     } catch {
       setError('Unable to verify authentication code.');
