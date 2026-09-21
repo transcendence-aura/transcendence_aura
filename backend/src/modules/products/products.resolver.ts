@@ -22,7 +22,10 @@ export class ProductResolver {
   ): Promise<ProductType> {
     const product = await this.productService.findBySlug(slug);
 
-    const actorId = await this.resolveOptionalActorId(context.req);
+    // Browsing a product is and remains public: an actor is attached only when a
+    // valid access token is present, so anonymous views stay untracked and the
+    // query never requires authentication.
+    const actorId = await this.tokenService.getOptionalUserId(context.req.headers.authorization);
     if (actorId) {
       await this.analyticsService.record(AnalyticsEventType.PRODUCT_VIEWED, actorId, {
         type: AnalyticsTargetType.PRODUCT,
@@ -31,25 +34,6 @@ export class ProductResolver {
     }
 
     return product;
-  }
-
-  // Browsing a product is and remains public: this only attaches an actor
-  // when a valid access token happens to be present, so anonymous views
-  // stay untracked and the query never requires authentication.
-  private async resolveOptionalActorId(request: AuthenticatedRequest): Promise<string | undefined> {
-    const header = request.headers.authorization;
-    const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
-
-    if (!token) {
-      return undefined;
-    }
-
-    try {
-      const payload = await this.tokenService.verifyAccessToken(token);
-      return payload.sub;
-    } catch {
-      return undefined;
-    }
   }
 
   @Query(() => ProductPageType)

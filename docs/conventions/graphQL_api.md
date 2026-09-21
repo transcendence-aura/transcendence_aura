@@ -1706,7 +1706,7 @@ Same shape as [`conversation`](#conversationotheruserid), newest first.
 
 ## `userProfile(handle)`
 
-Returns the public view of a user's profile: name, handle, bio, follower/following counts, and a small "recent activity" snapshot (last users followed, last products added to the wishlist). Public — no authentication required.
+Returns the public view of a user's profile: name, handle, bio, follower/following counts, and a small "recent activity" snapshot (last users followed, last products added to the wishlist). Public — no authentication required. When an access token is sent (`Authorization: Bearer <token>`), `isFollowing` tells whether that viewer follows the profile; a missing, invalid or expired token is treated as an anonymous visitor, never as an error.
 
 Suspended or deleted accounts have no public profile: the query behaves as if the handle didn't exist. The same visibility rule applies one level down — `followersCount`, `followingCount` and `recentFollows` only ever count or list accounts that are themselves `ACTIVE` and not deleted, so a suspended account silently drops out of everyone else's counts and activity the moment it's suspended.
 
@@ -1723,6 +1723,7 @@ query {
     bio
     followersCount
     followingCount
+    isFollowing
     recentFollows {
       id
       name
@@ -1745,8 +1746,11 @@ query {
 ```bash
 curl -k -X POST https://localhost/graphql \
   -H "Content-Type: application/json" \
-  -d '{"query":"{ userProfile(handle: \"aura-fan\") { id name handle bio followersCount followingCount recentFollows { id name handle } recentWishlistAdds { id slug name } } }"}' | jq
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -d '{"query":"{ userProfile(handle: \"aura-fan\") { id name handle bio followersCount followingCount isFollowing recentFollows { id name handle } recentWishlistAdds { id slug name } } }"}' | jq
 ```
+
+The `Authorization` header is optional: without it the query works the same, with `isFollowing: false`.
 
 **Arguments**
 
@@ -1756,16 +1760,17 @@ curl -k -X POST https://localhost/graphql \
 
 **Response type: `PublicProfileType`**
 
-| Field                | Type                         | Nullable | Description                                             |
-| -------------------- | ---------------------------- | -------- | ------------------------------------------------------- |
-| `id`                 | `String`                     | No       | UUID                                                    |
-| `name`               | `String`                     | No       | Display name                                            |
-| `handle`             | `String`                     | No       | Public handle                                           |
-| `bio`                | `String`                     | Yes      | Profile bio                                             |
-| `followersCount`     | `Int`                        | No       | Number of active accounts following this user           |
-| `followingCount`     | `Int`                        | No       | Number of active accounts this user follows             |
-| `recentFollows`      | `[PublicProfileSummaryType]` | No       | Up to 5 most recently followed users, newest first      |
-| `recentWishlistAdds` | `[ProductType]`              | No       | Up to 5 most recently wishlisted products, newest first |
+| Field                | Type                         | Nullable | Description                                                                                                                                                     |
+| -------------------- | ---------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | `String`                     | No       | UUID                                                                                                                                                            |
+| `name`               | `String`                     | No       | Display name                                                                                                                                                    |
+| `handle`             | `String`                     | No       | Public handle                                                                                                                                                   |
+| `bio`                | `String`                     | Yes      | Profile bio                                                                                                                                                     |
+| `followersCount`     | `Int`                        | No       | Number of active accounts following this user                                                                                                                   |
+| `followingCount`     | `Int`                        | No       | Number of active accounts this user follows                                                                                                                     |
+| `isFollowing`        | `Boolean`                    | No       | `true` if the authenticated viewer follows this user. `false` for anonymous visitors, invalid tokens, suspended or deleted viewers and the viewer's own profile |
+| `recentFollows`      | `[PublicProfileSummaryType]` | No       | Up to 5 most recently followed users, newest first                                                                                                              |
+| `recentWishlistAdds` | `[ProductType]`              | No       | Up to 5 most recently wishlisted products, newest first                                                                                                         |
 
 No other `User` field is exposed — in particular no `email`, `role`, `status`, password hash, refresh tokens or API keys.
 

@@ -58,6 +58,25 @@ export class TokenService {
     return payload;
   }
 
+  // For routes that stay public but adapt to a signed-in viewer: a missing,
+  // malformed, expired or invalid token is an anonymous visitor, never an error.
+  async getOptionalUserId(authorizationHeader: string | undefined): Promise<string | undefined> {
+    const token = authorizationHeader?.startsWith('Bearer ')
+      ? authorizationHeader.slice(7)
+      : undefined;
+
+    if (!token) {
+      return undefined;
+    }
+
+    try {
+      const payload = await this.verifyAccessToken(token);
+      return payload.sub;
+    } catch {
+      return undefined;
+    }
+  }
+
   issueMfaPendingToken(userId: string): Promise<string> {
     const jwt = this.configService.get('jwt', { infer: true });
 
