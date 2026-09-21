@@ -10,6 +10,8 @@ interface DialogProps {
   description?: string;
   children?: ReactNode;
   className?: string;
+  // false: only the dialog's own buttons close it (no Escape, click outside or close button).
+  dismissible?: boolean;
 }
 
 export const Dialog = ({
@@ -19,6 +21,7 @@ export const Dialog = ({
   description,
   children,
   className = '',
+  dismissible = true,
 }: DialogProps) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -49,7 +52,7 @@ export const Dialog = ({
       if (!isOpen) return;
 
       if (event.key === 'Escape') {
-        onClose();
+        if (dismissible) onClose();
         return;
       }
 
@@ -77,7 +80,7 @@ export const Dialog = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, dismissible]);
 
   useEffect(() => {
     if (isOpen) {
@@ -94,7 +97,11 @@ export const Dialog = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
+      <div
+        className="fixed inset-0 bg-black/50"
+        onClick={dismissible ? onClose : undefined}
+        aria-hidden="true"
+      />
 
       <div
         ref={dialogRef}
@@ -120,13 +127,15 @@ export const Dialog = ({
             )}
           </div>
 
-          <button
-            onClick={onClose}
-            className="text-text-muted hover:text-text-primary border-border-default focus-visible:outline-border-focus flex h-8 w-8 cursor-pointer items-center justify-center border transition-colors focus-visible:outline-2"
-            aria-label="Close dialog"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {dismissible && (
+            <button
+              onClick={onClose}
+              className="text-text-muted hover:text-text-primary border-border-default focus-visible:outline-border-focus flex h-8 w-8 cursor-pointer items-center justify-center border transition-colors focus-visible:outline-2"
+              aria-label="Close dialog"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {children && <div className="mt-6">{children}</div>}

@@ -11,6 +11,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { wasSignedOutByUser } from '@/lib/auth/token-store';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
+import { ApiKeySection } from './ApiKeySection';
 import { EmailChangeDialog } from './EmailChangeDialog';
 import { TEXT_BADGE, TEXT_BODY, TEXT_BODY_SM, TEXT_BUTTON } from '@/lib/typography';
 import { ProfileForm } from './ProfileForm';
@@ -139,6 +140,8 @@ export function ProfileSettings() {
           ))}
         </div>
       </SettingsSection>
+
+      <ApiKeySection />
 
       <SettingsSection title={t('dangerZone')}>
         <SettingsRow label={t('deleteAccount')}>
