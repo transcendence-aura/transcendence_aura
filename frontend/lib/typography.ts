@@ -26,3 +26,9 @@ export const TEXT_BUTTON =
 
 export const TEXT_BADGE =
   'text-xs leading-[var(--line-height-ui-badge)] font-[weight:var(--font-weight-ui-badge)] tracking-[var(--letter-spacing-ui-badge)] uppercase';
+
+export const TEXT_SUBTITLE =
+  'font-[family-name:var(--font-family-cormorant)] text-[length:var(--font-size-display-subtitle)] leading-[var(--line-height-display-subtitle)] font-[weight:var(--font-weight-display-subtitle)]';
+
+export const TEXT_STAT =
+  'font-[family-name:var(--font-family-cormorant)] text-[length:var(--font-size-display-stat)] leading-[var(--line-height-display-stat)] font-[weight:var(--font-weight-display-stat)]';

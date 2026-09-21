@@ -36,3 +36,25 @@ export const UPDATE_MY_PROFILE_MUTATION: TypedDocumentNode<
     }
   }
 `;
+
+export interface ProfileCountsData {
+  userProfile: {
+    followersCount: number;
+    followingCount: number;
+  };
+}
+
+export interface ProfileCountsVariables {
+  handle: string;
+}
+
+// Public query, only the counts are read here.
+export const PROFILE_COUNTS_QUERY: TypedDocumentNode<ProfileCountsData, ProfileCountsVariables> =
+  gql`
+    query ProfileCounts($handle: String!) {
+      userProfile(handle: $handle) {
+        followersCount
+        followingCount
+      }
+    }
+  `;
