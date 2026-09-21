@@ -2,11 +2,17 @@ import { gql, type TypedDocumentNode } from '@apollo/client';
 
 export type NotificationKind = 'MESSAGE' | 'FOLLOW' | 'WISHLIST' | 'SYSTEM';
 
+export interface NotificationActor {
+  id: string;
+  name: string;
+}
+
 export interface Notification {
   id: string;
   type: NotificationKind;
   userId: string;
   actorId?: string;
+  actor?: NotificationActor;
   title?: string;
   body?: string;
   readAt?: string;
@@ -31,6 +37,10 @@ export const NOTIFICATIONS_QUERY: TypedDocumentNode<
       type
       userId
       actorId
+      actor {
+        id
+        name
+      }
       title
       body
       readAt

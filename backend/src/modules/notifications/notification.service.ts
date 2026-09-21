@@ -71,6 +71,13 @@ export class NotificationService {
     }
   }
 
+  async getActor(actorId: string): Promise<{ id: string; name: string } | null> {
+    return this.prisma.user.findUnique({
+      where: { id: actorId },
+      select: { id: true, name: true },
+    });
+  }
+
   async list(userId: string, unreadOnly?: boolean): Promise<NotificationType[]> {
     const notifications = await this.prisma.notification.findMany({
       where: { userId, ...(unreadOnly ? { readAt: null } : {}) },
