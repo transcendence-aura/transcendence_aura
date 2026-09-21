@@ -36,7 +36,6 @@ export class ApiKeyService {
         const apiKey = await tx.apiKey.create({
           data: {
             name: dto.name,
-            scopes: dto.scopes ?? [],
             expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
             keyHash: hashApiKey(rawKey),
             ownerId,
@@ -47,7 +46,6 @@ export class ApiKeyService {
           id: apiKey.id,
           name: apiKey.name,
           key: rawKey,
-          scopes: apiKey.scopes,
           expiresAt: apiKey.expiresAt,
           createdAt: apiKey.createdAt,
         };
@@ -74,7 +72,6 @@ export class ApiKeyService {
     return apiKeys.map((apiKey) => ({
       id: apiKey.id,
       name: apiKey.name,
-      scopes: apiKey.scopes,
       expiresAt: apiKey.expiresAt,
       lastUsedAt: apiKey.lastUsedAt,
       isRevoked: apiKey.isRevoked,

@@ -18,9 +18,6 @@ export class ApiKeySummaryDto {
   @ApiProperty()
   name!: string;
 
-  @ApiProperty({ type: [String] })
-  scopes!: string[];
-
   @ApiProperty({ nullable: true, format: 'date-time' })
   expiresAt!: Date | null;
 

@@ -14,9 +14,6 @@ export class ApiKeyCreatedDto {
   })
   key!: string;
 
-  @ApiProperty({ type: [String] })
-  scopes!: string[];
-
   @ApiProperty({ nullable: true, format: 'date-time' })
   expiresAt!: Date | null;
 

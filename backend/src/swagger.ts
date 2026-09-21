@@ -16,7 +16,8 @@ export function setupSwagger(app: INestApplication): void {
   const config = new DocumentBuilder()
     .setTitle('AURA Public API')
     .setDescription(
-      'Catalogue-only, read-only public API. Requests to /api/v1/* require an API key ' +
+      'Catalogue reads, plus routes acting on the wishlist and bio of the key owner. ' +
+        'Requests to /api/v1/* require an API key ' +
         'sent in the X-API-Key header. Keys are self-service: log in with a normal account, ' +
         'call POST /api/keys (ApiKeyManagementAuth) to create one, then click Authorize and ' +
         'paste it under ApiKeyAuth to try the routes from this page.\n\n' +

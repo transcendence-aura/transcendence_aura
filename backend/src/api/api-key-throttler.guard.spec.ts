@@ -7,7 +7,7 @@ describe('ApiKeyThrottlerGuard', () => {
   };
 
   it('tracks requests by API key id', async () => {
-    const tracker = await guard.getTracker({ apiKey: { id: 'key-1', ownerId: 'o', scopes: [] } });
+    const tracker = await guard.getTracker({ apiKey: { id: 'key-1', ownerId: 'o' } });
     expect(tracker).toBe('key-1');
   });
 

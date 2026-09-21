@@ -1,17 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsISO8601, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsISO8601, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateApiKeyDto {
   @ApiProperty({ maxLength: 100, example: 'my-integration' })
   @IsString()
   @MaxLength(100)
   name!: string;
-
-  @ApiPropertyOptional({ type: [String], default: [] })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  scopes?: string[];
 
   @ApiPropertyOptional({ format: 'date-time', nullable: true })
   @IsOptional()

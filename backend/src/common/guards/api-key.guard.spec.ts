@@ -40,7 +40,6 @@ describe('ApiKeyGuard', () => {
     prisma.apiKey.findUnique.mockResolvedValue({
       id: 'key-1',
       ownerId: 'user-1',
-      scopes: [],
       isRevoked: true,
       expiresAt: null,
       owner: activeOwner,
@@ -55,7 +54,6 @@ describe('ApiKeyGuard', () => {
     prisma.apiKey.findUnique.mockResolvedValue({
       id: 'key-1',
       ownerId: 'user-1',
-      scopes: [],
       isRevoked: false,
       expiresAt: new Date(Date.now() - 1000),
       owner: activeOwner,
@@ -69,7 +67,6 @@ describe('ApiKeyGuard', () => {
     prisma.apiKey.findUnique.mockResolvedValue({
       id: 'key-1',
       ownerId: 'user-1',
-      scopes: [],
       isRevoked: false,
       expiresAt: null,
       owner: { status: UserStatus.SUSPENDED, deletedAt: null },
@@ -84,7 +81,6 @@ describe('ApiKeyGuard', () => {
     prisma.apiKey.findUnique.mockResolvedValue({
       id: 'key-1',
       ownerId: 'user-1',
-      scopes: [],
       isRevoked: false,
       expiresAt: null,
       owner: { status: UserStatus.ACTIVE, deletedAt: new Date() },
@@ -99,7 +95,6 @@ describe('ApiKeyGuard', () => {
     prisma.apiKey.findUnique.mockResolvedValue({
       id: 'key-1',
       ownerId: 'user-1',
-      scopes: ['read'],
       isRevoked: false,
       expiresAt: null,
       owner: activeOwner,
@@ -112,7 +107,7 @@ describe('ApiKeyGuard', () => {
     } as unknown as ExecutionContext;
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
-    expect(request.apiKey).toEqual({ id: 'key-1', ownerId: 'user-1', scopes: ['read'] });
+    expect(request.apiKey).toEqual({ id: 'key-1', ownerId: 'user-1' });
     expect(prisma.apiKey.update).toHaveBeenCalledWith({
       where: { id: 'key-1' },
       data: { lastUsedAt: expect.any(Date) },

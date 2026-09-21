@@ -1,5 +1,6 @@
 import { applyDecorators, Type } from '@nestjs/common';
 import {
+  ApiCreatedResponse,
   ApiExtraModels,
   ApiOkResponse,
   ApiProperty,
@@ -102,7 +103,7 @@ export const RETRY_AFTER_HEADER: ApiResponseHeaders = {
 
 export function ApiEnvelopeResponse(
   model: Type<unknown>,
-  options: { list?: boolean; description?: string } = {},
+  options: { list?: boolean; created?: boolean; description?: string } = {},
 ) {
   const data = options.list
     ? { type: 'array', items: { $ref: getSchemaPath(model) } }
@@ -112,10 +113,11 @@ export function ApiEnvelopeResponse(
     data,
   };
   if (options.list) properties.meta = { $ref: getSchemaPath(ApiMetaDto) };
+  const SuccessResponse = options.created ? ApiCreatedResponse : ApiOkResponse;
 
   return applyDecorators(
     ApiExtraModels(model, ApiMetaDto),
-    ApiOkResponse({
+    SuccessResponse({
       description: options.description,
       headers: RATE_LIMIT_HEADERS,
       schema: { type: 'object', properties },

@@ -11,5 +11,5 @@ export interface AuthenticatedRequest extends Request {
   // trusts a pre-existing userId instead of re-verifying the token.
   userId?: string;
   user?: AuthenticatedUser;
-  apiKey?: { id: string; ownerId: string; scopes: string[] };
+  apiKey?: { id: string; ownerId: string };
 }
