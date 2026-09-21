@@ -141,6 +141,13 @@ export default function ChatPage() {
     });
   }, [on, refetch, refetchPending]);
 
+  useEffect(() => {
+    return on('conversationStarted', () => {
+      refetch();
+      refetchPending();
+    });
+  }, [on, refetch, refetchPending]);
+
   const handleAccept = async (conversationId: string) => {
     try {
       await acceptConversation({ variables: { input: { conversationId } } });
