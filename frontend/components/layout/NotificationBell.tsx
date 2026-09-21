@@ -61,7 +61,7 @@ export function NotificationBell() {
 
   useEffect(() => {
     return on('newNotification', () => {
-      refetch();
+      refetch().catch(() => {});
     });
   }, [on, refetch]);
 
