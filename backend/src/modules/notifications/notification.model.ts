@@ -7,6 +7,15 @@ import { NotificationType as NotificationTypeEnum } from '@prisma/client';
 registerEnumType(NotificationTypeEnum, { name: 'NotificationKind' });
 
 @ObjectType()
+export class NotificationActorType {
+  @Field()
+  id!: string;
+
+  @Field()
+  name!: string;
+}
+
+@ObjectType()
 export class NotificationType {
   @Field()
   id!: string;

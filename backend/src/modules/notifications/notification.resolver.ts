@@ -1,12 +1,12 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Int, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { NotificationService } from './notification.service';
-import { NotificationType } from './notification.model';
+import { NotificationActorType, NotificationType } from './notification.model';
 import { MarkNotificationReadInput } from './notification.input';
 
-@Resolver()
+@Resolver(() => NotificationType)
 @UseGuards(RolesGuard)
 export class NotificationResolver {
   constructor(private readonly notificationService: NotificationService) {}
@@ -30,5 +30,11 @@ export class NotificationResolver {
   @Mutation(() => Int)
   markAllNotificationsRead(@CurrentUser() userId: string): Promise<number> {
     return this.notificationService.markAllRead(userId);
+  }
+
+  @ResolveField(() => NotificationActorType, { nullable: true })
+  actor(@Parent() notification: NotificationType): Promise<{ id: string; name: string } | null> {
+    if (!notification.actorId) return Promise.resolve(null);
+    return this.notificationService.getActor(notification.actorId);
   }
 }
