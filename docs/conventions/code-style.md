@@ -236,7 +236,7 @@ backend/
 ├── prisma/
 │   ├── migrations/
 │   ├── schema.prisma
-│   └── seed.ts
+│   └── seed/
 └── src/
 |   └── modules/
 |       ├── database/

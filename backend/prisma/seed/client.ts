@@ -1,6 +1,7 @@
 import path from 'node:path';
 import dotenv from 'dotenv';
-import { defineConfig } from 'prisma/config';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 dotenv.config({
   path: path.resolve(process.cwd(), '../.env'),
@@ -12,13 +13,6 @@ if (!databaseUrl) {
   throw new Error('POSTGRES_URL is not set');
 }
 
-export default defineConfig({
-  schema: 'prisma/schema.prisma',
-  migrations: {
-    path: 'prisma/migrations',
-    seed: 'tsx prisma/seed/index.ts',
-  },
-  datasource: {
-    url: databaseUrl,
-  },
+export const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: databaseUrl }),
 });

@@ -61,6 +61,28 @@ services:
       - vault
     restart: unless-stopped
 
+  seed:
+    build: ./backend
+    profiles:
+      - seed
+    command: npm run prisma:seed
+    volumes:
+      - ./backend/prisma:/app/prisma
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL}
+      SEED_GRAPHQL_URL: http://backend:3001/graphql
+      SEED_MODE: ${SEED_MODE:-empty}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_started
+      backend:
+        condition: service_started
+    networks:
+      - aura
+
   postgres:
     image: postgres:17-alpine
     environment:
