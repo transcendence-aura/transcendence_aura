@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Minus, Plus, Trash2 } from 'lucide-react';
+import { isLocalMediaUrl } from '@/lib/media/image-url';
 
 export interface CartItem {
   id: string;
@@ -43,6 +44,7 @@ export function OrderSummary({
                   alt={item.product.name}
                   fill
                   sizes="64px"
+                  unoptimized={isLocalMediaUrl(item.product.imageUrl)}
                   className="object-cover"
                 />
               ) : (

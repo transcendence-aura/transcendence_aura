@@ -7,6 +7,7 @@ import { Heart } from 'lucide-react';
 import { PriceDisplay } from '@/components/ui/display/PriceDisplay';
 import { useCart } from '@/lib/hooks/useCart';
 import { useToast } from '@/components/ui/feedback/toast';
+import { isLocalMediaUrl } from '@/lib/media/image-url';
 
 interface ProductMedia {
   id: string;
@@ -152,6 +153,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
+            unoptimized={isLocalMediaUrl(imageUrl)}
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         </div>
