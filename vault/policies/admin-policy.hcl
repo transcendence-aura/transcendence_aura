@@ -19,7 +19,7 @@
 # JWT
 # --------------------------------------------------------------
 
-path "secret/data/aura/development/jwt" {
+path "secret/data/aura-backend/development/jwt" {
   capabilities = ["create", "read", "update", "delete"]
 }
 
@@ -27,7 +27,7 @@ path "secret/data/aura/development/jwt" {
 # Database
 # --------------------------------------------------------------
 
-path "secret/data/aura/development/database" {
+path "secret/data/aura-backend/development/database" {
   capabilities = ["create", "read", "update", "delete"]
 }
 
@@ -35,7 +35,7 @@ path "secret/data/aura/development/database" {
 # Redis
 # --------------------------------------------------------------
 
-path "secret/data/aura/development/redis" {
+path "secret/data/aura-backend/development/redis" {
   capabilities = ["create", "read", "update", "delete"]
 }
 
@@ -43,7 +43,7 @@ path "secret/data/aura/development/redis" {
 # OAuth
 # --------------------------------------------------------------
 
-path "secret/data/aura/development/oauth" {
+path "secret/data/aura-backend/development/oauth" {
   capabilities = ["create", "read", "update", "delete"]
 }
 
@@ -51,7 +51,7 @@ path "secret/data/aura/development/oauth" {
 # SMTP
 # --------------------------------------------------------------
 
-path "secret/data/aura/development/smtp" {
+path "secret/data/aura-backend/development/smtp" {
   capabilities = ["create", "read", "update", "delete"]
 }
 
@@ -59,6 +59,6 @@ path "secret/data/aura/development/smtp" {
 # TOTP
 # --------------------------------------------------------------
 
-path "secret/data/aura/development/totp/users/*" {
+path "secret/data/aura-backend/development/totp/users/*" {
   capabilities = ["create", "read", "update", "delete"]
 }

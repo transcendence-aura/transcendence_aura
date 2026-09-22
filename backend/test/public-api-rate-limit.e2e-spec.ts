@@ -50,8 +50,6 @@ describe('Public API rate limiting (AUR-154 acceptance criteria)', () => {
       JWT_ACCESS_SECRET: 'rate-limit-e2e-secret',
       JWT_REFRESH_SECRET: 'rate-limit-e2e-secret',
       REDIS_URL: 'rate-limit-e2e',
-      OAUTH_CLIENT_ID: 'rate-limit-e2e-id',
-      OAUTH_CLIENT_SECRET: 'rate-limit-e2e-secret',
     };
 
     const moduleRef = await Test.createTestingModule({

@@ -32,8 +32,6 @@ describe('Refresh token flow', () => {
     JWT_ACCESS_SECRET: 'this-is-just-a-refresh-test-secret',
     JWT_REFRESH_SECRET: 'this-is-just-a-refresh-test-secret',
     REDIS_URL: 'refresh-test',
-    OAUTH_CLIENT_ID: 'local-refresh-test-id',
-    OAUTH_CLIENT_SECRET: 'local-refresh-test-secret',
   };
 
   beforeAll(async () => {

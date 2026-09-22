@@ -3,17 +3,12 @@ export interface RequiredSecrets {
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   REDIS_URL: string;
-  OAUTH_CLIENT_ID: string;
-  OAUTH_CLIENT_SECRET: string;
 }
 
 const REQUIRED_VAULT_SECRETS = [
   'POSTGRES_URL',
   'JWT_ACCESS_SECRET',
-  'JWT_REFRESH_SECRET',
   'REDIS_URL',
-  'OAUTH_CLIENT_ID',
-  'OAUTH_CLIENT_SECRET',
 ] as const satisfies readonly (keyof RequiredSecrets)[];
 
 export function validateSecrets(value: unknown): RequiredSecrets {
@@ -63,8 +58,6 @@ export function validateSecrets(value: unknown): RequiredSecrets {
     JWT_ACCESS_SECRET: value.JWT_ACCESS_SECRET as string,
     JWT_REFRESH_SECRET: value.JWT_REFRESH_SECRET as string,
     REDIS_URL: value.REDIS_URL as string,
-    OAUTH_CLIENT_ID: value.OAUTH_CLIENT_ID as string,
-    OAUTH_CLIENT_SECRET: value.OAUTH_CLIENT_SECRET as string,
   };
 }
 
