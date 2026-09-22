@@ -12,7 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { ConversationStatus } from '@prisma/client';
 import { TokenService } from '../auth/token.service';
 import { PrismaService } from '../../database/prisma.service';
-import { MessageType } from '../conversations/conversation.model';
+import { ConversationType, MessageType } from '../conversations/conversation.model';
 import { NotificationType } from '../notifications/notification.model';
 import { CircleFeedItemType } from '../circle-feed/circle-feed.model';
 
@@ -47,6 +47,13 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
   emitNewNotification(userId: string, notification: NotificationType): void {
     this.server.to(`user:${userId}`).emit('newNotification', notification);
+  }
+
+  // A brand-new conversation's recipient hasn't joined `conversation:${id}` yet
+  // (that only happens once they've fetched it), so this goes to their user room
+  // instead - same as emitNewNotification.
+  emitConversationStarted(recipientId: string, conversation: ConversationType): void {
+    this.server.to(`user:${recipientId}`).emit('conversationStarted', conversation);
   }
 
   emitCircleFeedActivity(followerId: string, item: CircleFeedItemType): void {

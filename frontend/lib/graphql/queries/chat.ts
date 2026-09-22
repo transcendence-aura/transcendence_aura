@@ -3,6 +3,7 @@ import { gql, type TypedDocumentNode } from '@apollo/client';
 export interface ConversationParticipant {
   id: string;
   name: string;
+  bio?: string;
 }
 
 export interface ChatMessage {
@@ -28,10 +29,12 @@ const CONVERSATION_FIELDS = `
   userOne {
     id
     name
+    bio
   }
   userTwo {
     id
     name
+    bio
   }
   messages {
     id
@@ -115,6 +118,43 @@ export const SEND_MESSAGE_MUTATION: TypedDocumentNode<SendMessageData, SendMessa
       senderId
       content
       createdAt
+    }
+  }
+`;
+
+export interface ResolveHandleData {
+  userProfile: { id: string; name: string };
+}
+
+export interface ResolveHandleVariables {
+  handle: string;
+}
+
+export const RESOLVE_HANDLE_QUERY: TypedDocumentNode<ResolveHandleData, ResolveHandleVariables> =
+  gql`
+    query ResolveHandle($handle: String!) {
+      userProfile(handle: $handle) {
+        id
+        name
+      }
+    }
+  `;
+
+export interface StartConversationData {
+  startConversation: Conversation;
+}
+
+export interface StartConversationVariables {
+  input: { otherUserId: string };
+}
+
+export const START_CONVERSATION_MUTATION: TypedDocumentNode<
+  StartConversationData,
+  StartConversationVariables
+> = gql`
+  mutation StartConversation($input: StartConversationInput!) {
+    startConversation(input: $input) {
+      ${CONVERSATION_FIELDS}
     }
   }
 `;

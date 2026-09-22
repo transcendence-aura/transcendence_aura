@@ -72,6 +72,9 @@ export class ConversationService {
     const existing = await this.findConversationRow(userOneId, userTwoId);
 
     if (existing) {
+      if (existing.status === ConversationStatus.DECLINED) {
+        throw new ForbiddenException('CONVERSATION_DECLINED');
+      }
       return { ...existing, messages: existing.messages.map(mapMessage) };
     }
 
@@ -89,7 +92,19 @@ export class ConversationService {
         include: { messages: { orderBy: { createdAt: 'asc' } } },
       });
 
-      return { ...conversation, messages: conversation.messages.map(mapMessage) };
+      const mapped = { ...conversation, messages: conversation.messages.map(mapMessage) };
+      // Emit only the declared ConversationType shape - `conversation` also
+      // carries raw Prisma columns (e.g. userOneDeletedAt) that GraphQL would
+      // normally strip, but socket.io has no schema to filter against.
+      this.realtimeGateway.emitConversationStarted(otherUserId, {
+        id: mapped.id,
+        userOneId: mapped.userOneId,
+        userTwoId: mapped.userTwoId,
+        initiatorId: mapped.initiatorId,
+        status: mapped.status,
+        messages: mapped.messages,
+      });
+      return mapped;
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -116,11 +131,13 @@ export class ConversationService {
     return messages.map(mapMessage);
   }
 
-  async getParticipant(userId: string): Promise<{ id: string; name: string }> {
-    return this.prisma.user.findUniqueOrThrow({
+  async getParticipant(userId: string): Promise<{ id: string; name: string; bio?: string }> {
+    const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, bio: true },
     });
+
+    return { id: user.id, name: user.name, bio: user.bio ?? undefined };
   }
 
   async listConversations(userId: string): Promise<ConversationType[]> {

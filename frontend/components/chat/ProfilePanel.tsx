@@ -3,11 +3,12 @@ import { Avatar } from '@/components/ui/display/avatar';
 
 interface ProfilePanelProps {
   name: string;
+  bio?: string;
   avatarUrl?: string;
   onClose: () => void;
 }
 
-export const ProfilePanel = ({ name, avatarUrl, onClose }: ProfilePanelProps) => {
+export const ProfilePanel = ({ name, bio, avatarUrl, onClose }: ProfilePanelProps) => {
   return (
     <div className="flex w-72 shrink-0 flex-col border-l border-border-default">
       <div className="flex items-center justify-between border-b border-border-default p-4">
@@ -30,6 +31,9 @@ export const ProfilePanel = ({ name, avatarUrl, onClose }: ProfilePanelProps) =>
         >
           {name}
         </span>
+        {bio && (
+          <p className="text-center text-xs leading-[1.8] font-light text-text-secondary">{bio}</p>
+        )}
       </div>
     </div>
   );

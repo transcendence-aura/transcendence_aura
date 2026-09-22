@@ -25,6 +25,9 @@ export class ConversationParticipantType {
 
   @Field()
   name!: string;
+
+  @Field({ nullable: true })
+  bio?: string;
 }
 
 @ObjectType()

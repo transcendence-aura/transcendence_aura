@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
-import { MoreVertical, User } from 'lucide-react';
+import { Plus, User } from 'lucide-react';
 import { Avatar } from '@/components/ui/display/avatar';
 import { Input } from '@/components/ui/form/input';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
@@ -25,11 +25,11 @@ import { ChatBubble } from '@/components/chat/ChatBubble';
 import { ChatComposer } from '@/components/chat/ChatComposer';
 import { ConversationItem } from '@/components/chat/ConversationItem';
 import { ConversationRequestItem } from '@/components/chat/ConversationRequestItem';
+import { NewConversationDialog } from '@/components/chat/NewConversationDialog';
 import { PendingConversationBar } from '@/components/chat/PendingConversationBar';
 import { ProfilePanel } from '@/components/chat/ProfilePanel';
-import { OptionsPanel } from '@/components/chat/OptionsPanel';
 
-type SidePanel = 'profile' | 'options' | null;
+type SidePanel = 'profile' | null;
 
 function formatRelativeTime(date: Date): string {
   const diffMs = Date.now() - date.getTime();
@@ -57,6 +57,7 @@ export default function ChatPage() {
   const isAuthenticated = useIsAuthenticated();
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [sidePanel, setSidePanel] = useState<SidePanel>(null);
+  const [newConversationOpen, setNewConversationOpen] = useState(false);
 
   const { data: meData } = useQuery(ME_QUERY, { skip: !isAuthenticated });
   const {
@@ -140,6 +141,13 @@ export default function ChatPage() {
     });
   }, [on, refetch, refetchPending]);
 
+  useEffect(() => {
+    return on('conversationStarted', () => {
+      refetch();
+      refetchPending();
+    });
+  }, [on, refetch, refetchPending]);
+
   const handleAccept = async (conversationId: string) => {
     try {
       await acceptConversation({ variables: { input: { conversationId } } });
@@ -199,12 +207,22 @@ export default function ChatPage() {
     >
       <div className="flex w-80 shrink-0 flex-col border-r border-border-default">
         <div className="flex flex-col gap-3 p-4">
-          <h1
-            className="text-[22px] leading-[1.3] text-text-primary"
-            style={{ fontFamily: 'var(--font-family-cormorant)' }}
-          >
-            Messages
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1
+              className="text-[22px] leading-[1.3] text-text-primary"
+              style={{ fontFamily: 'var(--font-family-cormorant)' }}
+            >
+              Messages
+            </h1>
+            <button
+              type="button"
+              aria-label="New conversation"
+              onClick={() => setNewConversationOpen(true)}
+              className="text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
           <Input placeholder="Search..." />
         </div>
 
@@ -215,11 +233,16 @@ export default function ChatPage() {
             </p>
           )}
 
-          {myId && pendingConversations.length > 0 && (
+          {myId && (
             <div className="border-b border-border-default pb-2">
               <span className="block px-4 py-2 text-[9px] leading-[1.5] font-medium tracking-[0.06em] text-text-muted uppercase">
                 Requests
               </span>
+              {!pendingError && pendingConversations.length === 0 && (
+                <p className="text-[11px] italic leading-[1.6] text-text-muted px-4 py-4">
+                  No pending requests.
+                </p>
+              )}
               {pendingConversations.map((conversation) => {
                 const other = getOtherParticipant(conversation, myId);
                 return (
@@ -292,18 +315,6 @@ export default function ChatPage() {
                     >
                       <User className="h-5 w-5" />
                     </button>
-                    <button
-                      type="button"
-                      aria-label="Options"
-                      onClick={() =>
-                        setSidePanel((prev) => (prev === 'options' ? null : 'options'))
-                      }
-                      className={
-                        sidePanel === 'options' ? 'text-text-primary' : 'hover:text-text-primary'
-                      }
-                    >
-                      <MoreVertical className="h-5 w-5" />
-                    </button>
                   </div>
                 </div>
               );
@@ -342,15 +353,23 @@ export default function ChatPage() {
 
       {activeConversation &&
         myId &&
-        sidePanel &&
+        sidePanel === 'profile' &&
         (() => {
           const other = getOtherParticipant(activeConversation, myId);
-          return sidePanel === 'profile' ? (
-            <ProfilePanel name={other.name} onClose={() => setSidePanel(null)} />
-          ) : (
-            <OptionsPanel onClose={() => setSidePanel(null)} />
+          return (
+            <ProfilePanel name={other.name} bio={other.bio} onClose={() => setSidePanel(null)} />
           );
         })()}
+
+      <NewConversationDialog
+        isOpen={newConversationOpen}
+        onClose={() => setNewConversationOpen(false)}
+        onStarted={(conversation) => {
+          setActiveConversationId(conversation.id);
+          refetch();
+          refetchPending();
+        }}
+      />
     </div>
   );
 }
