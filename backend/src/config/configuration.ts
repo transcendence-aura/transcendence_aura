@@ -18,10 +18,6 @@ export interface AppConfiguration {
   redis: {
     url: string;
   };
-  oauth: {
-    clientId: string;
-    clientSecret: string;
-  };
 }
 
 export function createAppConfig(secrets: RequiredSecrets): AppConfiguration {
@@ -42,10 +38,6 @@ export function createAppConfig(secrets: RequiredSecrets): AppConfiguration {
     },
     redis: {
       url: secrets.REDIS_URL,
-    },
-    oauth: {
-      clientId: secrets.OAUTH_CLIENT_ID,
-      clientSecret: secrets.OAUTH_CLIENT_SECRET,
     },
   };
 }

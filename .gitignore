@@ -153,4 +153,5 @@ backend/uploads/
 # Secrets
 /local-secrets/
 local-secrets/vault-secret-id
-local-secrets/vault-seed.json
+local-secrets/vault-root-token
+local-secrets/vault-unseal-key

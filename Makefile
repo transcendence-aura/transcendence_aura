@@ -74,19 +74,36 @@ setup: check-env
 	@npm run install:all
 	@printf "$(GREEN)Dependencies installed. Run 'make up' to start the stack.$(END)\n"
 
-# Vault setup
-.PHONY: vault-env
-vault-env:
-	@bash scripts/gen-vault-tokens.sh
-
 # Start Vault
+.PHONY: vault-permissions
+vault-permissions:
+	@printf "$(YELLOW)Preparing Vault storage$(END)\n"
+	@$(COMPOSE_RUN) run --rm --no-deps \
+		--user root \
+		--entrypoint sh \
+		vault -c 'chown -R vault:vault /vault/data && chmod 750 /vault/data'
+
 .PHONY: vault-start
-vault-start: vault-env
+vault-start: vault-permissions
 	@printf "$(YELLOW)Starting Vault$(END)\n"
 	@$(COMPOSE_RUN) up -d vault
 
+.PHONY: vault-init
+vault-init: vault-start
+	@printf "$(YELLOW)Initializing Vault$(END)\n"
+	@COMPOSE_CMD='$(COMPOSE)' \
+		HOST_GID='$(HOST_GID)' \
+		bash scripts/init-vault.sh
+
+.PHONY: vault-unseal
+vault-unseal: vault-init
+	@printf "$(YELLOW)Unsealing Vault$(END)\n"
+	@COMPOSE_CMD='$(COMPOSE)' \
+		HOST_GID='$(HOST_GID)' \
+		bash scripts/unseal-vault.sh
+
 .PHONY: vault-bootstrap
-vault-bootstrap: vault-start
+vault-bootstrap: vault-unseal
 	@printf "$(YELLOW)Configuring backend Vault access$(END)\n"
 	@COMPOSE_CMD='$(COMPOSE)' \
 		HOST_GID='$(HOST_GID)' \

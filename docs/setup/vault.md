@@ -2,19 +2,30 @@
 
 ## Overview
 
-HashiCorp Vault to load sensitive application configuration during startup.
+HashiCorp Vault is used to load sensitive backend application configuration during startup.
 
-Vault authentication and secret validation is completed before NestJS initializes.
-If authentication fails, startup is aborted and the backend does not accept requests.
+Vault runs as a persistent single-node server using integrated Raft storage rather than development mode. This allows Vault-managed secrets and configuration to survive normal `make down` / `make up` cycles.
 
-Vault is run in development mode. It is intended for local development and must not be used as a production Vault deployment.
+Vault initialization, unsealing, AppRole configuration, policy setup, and secret bootstrapping are handled automatically before the backend starts.
+
+The backend does not receive Vault administrative credentials. It authenticates using AppRole and is restricted to the secret paths and capabilities required by the application.
+
+Vault authentication and required-secret validation are completed before NestJS initializes. If Vault authentication fails or a required secret is missing, startup is aborted and the backend does not accept requests.
+
+The current Vault configuration is intended for local development and evaluation. It uses a single node, local unseal material, and TLS-disabled internal communication.
+It should not be treated as a production Vault deployment.
 
 ## Startup sequence
 
 ```text
-Read non-secret Vault bootstrap configuration
+Start Vault
+→ Initialize Vault if required
+→ Unseal Vault if required
+→ Configure KV v2, policies, AppRole, and application secrets
+→ Read non-secret Vault bootstrap configuration
 → Read the AppRole SecretID from the mounted secret file
 → Authenticate to Vault using the RoleID and SecretID
+→ Receive a short-lived Vault token
 → Read the configured KV v2 secret
 → Validate every required secret
 → Build the typed application configuration
@@ -26,14 +37,12 @@ Read non-secret Vault bootstrap configuration
 
 The following keys must exist in Vault:
 
-| Key                   | Purpose                      |
-| --------------------- | ---------------------------- |
-| `POSTGRES_URL`        | Prisma PostgreSQL connection |
-| `JWT_ACCESS_SECRET`   | Access-token signing         |
-| `JWT_REFRESH_SECRET`  | Refresh-token signing        |
-| `REDIS_URL`           | Redis connection             |
-| `OAUTH_CLIENT_ID`     | OAuth client identifier      |
-| `OAUTH_CLIENT_SECRET` | OAuth client authentication  |
+| Key                     | Purpose                      |
+| ----------------------- | ---------------------------- |
+| `POSTGRES_URL`          | Prisma PostgreSQL connection |
+| `JWT_ACCESS_SECRET`     | Access-token signing         |
+| `REDIS_URL`             | Redis connection             |
+| `TWO_FACTOR_ENCRYPTION` | 2FA encryption key           |
 
 Secret values must never be committed to source control or included in application logs.
 
@@ -73,47 +82,13 @@ The backend receives only the non-secret values required to locate and authentic
 | `VAULT_REQUEST_TIMEOUT_MS` |       No | Vault request timeout in milliseconds               |
 | `VAULT_NAMESPACE`          |       No | Vault Enterprise namespace, when applicable         |
 
-## Prepare local Vault secrets
-
-Before starting the stack for the first time, create the local secrets directory at the repository root:
-
-```bash
-mkdir -p local-secrets
-chmod 700 local-secrets
-```
-
-Create the development seed file:
-
-```bash
-touch local-secrets/vault-seed.json
-chmod 600 local-secrets/vault-seed.json
-```
-
-Populate `local-secrets/vault-seed.json` with the required development secrets (the secrets below are for development only):
-
-```json
-{
-  "POSTGRES_URL": "postgresql://aura:change_password@postgres:5432/db",
-  "REDIS_URL": "redis://redis:6379",
-  "JWT_ACCESS_SECRET": "local-development-access-secret-change-me-123456",
-  "JWT_REFRESH_SECRET": "local-development-refresh-secret-change-me-654321",
-  "OAUTH_CLIENT_ID": "local-test-client-id",
-  "OAUTH_CLIENT_SECRET": "local-test-client-secret"
-}
-```
-
-The seed file remains on the host. It is not mounted into Vault or backend containers.
-
-The bootstrap script will fail if the seed file is missing or unreadable.
-
-This prevents Vault from being seeded with empty, missing, or unintended values.
-
 ## Files excluded from source control
 
 ```gitignore
 /local-secrets/
-local-secrets/vault-seed.json
+local-secrets/vault-root-token
 local-secrets/vault-secret-id
+local-secrets/vault-unseal-key
 ```
 
 ## AppRole policy
@@ -140,7 +115,7 @@ vault_exec write \
   token_type="batch" \
   token_ttl="5m" \
   token_max_ttl="15m" \
-  secret_id_ttl="10m" \
+  secret_id_ttl="0" \
   secret_id_num_uses=0
 ```
 
@@ -151,7 +126,7 @@ vault_exec write \
 | `token_type`              |          `batch` | Issues lightweight, non-renewable startup tokens         |
 | `token_ttl`               |             `5m` | Sets the issued token lifetime                           |
 | `token_max_ttl`           |            `15m` | Sets the maximum token lifetime                          |
-| `secret_id_ttl`           |            `10m` | Expires the SecretID after ten minutes                   |
+| `secret_id_ttl`           |              `0` | SecretID does not expire for development                 |
 | `secret_id_num_uses`      |              `0` | Allows unlimited authentications during the SecretID TTL |
 
 For local-development convenience, `secret_id_num_uses=0` means that Vault does not enforce a use-count limit.
@@ -165,8 +140,7 @@ Batch tokens are not explicitly revoked by the backend. Their exposure is limite
 
 ## Development secret seeding
 
-The seed file is streamed from the host to the Vault CLI during bootstrap and input redirection is performed by the host shell.
-The Vault container receives the JSON through standard input and does not require access to the host file.
+Secrets are seeded from the host to the Vault CLI during bootstrap and input redirection is performed by the host shell.
 
 ## SecretID delivery
 
@@ -198,8 +172,6 @@ The SecretID is written atomically:
 The SecretID file must never be printed during debugging.
 
 ## Local startup flow
-
-After preparing `local-secrets/vault-seed.json`, start the stack:
 
 ```bash
 make up
@@ -250,8 +222,7 @@ Logs must never include:
 
 ## Production
 
-Vault runs in development mode.
-A production deployment must replace it with a persistent Vault environment that includes:
+A production deployment must have a Vault environment that includes:
 
 - TLS.
 - Persistent storage.

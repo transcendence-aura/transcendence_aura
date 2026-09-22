@@ -41,7 +41,7 @@ services:
       PORT: 3001
       POSTGRES_URL: ${POSTGRES_URL}
       VAULT_ADDR: ${VAULT_ADDR}
-      VAULT_ROLE_ID: ${VAULT_ROLE_ID}
+      VAULT_ROLE_ID: ${VAULT_ROLE_ID:-}
       VAULT_SECRET_ID_FILE: /run/secrets/vault_secret_id
       VAULT_SECRET_PATH: aura-backend/development
       VAULT_KV_MOUNT: secret
@@ -85,24 +85,30 @@ services:
 
   vault:
     image: hashicorp/vault:1.19
+    cap_add:
+      - IPC_LOCK
     command:
       - server
-      - -dev
-      - -dev-listen-address=0.0.0.0:8200
-      - -dev-root-token-id=${VAULT_DEV_ROOT_TOKEN_ID}
-      - -dev-no-store-token
+      - -config=/vault/aura/config/vault.hcl
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN_ID}
       VAULT_ADDR: ${VAULT_ADDR}
     volumes:
       - type: bind
         source: ./vault
         target: /vault/aura
         read_only: true
+
+      - type: volume
+        source: vault_data
+        target: /vault/data
     healthcheck:
       test:
         - CMD-SHELL
-        - VAULT_ADDR=http://127.0.0.1:8200 vault status >/dev/null 2>&1
+        - >
+          VAULT_ADDR=http://127.0.0.1:8200
+          vault status >/dev/null 2>&1;
+          code=$$?;
+          [ "$$code" -eq 0 ] || [ "$$code" -eq 2 ]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -113,6 +119,7 @@ services:
 volumes:
   postgres_data:
   product_uploads:
+  vault_data:
 
 networks:
   aura:

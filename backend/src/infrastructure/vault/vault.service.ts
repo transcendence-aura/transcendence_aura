@@ -20,6 +20,6 @@ export class VaultService {
   }
 
   private getTotpPath(userId: string): string {
-    return `aura/development/totp/users/${userId}`;
+    return `aura-backend/development/totp/users/${userId}`;
   }
 }
