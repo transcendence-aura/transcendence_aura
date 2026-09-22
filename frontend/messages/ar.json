@@ -1,11 +1,10 @@
 {
   "Navbar": {
     "shop": "المتجر",
-    "journal": "المجلة",
+    "community": "المجتمع",
     "about": "من نحن",
     "search": "بحث",
     "chat": "الرسائل",
-    "circle": "الدائرة",
     "wishlist": "المفضلة",
     "cart": "سلة التسوق",
     "cartMobile": "السلة",

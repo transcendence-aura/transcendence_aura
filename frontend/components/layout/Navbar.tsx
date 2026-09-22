@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Heart, MessageCircle, ShoppingBag, Users, Menu, X } from 'lucide-react';
+import { Search, Heart, MessageCircle, ShoppingBag, Menu, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
@@ -44,7 +44,7 @@ export function Navbar() {
           href="/circle"
           className="text-text-secondary hover:text-text-primary text-ui-nav transition-colors"
         >
-          Circle
+          {t('community')}
         </Link>
         <Link
           href="/about"
@@ -67,15 +67,6 @@ export function Navbar() {
           <Search className="h-5 w-5" />
         </button>
         <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-
-        {/* Circle */}
-        <Link
-          href="/circle"
-          aria-label={t('circle')}
-          className="text-text-secondary hover:text-text-primary transition-colors"
-        >
-          <Users className="h-5 w-5" />
-        </Link>
 
         {/* Chat */}
         <Link
@@ -167,7 +158,7 @@ export function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors"
           >
-            Circle
+            {t('community')}
           </Link>
           <Link
             href="/about"
@@ -175,15 +166,6 @@ export function Navbar() {
             className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors"
           >
             {t('about')}
-          </Link>
-
-          {/* Circle Mobile */}
-          <Link
-            href="/circle"
-            onClick={() => setMenuOpen(false)}
-            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors flex items-center gap-2"
-          >
-            <Users className="h-4 w-4" /> {t('circle')}
           </Link>
 
           {/* Chat Mobile */}

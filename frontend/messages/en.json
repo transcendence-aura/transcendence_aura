@@ -1,11 +1,10 @@
 {
   "Navbar": {
     "shop": "Shop",
-    "journal": "Journal",
+    "community": "Community",
     "about": "About",
     "search": "Search",
     "chat": "Messages",
-    "circle": "Circle",
     "wishlist": "Wishlist",
     "cart": "Shopping cart",
     "cartMobile": "Cart",
