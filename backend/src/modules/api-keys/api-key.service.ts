@@ -10,6 +10,7 @@ import type { AuthenticatedUser } from '../../common/types/authenticated-request
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { ApiKeyCreatedDto } from './dto/api-key-created.dto';
 import { ApiKeySummaryDto } from './dto/api-key-summary.dto';
+import { ApiKeyOwnSummaryDto } from './dto/api-key-own-summary.dto';
 import { generateApiKey, hashApiKey } from './api-key.utils';
 
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
@@ -78,6 +79,23 @@ export class ApiKeyService {
       revokedAt: apiKey.revokedAt,
       createdAt: apiKey.createdAt,
       owner: apiKey.owner,
+    }));
+  }
+
+  async listMine(ownerId: string): Promise<ApiKeyOwnSummaryDto[]> {
+    const apiKeys = await this.prisma.apiKey.findMany({
+      where: { ownerId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return apiKeys.map((apiKey) => ({
+      id: apiKey.id,
+      name: apiKey.name,
+      expiresAt: apiKey.expiresAt,
+      lastUsedAt: apiKey.lastUsedAt,
+      isRevoked: apiKey.isRevoked,
+      revokedAt: apiKey.revokedAt,
+      createdAt: apiKey.createdAt,
     }));
   }
 
