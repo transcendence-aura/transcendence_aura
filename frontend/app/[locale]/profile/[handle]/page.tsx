@@ -27,7 +27,6 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
   const { data: meData } = useQuery(ME_QUERY, { skip: !isAuthenticated });
   const { data, loading, error, refetch } = useQuery(PUBLIC_PROFILE_QUERY, {
     variables: { handle },
-    skip: !isAuthenticated,
   });
 
   if (loading && !data) {

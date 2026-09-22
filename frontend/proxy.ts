@@ -11,7 +11,6 @@ const PROTECTED_SEGMENTS = [
   'circle',
   'messages',
   'notifications',
-  'profile',
   'wishlist',
   'admin',
 ];
