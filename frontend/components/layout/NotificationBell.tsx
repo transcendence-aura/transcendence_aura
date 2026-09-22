@@ -44,7 +44,12 @@ export function NotificationBell() {
 
   const notificationText = (notification: Notification): string => {
     if (notification.type === 'MESSAGE' && notification.actor) {
-      return t('newMessage', { name: notification.actor.name });
+      return notification.title === 'CONVERSATION_REQUEST'
+        ? t('newRequest', { name: notification.actor.name })
+        : t('newMessage', { name: notification.actor.name });
+    }
+    if (notification.type === 'FOLLOW' && notification.actor) {
+      return t('newFollow', { name: notification.actor.name });
     }
     return notification.title ?? notification.body ?? t('fallback');
   };

@@ -5,6 +5,7 @@
     "about": "À propos",
     "search": "Rechercher",
     "chat": "Messages",
+    "circle": "Cercle",
     "wishlist": "Favoris",
     "cart": "Panier",
     "cartMobile": "Panier",
@@ -25,10 +26,22 @@
     "label": "Notifications",
     "empty": "Aucune notification pour le moment.",
     "newMessage": "{name} vous a envoyé un message",
+    "newRequest": "{name} souhaite démarrer une conversation avec vous",
+    "newFollow": "{name} a commencé à vous suivre",
     "fallback": "Nouvelle notification",
     "now": "maintenant",
     "markReadFailed": "Impossible de marquer les notifications comme lues",
     "unreadCount": "{count, plural, one {# notification non lue} other {# notifications non lues}}"
+  },
+  "CircleFeed": {
+    "title": "Activité",
+    "empty": "Suivez des personnes pour voir leur activité ici.",
+    "emptyCta": "Parcourir la boutique",
+    "failedToLoad": "Échec du chargement du fil",
+    "tryAgain": "Réessayer",
+    "now": "maintenant",
+    "newFollow": "{actor} a commencé à suivre {followedUser}",
+    "wishlistAdded": "{actor} a ajouté ceci à ses favoris"
   },
   "Footer": {
     "tagline": "Des formulations botaniques pures pour des rituels de soin attentifs.",
@@ -159,7 +172,17 @@
   },
   "ProfileHeader": {
     "following": "Abonnements",
-    "followers": "Abonnés"
+    "followers": "Abonnés",
+    "follow": "Suivre",
+    "followingAction": "Abonné(e)",
+    "followFailed": "Impossible de mettre à jour l'abonnement, veuillez réessayer"
+  },
+  "PublicProfile": {
+    "notFound": "Ce profil est introuvable",
+    "tryAgain": "Réessayer",
+    "recentlyFollowed": "A suivi récemment",
+    "recentlyAdded": "Ajouté récemment aux favoris",
+    "noActivity": "Aucune activité à afficher pour l'instant."
   },
   "AvatarUpload": {
     "changePhoto": "Changer de photo",

@@ -5,6 +5,7 @@
     "about": "About",
     "search": "Search",
     "chat": "Messages",
+    "circle": "Circle",
     "wishlist": "Wishlist",
     "cart": "Shopping cart",
     "cartMobile": "Cart",
@@ -25,10 +26,22 @@
     "label": "Notifications",
     "empty": "No notifications yet.",
     "newMessage": "{name} sent you a message",
+    "newRequest": "{name} wants to start a conversation with you",
+    "newFollow": "{name} started following you",
     "fallback": "New notification",
     "now": "now",
     "markReadFailed": "Could not mark notifications as read",
     "unreadCount": "{count, plural, one {# unread notification} other {# unread notifications}}"
+  },
+  "CircleFeed": {
+    "title": "Activity",
+    "empty": "Follow people to see their activity here.",
+    "emptyCta": "Browse the shop",
+    "failedToLoad": "Failed to load the feed",
+    "tryAgain": "Try again",
+    "now": "now",
+    "newFollow": "{actor} started following {followedUser}",
+    "wishlistAdded": "{actor} added this to their wishlist"
   },
   "Footer": {
     "tagline": "Pure botanical formulations for mindful skin rituals.",
@@ -159,7 +172,17 @@
   },
   "ProfileHeader": {
     "following": "Following",
-    "followers": "Followers"
+    "followers": "Followers",
+    "follow": "Follow",
+    "followingAction": "Following",
+    "followFailed": "Could not update follow status, please retry"
+  },
+  "PublicProfile": {
+    "notFound": "This profile could not be found",
+    "tryAgain": "Try again",
+    "recentlyFollowed": "Recently followed",
+    "recentlyAdded": "Recently added to wishlist",
+    "noActivity": "No activity to show yet."
   },
   "AvatarUpload": {
     "changePhoto": "Change photo",
