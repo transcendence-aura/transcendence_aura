@@ -55,12 +55,12 @@ const products: readonly DemoProduct[] = [
     name: 'Barrier Repair Cream',
     description:
       'Deep repair moisturizer that strengthens the skin barrier. Ideal for irritated or compromised skin. Suits dry and sensitive skin.',
-    badges: ['Sale'],
+    badges: [],
     categoryIds: [referenceIds.categories.faceCare],
     productFamilyIds: [referenceIds.productFamilies.moisturizer],
     collectionIds: [referenceIds.collections.skincare],
     variants: [
-      { label: '100ml', price: 48.0, isOnSale: true, discountPercentage: 15 },
+      { label: '100ml', price: 48.0 },
       { label: '242ml', price: 60.0 },
     ],
     inStock: true,
