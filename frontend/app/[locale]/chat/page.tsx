@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
 import { Plus, User } from 'lucide-react';
 import { Avatar } from '@/components/ui/display/avatar';
-import { Input } from '@/components/ui/form/input';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
@@ -223,7 +222,6 @@ export default function ChatPage() {
               <Plus className="h-5 w-5" />
             </button>
           </div>
-          <Input placeholder="Search..." />
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
