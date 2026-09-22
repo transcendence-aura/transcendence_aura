@@ -1,7 +1,10 @@
 export interface RequiredSecrets {
   POSTGRES_URL: string;
   JWT_ACCESS_SECRET: string;
+  JWT_REFRESH_SECRET: string;
   REDIS_URL: string;
+  OAUTH_CLIENT_ID: string,
+  OAUTH_CLIENT_SECRET: string,
   TWO_FACTOR_ENCRYPTION: string;
 }
 
@@ -38,17 +41,17 @@ export function validateSecrets(value: unknown): RequiredSecrets {
     errors.push('JWT_ACCESS_SECRET must contain at least 32 characters');
   }
 
-  // if (typeof value.JWT_REFRESH_SECRET === 'string' && value.JWT_REFRESH_SECRET.length < 32) {
-  //   errors.push('JWT_REFRESH_SECRET must contain at least 32 characters');
-  // }
+  if (typeof value.JWT_REFRESH_SECRET === 'string' && value.JWT_REFRESH_SECRET.length < 32) {
+    errors.push('JWT_REFRESH_SECRET must contain at least 32 characters');
+  }
 
-  //  if (
-  //    typeof value.JWT_ACCESS_SECRET === 'string' &&
-  //    typeof value.JWT_REFRESH_SECRET === 'string' &&
-  //    value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET
-  // ) {
-  //   errors.push('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different.');
-  // }
+   if (
+     typeof value.JWT_ACCESS_SECRET === 'string' &&
+     typeof value.JWT_REFRESH_SECRET === 'string' &&
+     value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET
+  ) {
+    errors.push('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different.');
+  }
 
   if (errors.length > 0) {
     throw new Error(`Vault secret validation failed: ${errors.join('; ')}`);
@@ -57,10 +60,10 @@ export function validateSecrets(value: unknown): RequiredSecrets {
   return {
     POSTGRES_URL: value.POSTGRES_URL as string,
     JWT_ACCESS_SECRET: value.JWT_ACCESS_SECRET as string,
-    //JWT_REFRESH_SECRET: value.JWT_REFRESH_SECRET as string,
+    JWT_REFRESH_SECRET: value.JWT_REFRESH_SECRET as string,
     REDIS_URL: value.REDIS_URL as string,
-    // OAUTH_CLIENT_ID: value.OAUTH_CLIENT_ID as string,
-    // OAUTH_CLIENT_SECRET: value.OAUTH_CLIENT_SECRET as string,
+    OAUTH_CLIENT_ID: value.OAUTH_CLIENT_ID as string,
+    OAUTH_CLIENT_SECRET: value.OAUTH_CLIENT_SECRET as string,
     TWO_FACTOR_ENCRYPTION: value.TWO_FACTOR_ENCRYPTION as string,
   };
 }
