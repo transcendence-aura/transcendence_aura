@@ -93,6 +93,17 @@ export class ConversationService {
       });
 
       const mapped = { ...conversation, messages: conversation.messages.map(mapMessage) };
+
+      // No dedicated enum value for "conversation request" - reuses MESSAGE
+      // with a title marker the frontend checks for before falling back to
+      // the generic "sent you a message" text.
+      await this.notificationService.create({
+        userId: otherUserId,
+        type: NotificationTypeEnum.MESSAGE,
+        actorId: userId,
+        title: 'CONVERSATION_REQUEST',
+      });
+
       // Emit only the declared ConversationType shape - `conversation` also
       // carries raw Prisma columns (e.g. userOneDeletedAt) that GraphQL would
       // normally strip, but socket.io has no schema to filter against.
