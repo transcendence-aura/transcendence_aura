@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { useToast } from '@/components/ui/feedback/toast';
 
 interface WishlistToggleProps {
+  // Not used yet - persistence (real add/remove) is a separate ticket. Threaded through now so
+  // that ticket only has to wire the mutation, not chase down where a real product id comes from.
+  productId: string;
   onToggle?: (isAdded: boolean) => void;
 }
 
-export const WishlistToggle = ({ onToggle }: WishlistToggleProps) => {
+export const WishlistToggle = ({ productId: _productId, onToggle }: WishlistToggleProps) => {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const { toast } = useToast();
 
