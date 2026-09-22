@@ -35,7 +35,7 @@ path "secret/data/aura-backend/development/database" {
 # Redis
 # --------------------------------------------------------------
 
-path "secret/data-backend/aura/development/redis" {
+path "secret/data/aura-backend/development/redis" {
   capabilities = ["create", "read", "update", "delete"]
 }
 

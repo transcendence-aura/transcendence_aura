@@ -37,12 +37,11 @@ Start Vault
 
 The following keys must exist in Vault:
 
-| Key                     | Purpose                      |
-| ----------------------- | ---------------------------- |
-| `POSTGRES_URL`          | Prisma PostgreSQL connection |
-| `JWT_ACCESS_SECRET`     | Access-token signing         |
-| `REDIS_URL`             | Redis connection             |
-| `TWO_FACTOR_ENCRYPTION` | 2FA encryption key           |
+| Key                 | Purpose                      |
+| ------------------- | ---------------------------- |
+| `POSTGRES_URL`      | Prisma PostgreSQL connection |
+| `JWT_ACCESS_SECRET` | Access-token signing         |
+| `REDIS_URL`         | Redis connection             |
 
 Secret values must never be committed to source control or included in application logs.
 

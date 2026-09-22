@@ -88,16 +88,6 @@ vault_exec_with_token write \
   secret_id_ttl="0" \
   secret_id_num_uses=0
 
-
-# Preserve the existing TWO_FACTOR_ENCRYPTION key.
-existing_two_factor_key="$(
-  vault_exec_with_token kv get \
-    -mount=secret \
-    -field=TWO_FACTOR_ENCRYPTION \
-    "$SECRET_PATH" \
-    2>/dev/null || true
-)"
-
 secret_exists=false
 
 if vault_exec_with_token kv metadata get \
@@ -108,18 +98,6 @@ if vault_exec_with_token kv metadata get \
   secret_exists=true
 fi
 
-if [[ -z "$existing_two_factor_key" ]]; then
-  command -v openssl >/dev/null 2>&1 ||
-    fail "OpenSSL is required to generate the 2FA encryption key."
-
-  two_factor_key="$(openssl rand -hex 32)"
-
-  echo "Generating initial 2FA encryption key."
-else
-  two_factor_key="$existing_two_factor_key"
-
-  echo "Existing 2FA encryption key found; preserving it."
-fi
 
 echo "Seeding Vault application secrets..."
 
@@ -129,16 +107,14 @@ if [[ "$secret_exists" == "true" ]]; then
     "$SECRET_PATH" \
     POSTGRES_URL="$POSTGRES_URL" \
     REDIS_URL="$REDIS_URL" \
-    JWT_ACCESS_SECRET="$JWT_ACCESS_SECRET" \
-    TWO_FACTOR_ENCRYPTION="$two_factor_key"
+    JWT_ACCESS_SECRET="$JWT_ACCESS_SECRET"
 else
   vault_exec_with_token kv put \
     -mount=secret \
     "$SECRET_PATH" \
     POSTGRES_URL="$POSTGRES_URL" \
     REDIS_URL="$REDIS_URL" \
-    JWT_ACCESS_SECRET="$JWT_ACCESS_SECRET" \
-    TWO_FACTOR_ENCRYPTION="$two_factor_key"
+    JWT_ACCESS_SECRET="$JWT_ACCESS_SECRET"
 fi
 
 unset two_factor_key

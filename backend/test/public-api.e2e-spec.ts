@@ -111,9 +111,6 @@ describe('Public API /v1 (AUR-153 acceptance criteria)', () => {
       JWT_ACCESS_SECRET: 'public-api-e2e-secret',
       JWT_REFRESH_SECRET: 'public-api-e2e-secret',
       REDIS_URL: 'public-api-e2e',
-      OAUTH_CLIENT_ID: 'public-api-e2e-id',
-      OAUTH_CLIENT_SECRET: 'public-api-e2e-secret',
-      TWO_FACTOR_ENCRYPTION: 'two-factor-encryption-secret-123',
     };
 
     const moduleRef = await Test.createTestingModule({
