@@ -31,7 +31,7 @@ describe('Access token transport', () => {
     REDIS_URL: 'access-token-transport-test',
     OAUTH_CLIENT_ID: 'local-refresh-test-id',
     OAUTH_CLIENT_SECRET: 'local-refresh-test-secret',
-    TWO_FACTOR_ENCRYPTION: 'two-factor-encryption-secret-123'
+    TWO_FACTOR_ENCRYPTION: 'two-factor-encryption-secret-123',
   };
 
   beforeAll(async () => {
