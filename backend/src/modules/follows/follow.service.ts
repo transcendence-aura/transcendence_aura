@@ -53,7 +53,8 @@ export class FollowService {
 
     await this.unblockDeclinedConversation(followerId, followingId);
 
-    await this.notificationService.create({
+    // NotificationService.create never throws, so this isn't awaited.
+    void this.notificationService.create({
       userId: followingId,
       type: NotificationTypeEnum.FOLLOW,
       actorId: followerId,

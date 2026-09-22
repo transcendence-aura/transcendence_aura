@@ -13,6 +13,9 @@ export class NotificationActorType {
 
   @Field()
   name!: string;
+
+  @Field()
+  handle!: string;
 }
 
 @ObjectType()

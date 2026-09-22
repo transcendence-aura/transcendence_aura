@@ -33,7 +33,9 @@ export class NotificationResolver {
   }
 
   @ResolveField(() => NotificationActorType, { nullable: true })
-  actor(@Parent() notification: NotificationType): Promise<{ id: string; name: string } | null> {
+  actor(
+    @Parent() notification: NotificationType,
+  ): Promise<{ id: string; name: string; handle: string } | null> {
     if (!notification.actorId) return Promise.resolve(null);
     return this.notificationService.getActor(notification.actorId);
   }

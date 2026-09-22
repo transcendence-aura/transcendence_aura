@@ -14,6 +14,7 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationService } from '../notifications/notification.service';
+import { CONVERSATION_REQUEST_MARKER } from '../notifications/notification-markers';
 import { ConversationType, MessageType } from './conversation.model';
 import { SendMessageInput } from './conversation.input';
 import { AnalyticsService } from '../analytics/analytics.service';
@@ -94,15 +95,19 @@ export class ConversationService {
 
       const mapped = { ...conversation, messages: conversation.messages.map(mapMessage) };
 
-      // No dedicated enum value for "conversation request" - reuses MESSAGE
-      // with a title marker the frontend checks for before falling back to
-      // the generic "sent you a message" text.
-      await this.notificationService.create({
-        userId: otherUserId,
-        type: NotificationTypeEnum.MESSAGE,
-        actorId: userId,
-        title: 'CONVERSATION_REQUEST',
-      });
+      // Only a genuine PENDING request needs a "wants to start a conversation"
+      // notification - when the recipient already follows the initiator this
+      // conversation is auto-ACCEPTED above, and that notification text would
+      // be misleading (nothing is actually awaiting their response).
+      // NotificationService.create never throws, so this isn't awaited.
+      if (status === ConversationStatus.PENDING) {
+        void this.notificationService.create({
+          userId: otherUserId,
+          type: NotificationTypeEnum.MESSAGE,
+          actorId: userId,
+          title: CONVERSATION_REQUEST_MARKER,
+        });
+      }
 
       // Emit only the declared ConversationType shape - `conversation` also
       // carries raw Prisma columns (e.g. userOneDeletedAt) that GraphQL would
