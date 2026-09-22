@@ -40,6 +40,7 @@
     "tryAgain": "Try again",
     "now": "now",
     "newFollow": "{actor} started following {followedUser}",
+    "newFollowFallback": "{actor} started following someone",
     "wishlistAdded": "{actor} added this to their wishlist"
   },
   "Footer": {
@@ -174,7 +175,8 @@
     "followers": "Followers",
     "follow": "Follow",
     "followingAction": "Following",
-    "followFailed": "Could not update follow status, please retry"
+    "followFailed": "Could not update follow status, please retry",
+    "logInToFollow": "Log in to follow"
   },
   "PublicProfile": {
     "notFound": "This profile could not be found",

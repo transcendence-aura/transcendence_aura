@@ -9,7 +9,9 @@ import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useRealtime } from '@/lib/realtime/realtime-provider';
 import { useToast } from '@/components/ui/feedback/toast';
 import { NotificationBadge } from '@/components/ui/feedback/notification-badge';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import {
+  CONVERSATION_REQUEST_MARKER,
   MARK_ALL_NOTIFICATIONS_READ_MUTATION,
   NOTIFICATIONS_QUERY,
   type Notification,
@@ -19,17 +21,10 @@ const QUERY_VARIABLES = { unreadOnly: true };
 
 function targetHref(notification: Notification): string {
   if (notification.type === 'MESSAGE') return '/chat';
+  if (notification.type === 'FOLLOW' && notification.actor) {
+    return `/profile/${notification.actor.handle}`;
+  }
   return '#';
-}
-
-function formatRelativeTime(iso: string, nowLabel: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffMinutes = Math.floor(diffMs / 60_000);
-  if (diffMinutes < 1) return nowLabel;
-  if (diffMinutes < 60) return `${diffMinutes}m`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h`;
-  return `${Math.floor(diffHours / 24)}d`;
 }
 
 export function NotificationBell() {
@@ -44,7 +39,7 @@ export function NotificationBell() {
 
   const notificationText = (notification: Notification): string => {
     if (notification.type === 'MESSAGE' && notification.actor) {
-      return notification.title === 'CONVERSATION_REQUEST'
+      return notification.title === CONVERSATION_REQUEST_MARKER
         ? t('newRequest', { name: notification.actor.name })
         : t('newMessage', { name: notification.actor.name });
     }

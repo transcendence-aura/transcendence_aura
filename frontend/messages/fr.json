@@ -40,6 +40,7 @@
     "tryAgain": "Réessayer",
     "now": "maintenant",
     "newFollow": "{actor} a commencé à suivre {followedUser}",
+    "newFollowFallback": "{actor} a commencé à suivre quelqu'un",
     "wishlistAdded": "{actor} a ajouté ceci à ses favoris"
   },
   "Footer": {
@@ -174,7 +175,8 @@
     "followers": "Abonnés",
     "follow": "Suivre",
     "followingAction": "Abonné(e)",
-    "followFailed": "Impossible de mettre à jour l'abonnement, veuillez réessayer"
+    "followFailed": "Impossible de mettre à jour l'abonnement, veuillez réessayer",
+    "logInToFollow": "Se connecter pour suivre"
   },
   "PublicProfile": {
     "notFound": "Ce profil est introuvable",

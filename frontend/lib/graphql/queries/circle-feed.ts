@@ -1,4 +1,5 @@
 import { gql, type TypedDocumentNode } from '@apollo/client';
+import { PRODUCT_CARD_FIELDS, type ProductCardProduct } from '../fragments/product-card';
 
 export type CircleFeedActivityKind = 'NEW_FOLLOW' | 'WISHLIST_ITEM_ADDED';
 
@@ -8,41 +9,13 @@ export interface CircleFeedProfile {
   handle: string;
 }
 
-export interface CircleFeedProductMedia {
-  id: string;
-  url: string;
-  altText?: string;
-  position: number;
-}
-
-export interface CircleFeedProductVariant {
-  id: string;
-  label: string;
-  isAvailable: boolean;
-  price: number;
-  isOnSale: boolean;
-  discountPercentage: number;
-}
-
-export interface CircleFeedProduct {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string;
-  media: CircleFeedProductMedia[];
-  variants: CircleFeedProductVariant[];
-  primaryImage?: CircleFeedProductMedia;
-  minPrice?: number;
-  badges: string[];
-}
-
 export interface CircleFeedItem {
   id: string;
   type: CircleFeedActivityKind;
   actor: CircleFeedProfile;
   createdAt: string;
   followedUser?: CircleFeedProfile;
-  product?: CircleFeedProduct;
+  product?: ProductCardProduct;
 }
 
 export interface CircleFeedPage {
@@ -73,36 +46,12 @@ export const CIRCLE_FEED_QUERY: TypedDocumentNode<CircleFeedQueryData> = gql`
           handle
         }
         product {
-          id
-          slug
-          name
-          description
-          badges
-          minPrice
-          primaryImage {
-            id
-            url
-            altText
-            position
-          }
-          media {
-            id
-            url
-            altText
-            position
-          }
-          variants {
-            id
-            label
-            isAvailable
-            price
-            isOnSale
-            discountPercentage
-          }
+          ...ProductCardFields
         }
       }
       total
       hasNextPage
     }
   }
+  ${PRODUCT_CARD_FIELDS}
 `;

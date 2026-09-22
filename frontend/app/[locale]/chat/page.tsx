@@ -10,6 +10,7 @@ import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useRealtime } from '@/lib/realtime/realtime-provider';
 import { useToast } from '@/components/ui/feedback/toast';
 import { getLastSeen, markConversationSeen } from '@/lib/chat/last-seen';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import {
   ACCEPT_CONVERSATION_MUTATION,
@@ -29,17 +30,6 @@ import { PendingConversationBar } from '@/components/chat/PendingConversationBar
 import { ProfilePanel } from '@/components/chat/ProfilePanel';
 
 type SidePanel = 'profile' | null;
-
-function formatRelativeTime(date: Date): string {
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60_000);
-
-  if (diffMinutes < 1) return 'now';
-  if (diffMinutes < 60) return `${diffMinutes}m`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h`;
-  return `${Math.floor(diffHours / 24)}d`;
-}
 
 function getOtherParticipant(conversation: Conversation, myId: string) {
   return conversation.userOne.id === myId ? conversation.userTwo : conversation.userOne;
@@ -272,7 +262,7 @@ export default function ChatPage() {
                   key={conversation.id}
                   name={other.name}
                   lastMessage={lastMessage?.content ?? 'No messages yet'}
-                  timeLabel={lastMessage ? formatRelativeTime(new Date(lastMessage.createdAt)) : ''}
+                  timeLabel={lastMessage ? formatRelativeTime(lastMessage.createdAt, 'now') : ''}
                   isUnread={isConversationUnread(conversation, myId)}
                   isActive={conversation.id === effectiveActiveId}
                   onClick={() => {

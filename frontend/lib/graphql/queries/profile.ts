@@ -1,4 +1,5 @@
 import { gql, type TypedDocumentNode } from '@apollo/client';
+import { PRODUCT_CARD_FIELDS, type ProductCardProduct } from '../fragments/product-card';
 
 // Only the fields the user changed are sent: an omitted field is left untouched by the backend.
 export interface UpdateMyProfileInput {
@@ -65,25 +66,6 @@ export interface PublicProfileSummary {
   handle: string;
 }
 
-export interface PublicProfileProduct {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string;
-  media: { id: string; url: string; altText?: string; position: number }[];
-  variants: {
-    id: string;
-    label: string;
-    isAvailable: boolean;
-    price: number;
-    isOnSale: boolean;
-    discountPercentage: number;
-  }[];
-  primaryImage?: { id: string; url: string; altText?: string; position: number };
-  minPrice?: number;
-  badges: string[];
-}
-
 export interface PublicProfile {
   id: string;
   name: string;
@@ -93,7 +75,7 @@ export interface PublicProfile {
   followingCount: number;
   isFollowing: boolean;
   recentFollows: PublicProfileSummary[];
-  recentWishlistAdds: PublicProfileProduct[];
+  recentWishlistAdds: ProductCardProduct[];
 }
 
 export interface PublicProfileQueryData {
@@ -123,35 +105,11 @@ export const PUBLIC_PROFILE_QUERY: TypedDocumentNode<
         handle
       }
       recentWishlistAdds {
-        id
-        slug
-        name
-        description
-        badges
-        minPrice
-        primaryImage {
-          id
-          url
-          altText
-          position
-        }
-        media {
-          id
-          url
-          altText
-          position
-        }
-        variants {
-          id
-          label
-          isAvailable
-          price
-          isOnSale
-          discountPercentage
-        }
+        ...ProductCardFields
       }
     }
   }
+  ${PRODUCT_CARD_FIELDS}
 `;
 
 export interface FollowUserData {

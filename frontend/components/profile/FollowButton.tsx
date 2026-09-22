@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { ApolloCache } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { useToast } from '@/components/ui/feedback/toast';
 import {
   FOLLOW_USER_MUTATION,
@@ -17,15 +18,31 @@ interface FollowButtonProps {
   targetUserId: string;
   handle: string;
   isFollowing: boolean;
+  isAuthenticated: boolean;
 }
 
-export function FollowButton({ targetUserId, handle, isFollowing }: FollowButtonProps) {
+export function FollowButton({
+  targetUserId,
+  handle,
+  isFollowing,
+  isAuthenticated,
+}: FollowButtonProps) {
   const t = useTranslations('ProfileHeader');
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
-
   const [followUser] = useMutation(FOLLOW_USER_MUTATION);
   const [unfollowUser] = useMutation(UNFOLLOW_USER_MUTATION);
+
+  if (!isAuthenticated) {
+    return (
+      <Link
+        href={`/login?returnTo=${encodeURIComponent(`/profile/${handle}`)}`}
+        className={`inline-block w-fit ${TEXT_BUTTON} text-text-inverse bg-brand-dark hover:bg-brand-darker px-3 py-1.5 transition-colors`}
+      >
+        {t('logInToFollow')}
+      </Link>
+    );
+  }
 
   const updateCache = (cache: ApolloCache) => {
     const existing = cache.readQuery<{ userProfile: PublicProfile }>({
@@ -75,8 +92,9 @@ export function FollowButton({ targetUserId, handle, isFollowing }: FollowButton
   return (
     <span
       role="button"
-      tabIndex={0}
+      tabIndex={pending ? -1 : 0}
       aria-pressed={isFollowing}
+      aria-disabled={pending}
       onClick={handleToggle}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

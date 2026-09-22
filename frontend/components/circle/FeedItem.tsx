@@ -2,17 +2,8 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Avatar } from '@/components/ui/display/avatar';
 import { ProductCard } from '@/components/cards/ProductCard';
+import { formatRelativeTime } from '@/lib/format-relative-time';
 import type { CircleFeedItem } from '@/lib/graphql/queries/circle-feed';
-
-function formatRelativeTime(iso: string, nowLabel: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffMinutes = Math.floor(diffMs / 60_000);
-  if (diffMinutes < 1) return nowLabel;
-  if (diffMinutes < 60) return `${diffMinutes}m`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h`;
-  return `${Math.floor(diffHours / 24)}d`;
-}
 
 interface FeedItemProps {
   item: CircleFeedItem;
@@ -22,8 +13,10 @@ export function FeedItem({ item }: FeedItemProps) {
   const t = useTranslations('CircleFeed');
 
   const text =
-    item.type === 'NEW_FOLLOW' && item.followedUser
-      ? t('newFollow', { actor: item.actor.name, followedUser: item.followedUser.name })
+    item.type === 'NEW_FOLLOW'
+      ? item.followedUser
+        ? t('newFollow', { actor: item.actor.name, followedUser: item.followedUser.name })
+        : t('newFollowFallback', { actor: item.actor.name })
       : t('wishlistAdded', { actor: item.actor.name });
 
   return (

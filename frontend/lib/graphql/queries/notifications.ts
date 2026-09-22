@@ -2,9 +2,14 @@ import { gql, type TypedDocumentNode } from '@apollo/client';
 
 export type NotificationKind = 'MESSAGE' | 'FOLLOW' | 'WISHLIST' | 'SYSTEM';
 
+// Must match the constant of the same name in
+// backend/src/modules/notifications/notification-markers.ts.
+export const CONVERSATION_REQUEST_MARKER = 'CONVERSATION_REQUEST';
+
 export interface NotificationActor {
   id: string;
   name: string;
+  handle: string;
 }
 
 export interface Notification {
@@ -40,6 +45,7 @@ export const NOTIFICATIONS_QUERY: TypedDocumentNode<
       actor {
         id
         name
+        handle
       }
       title
       body

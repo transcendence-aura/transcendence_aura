@@ -70,6 +70,7 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
               targetUserId={profile.id}
               handle={profile.handle}
               isFollowing={profile.isFollowing}
+              isAuthenticated={isAuthenticated}
             />
           )
         }
