@@ -1,57 +1,91 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { SearchInput } from '@/components/ui/form/search-input';
+import { CATALOGUE_CATEGORIES } from '@/lib/catalogue/categories';
+import { CATALOGUE_COLLECTIONS } from '@/lib/catalogue/collections';
+import { CATALOGUE_PRODUCT_FAMILIES } from '@/lib/catalogue/product-families';
 
 interface CatalogueSidebarProps {
-  onCategoryChange: (categories: string[]) => void;
-  onSkinTypeChange: (skinTypes: string[]) => void;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  // null: no filter ("All").
+  selectedCollection: string | null;
+  onCollectionChange: (collectionSlug: string | null) => void;
+  selectedCategory: string | null;
+  onCategoryChange: (categorySlug: string | null) => void;
+  selectedFamily: string | null;
+  onFamilyChange: (familySlug: string | null) => void;
   onPriceChange: (range: [number, number]) => void;
   priceRange: [number, number];
-  selectedCategories?: string[];
-  selectedSkinTypes?: string[];
 }
 
-const CATEGORIES = [
-  { id: '1', name: 'Serums & Oils' },
-  { id: '2', name: 'Face Care' },
-  { id: '3', name: 'Ritual Sets' },
-];
+// A price bound (min or max) as its own text field, decoupled from `value` while being edited.
+// Deriving the input's text straight from `value` on every keystroke (the previous approach)
+// fights the user: clearing the field to type a new number resolves to `Number('') || 0`, which
+// for the min bound (default 0) redraws the exact same "0" the user just deleted, making it look
+// stuck. Free typing is allowed here; a bad or empty value only reverts on blur.
+function PriceBoundInput({
+  value,
+  onCommit,
+  ariaLabel,
+}: {
+  value: number;
+  onCommit: (value: number) => void;
+  ariaLabel: string;
+}) {
+  const [text, setText] = useState(String(value));
 
-const SKIN_TYPES = [
-  { id: '2', name: 'Dry skin' },
-  { id: '3', name: 'Sensitive skin' },
-  { id: '4', name: 'Oily skin' },
-];
+  // Stays in sync when the bound changes from elsewhere (Clear all, removing the filter chip).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setText(String(value)), [value]);
+
+  return (
+    <div className="relative">
+      <span className="text-body-sm text-text-muted pointer-events-none absolute top-1/2 left-2 -translate-y-1/2">
+        €
+      </span>
+      <input
+        type="text"
+        inputMode="numeric"
+        aria-label={ariaLabel}
+        value={text}
+        onChange={(e) => {
+          const raw = e.target.value;
+          setText(raw);
+          if (raw === '') return;
+          const parsed = Number(raw);
+          if (!Number.isNaN(parsed) && parsed >= 0) onCommit(parsed);
+        }}
+        onBlur={() => {
+          if (Number.isNaN(Number(text)) || text === '') setText(String(value));
+        }}
+        className="w-16 border border-border-default bg-page py-1.5 pr-1 pl-5 text-body-sm text-text-primary font-jost outline-none"
+      />
+    </div>
+  );
+}
 
 export const CatalogueSidebar = ({
+  searchValue,
+  onSearchChange,
+  selectedCollection,
+  onCollectionChange,
+  selectedCategory,
   onCategoryChange,
-  onSkinTypeChange,
+  selectedFamily,
+  onFamilyChange,
   onPriceChange,
   priceRange,
-  selectedCategories = [],
-  selectedSkinTypes = [],
 }: CatalogueSidebarProps) => {
   const [expandedSections, setExpandedSections] = useState({
-    category: true,
-    skinType: true,
+    collection: false,
+    category: false,
+    family: false,
     price: false,
   });
 
-  const handleCategoryChange = (categoryId: string, checked: boolean) => {
-    const updated = checked
-      ? [...selectedCategories, categoryId]
-      : selectedCategories.filter((id) => id !== categoryId);
-    onCategoryChange(updated);
-  };
-
-  const handleSkinTypeChange = (skinTypeId: string, checked: boolean) => {
-    const updated = checked
-      ? [...selectedSkinTypes, skinTypeId]
-      : selectedSkinTypes.filter((id) => id !== skinTypeId);
-    onSkinTypeChange(updated);
-  };
-
-  const toggleSection = (section: 'category' | 'skinType' | 'price') => {
+  const toggleSection = (section: 'collection' | 'category' | 'family' | 'price') => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
@@ -60,7 +94,67 @@ export const CatalogueSidebar = ({
 
   return (
     <aside className="border-r border-border-default p-5">
-      {/* Category Filter */}
+      {/* Search - combines with every filter below (sent together as one query). */}
+      <div className="mb-6">
+        <SearchInput
+          value={searchValue}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search products..."
+          aria-label="Search products"
+        />
+      </div>
+
+      {/* Collection Filter - single-select, combines with Category and Product Family. */}
+      <div className="mb-6 pb-6 border-b border-subtle">
+        <button
+          type="button"
+          onClick={() => toggleSection('collection')}
+          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
+        >
+          Collection
+          <span
+            className={`text-brand-dark transition-transform ${expandedSections.collection ? 'rotate-90' : ''}`}
+          >
+            ›
+          </span>
+        </button>
+
+        {expandedSections.collection && (
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer group select-none">
+              <input
+                type="radio"
+                name="catalogue-collection"
+                checked={selectedCollection === null}
+                onChange={() => onCollectionChange(null)}
+                className="w-4 h-4 accent-text-primary cursor-pointer"
+              />
+              <span className="text-body-sm text-text-primary group-hover:text-text-primary">
+                All
+              </span>
+            </label>
+            {CATALOGUE_COLLECTIONS.map((collection) => (
+              <label
+                key={collection.slug}
+                className="flex items-center gap-2 cursor-pointer group select-none"
+              >
+                <input
+                  type="radio"
+                  name="catalogue-collection"
+                  checked={selectedCollection === collection.slug}
+                  onChange={() => onCollectionChange(collection.slug)}
+                  className="w-4 h-4 accent-text-primary cursor-pointer"
+                />
+                <span className="text-body-sm text-text-primary group-hover:text-text-primary">
+                  {collection.name}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Category Filter - single-select: the backend filters by one categorySlug at a time. */}
       <div className="mb-6 pb-6 border-b border-subtle">
         <button
           type="button"
@@ -77,15 +171,28 @@ export const CatalogueSidebar = ({
 
         {expandedSections.category && (
           <div className="space-y-2">
-            {CATEGORIES.map((category) => (
+            <label className="flex items-center gap-2 cursor-pointer group select-none">
+              <input
+                type="radio"
+                name="catalogue-category"
+                checked={selectedCategory === null}
+                onChange={() => onCategoryChange(null)}
+                className="w-4 h-4 accent-text-primary cursor-pointer"
+              />
+              <span className="text-body-sm text-text-primary group-hover:text-text-primary">
+                All
+              </span>
+            </label>
+            {CATALOGUE_CATEGORIES.map((category) => (
               <label
-                key={category.id}
+                key={category.slug}
                 className="flex items-center gap-2 cursor-pointer group select-none"
               >
                 <input
-                  type="checkbox"
-                  checked={selectedCategories.includes(category.id)}
-                  onChange={(e) => handleCategoryChange(category.id, e.target.checked)}
+                  type="radio"
+                  name="catalogue-category"
+                  checked={selectedCategory === category.slug}
+                  onChange={() => onCategoryChange(category.slug)}
                   className="w-4 h-4 accent-text-primary cursor-pointer"
                 />
                 <span className="text-body-sm text-text-primary group-hover:text-text-primary">
@@ -97,36 +204,49 @@ export const CatalogueSidebar = ({
         )}
       </div>
 
-      {/* Skin Type Filter */}
+      {/* Product Family Filter - single-select, combines with Category (both sent together). */}
       <div className="mb-6 pb-6 border-b border-subtle">
         <button
           type="button"
-          onClick={() => toggleSection('skinType')}
+          onClick={() => toggleSection('family')}
           className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
         >
-          Skin type
+          Product Family
           <span
-            className={`text-brand-dark transition-transform ${expandedSections.skinType ? 'rotate-90' : ''}`}
+            className={`text-brand-dark transition-transform ${expandedSections.family ? 'rotate-90' : ''}`}
           >
             ›
           </span>
         </button>
 
-        {expandedSections.skinType && (
+        {expandedSections.family && (
           <div className="space-y-2">
-            {SKIN_TYPES.map((skinType) => (
+            <label className="flex items-center gap-2 cursor-pointer group select-none">
+              <input
+                type="radio"
+                name="catalogue-family"
+                checked={selectedFamily === null}
+                onChange={() => onFamilyChange(null)}
+                className="w-4 h-4 accent-text-primary cursor-pointer"
+              />
+              <span className="text-body-sm text-text-primary group-hover:text-text-primary">
+                All
+              </span>
+            </label>
+            {CATALOGUE_PRODUCT_FAMILIES.map((family) => (
               <label
-                key={skinType.id}
+                key={family.slug}
                 className="flex items-center gap-2 cursor-pointer group select-none"
               >
                 <input
-                  type="checkbox"
-                  checked={selectedSkinTypes.includes(skinType.id)}
-                  onChange={(e) => handleSkinTypeChange(skinType.id, e.target.checked)}
+                  type="radio"
+                  name="catalogue-family"
+                  checked={selectedFamily === family.slug}
+                  onChange={() => onFamilyChange(family.slug)}
                   className="w-4 h-4 accent-text-primary cursor-pointer"
                 />
                 <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                  {skinType.name}
+                  {family.name}
                 </span>
               </label>
             ))}
@@ -151,24 +271,16 @@ export const CatalogueSidebar = ({
 
         {expandedSections.price && (
           <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={`€${priceRange[0]}`}
-              onChange={(e) => {
-                const val = Number(e.target.value.replace('€', '')) || 0;
-                onPriceChange([val, priceRange[1]]);
-              }}
-              className="w-15 px-2 py-1.5 border border-border-default text-body-sm text-text-primary bg-page font-jost outline-none"
+            <PriceBoundInput
+              value={priceRange[0]}
+              onCommit={(min) => onPriceChange([min, priceRange[1]])}
+              ariaLabel="Minimum price"
             />
             <span className="text-body-sm text-text-muted">—</span>
-            <input
-              type="text"
-              value={`€${priceRange[1]}`}
-              onChange={(e) => {
-                const val = Number(e.target.value.replace('€', '')) || 0;
-                onPriceChange([priceRange[0], val]);
-              }}
-              className="w-15 px-2 py-1.5 border border-border-default text-body-sm text-text-primary bg-page font-jost outline-none"
+            <PriceBoundInput
+              value={priceRange[1]}
+              onCommit={(max) => onPriceChange([priceRange[0], max])}
+              ariaLabel="Maximum price"
             />
           </div>
         )}

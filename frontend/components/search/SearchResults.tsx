@@ -21,6 +21,8 @@ export function SearchResults({ term }: { term: string }) {
 
   const { data, loading, error, refetch } = useQuery<ProductsQueryResponse>(PRODUCTS_QUERY, {
     skip: searchQuery === null,
+    // Revalidates on every mount/variable change instead of trusting a possibly stale cache entry.
+    fetchPolicy: 'cache-and-network',
     variables: { filter: { search: searchQuery }, pagination: { page, limit: RESULTS_PER_PAGE } },
   });
 
