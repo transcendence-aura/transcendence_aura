@@ -13,6 +13,7 @@ import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import { ApiKeySection } from './ApiKeySection';
 import { EmailChangeDialog } from './EmailChangeDialog';
+import { PasswordChangeDialog } from './PasswordChangeDialog';
 import { ProfileForm } from './ProfileForm';
 import { SettingsRow, SettingsSection } from './SettingsSection';
 
@@ -50,6 +51,7 @@ export function ProfileSettings() {
   const isAuthenticated = useIsAuthenticated();
   const { data, loading, error, refetch } = useQuery(ME_QUERY, { skip: !isAuthenticated });
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   // Whether the user was signed in while this page was on screen.
   const wasAuthenticated = useRef(isAuthenticated);
@@ -121,7 +123,14 @@ export function ProfileSettings() {
             </Button>
           </SettingsRow>
           <SettingsRow label={t('password')}>
-            <ComingSoon />
+            <Button
+              type="button"
+              variant="link"
+              onClick={() => setIsPasswordDialogOpen(true)}
+              className="text-ui-button uppercase"
+            >
+              {t('changePassword')}
+            </Button>
           </SettingsRow>
           <SettingsRow label={t('twoFactor')} description={t('twoFactorDescription')}>
             <Link href="/settings/security" className={LINK_CLASS}>
@@ -153,6 +162,10 @@ export function ProfileSettings() {
         isOpen={isEmailDialogOpen}
         onClose={() => setIsEmailDialogOpen(false)}
         currentEmail={email}
+      />
+      <PasswordChangeDialog
+        isOpen={isPasswordDialogOpen}
+        onClose={() => setIsPasswordDialogOpen(false)}
       />
     </div>
   );

@@ -25,6 +25,8 @@ export function LoginForm() {
   // Set by the register form when the account was created but the automatic sign-in failed.
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get('registered') === '1';
+  // Set by the settings page after a password change: every session was revoked server-side.
+  const passwordChanged = searchParams.get('passwordChanged') === '1';
   const returnTo = getSafeReturnTo(searchParams.get('returnTo'));
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -206,6 +208,9 @@ export function LoginForm() {
       </h2>
       <p className="mb-6 text-ui-label leading-relaxed text-text-secondary">{t('subtitle')}</p>
       {justRegistered && <p className="mb-4 text-ui-label text-status-online">{t('registered')}</p>}
+      {passwordChanged && (
+        <p className="mb-4 text-ui-label text-status-online">{t('passwordChanged')}</p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email */}
