@@ -14,6 +14,7 @@ import {
 import { PrismaService } from '../../database/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationService } from '../notifications/notification.service';
+import { CONVERSATION_REQUEST_MARKER } from '../notifications/notification-markers';
 import { ConversationType, MessageType } from './conversation.model';
 import { SendMessageInput } from './conversation.input';
 import { AnalyticsService } from '../analytics/analytics.service';
@@ -93,6 +94,21 @@ export class ConversationService {
       });
 
       const mapped = { ...conversation, messages: conversation.messages.map(mapMessage) };
+
+      // Only a genuine PENDING request needs a "wants to start a conversation"
+      // notification - when the recipient already follows the initiator this
+      // conversation is auto-ACCEPTED above, and that notification text would
+      // be misleading (nothing is actually awaiting their response).
+      // NotificationService.create never throws, so this isn't awaited.
+      if (status === ConversationStatus.PENDING) {
+        void this.notificationService.create({
+          userId: otherUserId,
+          type: NotificationTypeEnum.MESSAGE,
+          actorId: userId,
+          title: CONVERSATION_REQUEST_MARKER,
+        });
+      }
+
       // Emit only the declared ConversationType shape - `conversation` also
       // carries raw Prisma columns (e.g. userOneDeletedAt) that GraphQL would
       // normally strip, but socket.io has no schema to filter against.
@@ -223,12 +239,18 @@ export class ConversationService {
     const recipientId =
       conversation.userOneId === userId ? conversation.userTwoId : conversation.userOneId;
 
-    await this.notificationService.create({
-      userId: recipientId,
-      type: NotificationTypeEnum.MESSAGE,
-      actorId: userId,
-      body: input.content,
-    });
+    // A PENDING conversation's first (and only possible, per the guard above)
+    // message from the initiator already triggered a "wants to start a
+    // conversation" notification in startConversation - sending a second
+    // "sent you a message" notification for the same event is redundant.
+    if (conversation.status !== ConversationStatus.PENDING) {
+      await this.notificationService.create({
+        userId: recipientId,
+        type: NotificationTypeEnum.MESSAGE,
+        actorId: userId,
+        body: input.content,
+      });
+    }
 
     return mapped;
   }

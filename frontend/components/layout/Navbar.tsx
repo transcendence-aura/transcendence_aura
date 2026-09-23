@@ -44,7 +44,7 @@ export function Navbar() {
           href="/circle"
           className="text-text-secondary hover:text-text-primary text-ui-nav transition-colors"
         >
-          Circle
+          {t('community')}
         </Link>
         <Link
           href="/about"
@@ -158,7 +158,7 @@ export function Navbar() {
             onClick={() => setMenuOpen(false)}
             className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors"
           >
-            Circle
+            {t('community')}
           </Link>
           <Link
             href="/about"

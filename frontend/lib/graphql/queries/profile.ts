@@ -1,4 +1,5 @@
 import { gql, type TypedDocumentNode } from '@apollo/client';
+import { PRODUCT_CARD_FIELDS, type ProductCardProduct } from '../fragments/product-card';
 
 // Only the fields the user changed are sent: an omitted field is left untouched by the backend.
 export interface UpdateMyProfileInput {
@@ -56,5 +57,86 @@ export const PROFILE_COUNTS_QUERY: TypedDocumentNode<ProfileCountsData, ProfileC
         followersCount
         followingCount
       }
+    }
+  `;
+
+export interface PublicProfileSummary {
+  id: string;
+  name: string;
+  handle: string;
+}
+
+export interface PublicProfile {
+  id: string;
+  name: string;
+  handle: string;
+  bio?: string;
+  followersCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+  recentFollows: PublicProfileSummary[];
+  recentWishlistAdds: ProductCardProduct[];
+}
+
+export interface PublicProfileQueryData {
+  userProfile: PublicProfile;
+}
+
+export interface PublicProfileQueryVariables {
+  handle: string;
+}
+
+export const PUBLIC_PROFILE_QUERY: TypedDocumentNode<
+  PublicProfileQueryData,
+  PublicProfileQueryVariables
+> = gql`
+  query PublicProfile($handle: String!) {
+    userProfile(handle: $handle) {
+      id
+      name
+      handle
+      bio
+      followersCount
+      followingCount
+      isFollowing
+      recentFollows {
+        id
+        name
+        handle
+      }
+      recentWishlistAdds {
+        ...ProductCardFields
+      }
+    }
+  }
+  ${PRODUCT_CARD_FIELDS}
+`;
+
+export interface FollowUserData {
+  followUser: boolean;
+}
+
+export interface FollowUserVariables {
+  input: { targetUserId: string };
+}
+
+export const FOLLOW_USER_MUTATION: TypedDocumentNode<FollowUserData, FollowUserVariables> = gql`
+  mutation FollowUser($input: FollowInput!) {
+    followUser(input: $input)
+  }
+`;
+
+export interface UnfollowUserData {
+  unfollowUser: boolean;
+}
+
+export interface UnfollowUserVariables {
+  input: { targetUserId: string };
+}
+
+export const UNFOLLOW_USER_MUTATION: TypedDocumentNode<UnfollowUserData, UnfollowUserVariables> =
+  gql`
+    mutation UnfollowUser($input: FollowInput!) {
+      unfollowUser(input: $input)
     }
   `;

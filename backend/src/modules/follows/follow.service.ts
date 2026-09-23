@@ -1,10 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ConversationStatus, Prisma } from '@prisma/client';
+import {
+  ConversationStatus,
+  NotificationType as NotificationTypeEnum,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEventType, AnalyticsTargetType } from '../analytics/analytics-event-type.enum';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { CircleFeedService } from '../circle-feed/circle-feed.service';
+import { NotificationService } from '../notifications/notification.service';
 
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
 
@@ -15,6 +20,7 @@ export class FollowService {
     private readonly analyticsService: AnalyticsService,
     private readonly realtimeGateway: RealtimeGateway,
     private readonly circleFeedService: CircleFeedService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async follow(followerId: string, followingId: string): Promise<boolean> {
@@ -46,6 +52,13 @@ export class FollowService {
     await this.circleFeedService.publishNewFollow(followerId, followingId, created.createdAt);
 
     await this.unblockDeclinedConversation(followerId, followingId);
+
+    // NotificationService.create never throws, so this isn't awaited.
+    void this.notificationService.create({
+      userId: followingId,
+      type: NotificationTypeEnum.FOLLOW,
+      actorId: followerId,
+    });
 
     return true;
   }

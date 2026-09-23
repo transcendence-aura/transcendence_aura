@@ -71,10 +71,10 @@ export class NotificationService {
     }
   }
 
-  async getActor(actorId: string): Promise<{ id: string; name: string } | null> {
+  async getActor(actorId: string): Promise<{ id: string; name: string; handle: string } | null> {
     return this.prisma.user.findUnique({
       where: { id: actorId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, handle: true },
     });
   }
 
