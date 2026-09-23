@@ -24,7 +24,10 @@ interface CollectionCardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const CollectionCard = forwardRef<HTMLDivElement, CollectionCardProps>(
-  ({ collection, href = `/collections/${collection.slug}`, className = '', ...props }, ref) => {
+  (
+    { collection, href = `/catalogue?collection=${collection.slug}`, className = '', ...props },
+    ref,
+  ) => {
     const t = useTranslations('CollectionCard');
     const cardContent = (
       <article
