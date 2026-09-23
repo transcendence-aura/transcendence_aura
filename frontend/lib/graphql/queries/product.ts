@@ -7,30 +7,16 @@ export interface ProductCategory {
   slug: string;
 }
 
-export interface ProductRating {
-  average: number;
-  count: number;
-}
-
-export interface ProductContent {
-  description: string;
-  keyIngredients: string;
-  howToUse: string;
-  shippingInfo: string;
-}
-
 export interface Product {
   id: string;
   slug: string;
   name: string;
-  description: string | null;
-  shortDescription: string;
+  description?: string | null;
   badges: string[];
-  category: ProductCategory;
-  rating: ProductRating;
+  primaryImage?: ProductMedia;
   media: ProductMedia[];
   variants: ProductVariant[];
-  content: ProductContent;
+  categories: ProductCategory[];
 }
 
 export interface ProductQueryResponse {
@@ -44,16 +30,12 @@ export const PRODUCT_QUERY = gql`
       slug
       name
       description
-      shortDescription
-      category {
-        id
-        name
-        slug
-      }
       badges
-      rating {
-        average
-        count
+      primaryImage {
+        id
+        url
+        altText
+        position
       }
       media {
         id
@@ -69,11 +51,10 @@ export const PRODUCT_QUERY = gql`
         isOnSale
         discountPercentage
       }
-      content {
-        description
-        keyIngredients
-        howToUse
-        shippingInfo
+      categories {
+        id
+        name
+        slug
       }
     }
   }

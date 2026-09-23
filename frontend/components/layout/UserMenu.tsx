@@ -12,6 +12,7 @@ import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { clearAccessToken } from '@/lib/auth/token-store';
 import { LOGOUT_MUTATION } from '@/lib/auth/logout.mutation';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
+import { useCart } from '@/lib/hooks/useCart';
 
 const ITEM_CLASS =
   'text-text-secondary hover:text-text-primary hover:bg-page focus-visible:outline-border-focus flex w-full items-center gap-3 px-4 py-2.5 text-ui-label tracking-wider transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2';
@@ -25,11 +26,15 @@ function useLogout() {
   const [logout] = useMutation(LOGOUT_MUTATION);
   const { toast } = useToast();
   const t = useTranslations('UserMenu');
+  const cart = useCart();
 
   return async () => {
     try {
       await logout();
       clearAccessToken({ byUser: true });
+      // The cart is local-only (localStorage, no user id attached) - clear it here too, otherwise
+      // it survives into the next session signed in on the same browser.
+      cart.clear();
       await client.clearStore();
       router.push('/login');
     } catch {
