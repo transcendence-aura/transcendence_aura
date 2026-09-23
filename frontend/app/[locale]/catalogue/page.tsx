@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense, useEffect, useState } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
@@ -36,6 +37,10 @@ const DEFAULT_PRICE_RANGE: [number, number] = [0, 500];
 const SKELETON_COUNT = 9;
 
 function CatalogueContent() {
+  const t = useTranslations('Catalogue');
+  const tFilters = useTranslations('CatalogueFilters');
+  const tBadges = useTranslations('ProductBadges');
+  const format = useFormatter();
   const { addItem } = useCart();
   const { toast } = useToast();
   const searchTerm = useSearchParams().get('q')?.trim() ?? '';
@@ -130,11 +135,20 @@ function CatalogueContent() {
     setCurrentPage(1);
   };
 
+  const badgeLabel = (badge: string) => (tBadges.has(badge) ? tBadges(badge) : badge);
+  const formatPrice = (value: number, digits: number) =>
+    format.number(value, {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+
   const handleAddToCart = (product: Product) => {
     const variant = product.variants[0];
     if (!variant || !variant.isAvailable) {
       toast({
-        message: 'This product is currently unavailable',
+        message: t('unavailable'),
         variant: 'error',
       });
       return;
@@ -152,7 +166,7 @@ function CatalogueContent() {
     });
 
     toast({
-      message: `Added ${product.name} to cart`,
+      message: t('addedToCart', { name: product.name }),
       variant: 'success',
     });
   };
@@ -160,15 +174,15 @@ function CatalogueContent() {
   // A search term in the URL (?q=) swaps the browsing view for the search results.
   if (searchTerm) return <SearchResults key={searchTerm} term={searchTerm} />;
 
-  const selectedCollectionName = CATALOGUE_COLLECTIONS.find(
+  const selectedCollectionSlug = CATALOGUE_COLLECTIONS.find(
     (collection) => collection.slug === selectedCollection,
-  )?.name;
-  const selectedCategoryName = CATALOGUE_CATEGORIES.find(
+  )?.slug;
+  const selectedCategorySlug = CATALOGUE_CATEGORIES.find(
     (category) => category.slug === selectedCategory,
-  )?.name;
-  const selectedFamilyName = CATALOGUE_PRODUCT_FAMILIES.find(
+  )?.slug;
+  const selectedFamilySlug = CATALOGUE_PRODUCT_FAMILIES.find(
     (family) => family.slug === selectedFamily,
-  )?.name;
+  )?.slug;
   const hasPriceFilter = priceRange[0] > 0 || priceRange[1] < DEFAULT_PRICE_RANGE[1];
   const hasActiveFilters =
     debouncedSearch !== '' ||
@@ -182,36 +196,36 @@ function CatalogueContent() {
       {/* Header Section */}
       <div className="flex flex-col gap-4 border-b border-border-default bg-page px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:gap-0 sm:px-6 md:px-8 md:py-7">
         <div className="flex-1">
-          <p className="mb-2 text-ui-label text-text-muted">Our collection</p>
+          <p className="mb-2 text-ui-label text-text-muted">{t('eyebrow')}</p>
           <h1 className="mb-1 font-bold font-cormorant text-display-title text-text-primary">
-            All Products
+            {t('title')}
           </h1>
           <p className="text-body-sm text-text-muted">
-            {loading ? 'Loading...' : `${total} products`}
+            {loading ? t('loading') : t('productCount', { count: total })}
           </p>
         </div>
 
         {/* Controls */}
         <div className="flex w-full items-center gap-3 sm:w-auto sm:gap-4">
           <div className="hidden items-center gap-2 sm:flex">
-            <span className="text-sm text-ui-label text-text-muted">Sort by</span>
+            <span className="text-sm text-ui-label text-text-muted">{t('sortBy')}</span>
             <select
               value={sortBy}
               onChange={handleSortChange}
               className="border-0 border-b border-border-default bg-transparent pb-0.5 text-body-sm text-text-primary outline-none cursor-pointer"
             >
-              <option value="featured">Featured</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
+              <option value="featured">{t('sortFeatured')}</option>
+              <option value="price-asc">{t('sortPriceAsc')}</option>
+              <option value="price-desc">{t('sortPriceDesc')}</option>
             </select>
           </div>
 
           {/* Grid / List View Toggle */}
-          <div className="flex gap-1 ml-auto sm:ml-0">
+          <div className="flex gap-1 ms-auto sm:ms-0">
             <button
               type="button"
               onClick={() => handleViewModeChange('grid')}
-              aria-label="Grid view"
+              aria-label={t('gridView')}
               className={`flex items-center justify-center w-8 h-8 rounded border transition-colors ${
                 viewMode === 'grid'
                   ? 'border-brand-dark bg-card-subtle text-text-primary'
@@ -223,7 +237,7 @@ function CatalogueContent() {
             <button
               type="button"
               onClick={() => handleViewModeChange('list')}
-              aria-label="List view"
+              aria-label={t('listView')}
               className={`flex items-center justify-center w-8 h-8 rounded border transition-colors ${
                 viewMode === 'list'
                   ? 'border-brand-dark bg-card-subtle text-text-primary'
@@ -238,7 +252,7 @@ function CatalogueContent() {
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="flex items-center justify-center w-8 h-8 md:hidden border border-border-default text-text-primary rounded"
-            aria-label="Toggle filters"
+            aria-label={t('toggleFilters')}
           >
             ☰
           </button>
@@ -247,54 +261,58 @@ function CatalogueContent() {
 
       {/* Active Filters Bar */}
       <div className="flex flex-wrap items-center gap-2 border-b border-border-default bg-page px-4 py-2.5 sm:px-6 md:px-6">
-        <span className="text-sm text-ui-label text-text-muted">Filters</span>
+        <span className="text-sm text-ui-label text-text-muted">{t('filters')}</span>
 
         {debouncedSearch && (
           <div className="flex items-center gap-1.5 border border-border-default px-2.5 py-1 text-body-sm text-text-primary">
-            “{debouncedSearch}”
+            {t('searchChip', { term: debouncedSearch })}
             <button
               type="button"
               onClick={() => setSearchInput('')}
-              className="ml-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
+              aria-label={t('removeFilter')}
+              className="ms-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
             >
               ✕
             </button>
           </div>
         )}
 
-        {selectedCollectionName && (
+        {selectedCollectionSlug && (
           <div className="flex items-center gap-1.5 border border-border-default px-2.5 py-1 text-body-sm text-text-primary">
-            {selectedCollectionName}
+            {tFilters(`collections.${selectedCollectionSlug}`)}
             <button
               type="button"
               onClick={() => handleCollectionChange(null)}
-              className="ml-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
+              aria-label={t('removeFilter')}
+              className="ms-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
             >
               ✕
             </button>
           </div>
         )}
 
-        {selectedCategoryName && (
+        {selectedCategorySlug && (
           <div className="flex items-center gap-1.5 border border-border-default px-2.5 py-1 text-body-sm text-text-primary">
-            {selectedCategoryName}
+            {tFilters(`categories.${selectedCategorySlug}`)}
             <button
               type="button"
               onClick={() => handleCategoryChange(null)}
-              className="ml-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
+              aria-label={t('removeFilter')}
+              className="ms-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
             >
               ✕
             </button>
           </div>
         )}
 
-        {selectedFamilyName && (
+        {selectedFamilySlug && (
           <div className="flex items-center gap-1.5 border border-border-default px-2.5 py-1 text-body-sm text-text-primary">
-            {selectedFamilyName}
+            {tFilters(`families.${selectedFamilySlug}`)}
             <button
               type="button"
               onClick={() => handleFamilyChange(null)}
-              className="ml-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
+              aria-label={t('removeFilter')}
+              className="ms-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
             >
               ✕
             </button>
@@ -303,11 +321,12 @@ function CatalogueContent() {
 
         {hasPriceFilter ? (
           <div className="flex items-center gap-1.5 border border-border-default px-2.5 py-1 text-body-sm text-text-primary">
-            €{priceRange[0]} — €{priceRange[1]}
+            {formatPrice(priceRange[0], 0)} — {formatPrice(priceRange[1], 0)}
             <button
               type="button"
               onClick={() => handlePriceChange(DEFAULT_PRICE_RANGE)}
-              className="ml-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
+              aria-label={t('removeFilter')}
+              className="ms-1 text-xs text-text-muted hover:text-text-primary cursor-pointer"
             >
               ✕
             </button>
@@ -325,9 +344,9 @@ function CatalogueContent() {
               setPriceRange(DEFAULT_PRICE_RANGE);
               setCurrentPage(1);
             }}
-            className="ml-auto border-b border-border-default pb-0.5 text-sm text-ui-label text-text-muted cursor-pointer"
+            className="ms-auto border-b border-border-default pb-0.5 text-sm text-ui-label text-text-muted cursor-pointer"
           >
-            Clear all
+            {t('clearAll')}
           </button>
         ) : null}
       </div>
@@ -363,8 +382,8 @@ function CatalogueContent() {
             </div>
           ) : error ? (
             <div className="flex flex-col items-center gap-4 py-16 text-center">
-              <p className="text-body-base text-text-muted">Failed to load products</p>
-              <Button onClick={() => refetch()}>Try Again</Button>
+              <p className="text-body-base text-text-muted">{t('loadFailed')}</p>
+              <Button onClick={() => refetch()}>{t('retry')}</Button>
             </div>
           ) : (
             <>
@@ -389,7 +408,7 @@ function CatalogueContent() {
                       <div
                         key={product.id}
                         className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 py-5 px-2 transition-all ${
-                          !isAvailable ? 'opacity-60 grayscale-[35%]' : 'hover:bg-[#FBFBFA]/60'
+                          !isAvailable ? 'opacity-60 grayscale-35' : 'hover:bg-[#FBFBFA]/60'
                         }`}
                       >
                         {/* Left: Clickable Image and Details */}
@@ -399,12 +418,12 @@ function CatalogueContent() {
                             className="relative h-28 w-24 shrink-0 bg-[#FBFBFA] overflow-hidden border border-border-default/60 group"
                           >
                             {!isAvailable ? (
-                              <span className="absolute left-1.5 top-1.5 z-10 bg-[#782424] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white">
-                                Sold out
+                              <span className="absolute inset-s-1.5 top-1.5 z-10 bg-[#782424] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white">
+                                {t('soldOut')}
                               </span>
                             ) : product.badges && product.badges.length > 0 ? (
-                              <span className="absolute left-1.5 top-1.5 z-10 bg-[#2A2421] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white">
-                                {product.badges[0]}
+                              <span className="absolute inset-s-1.5 top-1.5 z-10 bg-[#2A2421] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white">
+                                {badgeLabel(product.badges[0])}
                               </span>
                             ) : null}
 
@@ -430,7 +449,7 @@ function CatalogueContent() {
                             </p>
                             <div className="flex items-center gap-2 mt-2.5">
                               <span className="font-medium text-body-base text-text-primary">
-                                €{product.variants[0]?.price.toFixed(2)}
+                                {formatPrice(product.variants[0]?.price ?? 0, 2)}
                               </span>
                               {product.variants[0]?.label && (
                                 <span className="text-xs text-text-muted border border-border-default/70 px-1.5 py-0.5">
@@ -442,21 +461,21 @@ function CatalogueContent() {
                         </div>
 
                         {/* Right: Add to Cart and Wishlist */}
-                        <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0 sm:pl-4">
+                        <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0 sm:ps-4">
                           <button
                             type="button"
                             disabled={!isAvailable}
                             onClick={() => handleAddToCart(product)}
                             className="border border-border-default bg-page px-5 py-2 text-[11px] font-medium uppercase tracking-widest text-text-primary transition-colors hover:border-brand-dark hover:bg-[#2A2421] hover:text-white disabled:opacity-40 disabled:hover:bg-page disabled:hover:text-text-primary disabled:cursor-not-allowed cursor-pointer"
                           >
-                            {isAvailable ? 'Add to bag' : 'Sold out'}
+                            {isAvailable ? t('addToBag') : t('soldOut')}
                           </button>
 
                           <button
                             type="button"
                             onClick={() => toggleWishlist(product.id)}
                             className="flex h-8 w-8 items-center justify-center rounded-full border border-border-default/70 bg-page hover:border-border-focus transition-colors cursor-pointer"
-                            aria-label="Add to wishlist"
+                            aria-label={t('addToWishlist')}
                           >
                             <Heart
                               className={`h-3.5 w-3.5 transition-colors ${
@@ -484,9 +503,9 @@ function CatalogueContent() {
                     }}
                     disabled={currentPage === 1}
                     className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    aria-label="Previous page"
+                    aria-label={t('previousPage')}
                   >
-                    ‹
+                    <span className="inline-block rtl:-scale-x-100">‹</span>
                   </button>
 
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -515,16 +534,16 @@ function CatalogueContent() {
                     }}
                     disabled={currentPage === totalPages}
                     className="flex h-8 w-8 shrink-0 items-center justify-center border border-border-default bg-page text-body-sm text-text-muted hover:border-border-focus disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    aria-label="Next page"
+                    aria-label={t('nextPage')}
                   >
-                    ›
+                    <span className="inline-block rtl:-scale-x-100">›</span>
                   </button>
                 </div>
               )}
 
               {total === 0 && (
                 <div className="py-12 text-center">
-                  <p className="text-body-base text-text-muted">No products found</p>
+                  <p className="text-body-base text-text-muted">{t('empty')}</p>
                 </div>
               )}
             </>

@@ -272,7 +272,7 @@ export function ProductFormDialog({
                 {badges.map((badge) => (
                   <span
                     key={badge}
-                    className="bg-page border-border-default text-text-secondary inline-flex items-center gap-1.5 border px-2 py-1 text-xs"
+                    className="bg-page border-border-default text-text-secondary inline-flex items-center gap-1.5 border px-2 py-1 text-ui-label"
                   >
                     {badge}
                     <button

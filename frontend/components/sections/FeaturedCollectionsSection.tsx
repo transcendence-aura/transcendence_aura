@@ -12,21 +12,21 @@ const FEATURED_COLLECTIONS = [
     key: 'skincareOils',
     slug: 'skincare-oils',
     productCount: 8,
-    imagePlaceholder: 'https://placehold.co/400x400?text=Skincare',
+    imagePlaceholder: '/images/landing/category-skincare-oils.png',
   },
   {
     id: 'col-2',
     key: 'faceCare',
     slug: 'face-care',
     productCount: 12,
-    imagePlaceholder: 'https://placehold.co/400x400?text=FaceCare',
+    imagePlaceholder: '/images/landing/category-face-care.png',
   },
   {
     id: 'col-3',
     key: 'ritualsSun',
     slug: 'rituals-sun',
     productCount: 6,
-    imagePlaceholder: 'https://placehold.co/400x400?text=Rituals',
+    imagePlaceholder: '/images/landing/category-rituals-sun.png',
   },
 ] as const;
 

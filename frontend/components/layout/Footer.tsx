@@ -43,7 +43,7 @@ export function Footer() {
     <footer className="bg-footer-bg px-6 md:px-8 pt-12 pb-6">
       <div className="mb-8 grid grid-cols-2 gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="col-span-2 md:col-span-1">
-          <p className="font-cormorant text-footer-text mb-2 text-lg tracking-widest">Aura</p>
+          <p className="font-cormorant text-footer-text mb-2 text-body-lg tracking-widest">Aura</p>
           <p className="text-body-sm text-footer-muted max-w-xs">{t('tagline')}</p>
         </div>
 

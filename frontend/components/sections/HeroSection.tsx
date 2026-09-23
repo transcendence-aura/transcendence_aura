@@ -13,15 +13,11 @@ export const HeroSection = () => {
           {/* Left: Editorial Text on bg-page */}
           <div className="space-y-6">
             <h1 className="font-cormorant text-text-primary">
-              <span className="block text-5xl md:text-6xl font-light leading-tight">
-                {t('titleLine1')}
-              </span>
-              <span className="block text-5xl md:text-6xl font-light italic leading-tight">
+              <span className="block text-display-hero leading-tight">{t('titleLine1')}</span>
+              <span className="block text-display-hero italic leading-tight">
                 {t('titleLine2')}
               </span>
-              <span className="block text-5xl md:text-6xl font-light leading-tight">
-                {t('titleLine3')}
-              </span>
+              <span className="block text-display-hero leading-tight">{t('titleLine3')}</span>
             </h1>
             <p className="text-body-base text-text-secondary max-w-md">{t('tagline')}</p>
             <div className="flex items-center gap-8 pt-4">
@@ -45,7 +41,7 @@ export const HeroSection = () => {
           {/* Right: Hero Image on bg-surface */}
           <div className="flex items-center justify-center bg-surface rounded-none overflow-hidden aspect-square">
             <Image
-              src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80"
+              src="/images/landing/hero-aura.png"
               alt={t('imageAlt')}
               width={400}
               height={400}

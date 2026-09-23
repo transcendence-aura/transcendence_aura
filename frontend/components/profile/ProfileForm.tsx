@@ -21,7 +21,6 @@ import {
   UPDATE_MY_PROFILE_MUTATION,
   type UpdateMyProfileInput,
 } from '@/lib/graphql/queries/profile';
-import { TEXT_BODY, TEXT_BODY_SM, TEXT_BUTTON } from '@/lib/typography';
 
 export interface ProfileValues {
   handle: string;
@@ -111,11 +110,17 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
             value={firstName}
             disabled
             readOnly
-            className={TEXT_BODY}
+            className="text-body-base"
           />
         </FormField>
         <FormField label={t('lastName')} htmlFor="profile-last-name" hint={t('nameLocked')}>
-          <Input id="profile-last-name" value={lastName} disabled readOnly className={TEXT_BODY} />
+          <Input
+            id="profile-last-name"
+            value={lastName}
+            disabled
+            readOnly
+            className="text-body-base"
+          />
         </FormField>
       </div>
 
@@ -123,7 +128,7 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
         <div className="relative">
           <span
             aria-hidden="true"
-            className={`text-text-muted pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 ${TEXT_BODY}`}
+            className="text-text-muted pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-body-base"
           >
             @
           </span>
@@ -136,7 +141,7 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
             error={Boolean(errors.handle)}
             aria-invalid={Boolean(errors.handle)}
             aria-describedby={errors.handle ? 'profile-handle-error' : undefined}
-            className={`ps-8 ${TEXT_BODY}`}
+            className="ps-8 text-body-base"
           />
         </div>
       </FormField>
@@ -155,12 +160,12 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
           error={Boolean(errors.bio)}
           aria-invalid={Boolean(errors.bio)}
           aria-describedby={errors.bio ? 'profile-bio-error' : undefined}
-          className={TEXT_BODY}
+          className="text-body-base"
         />
       </FormField>
 
       {generalError && (
-        <p role="alert" className={`text-status-error ${TEXT_BODY_SM}`}>
+        <p role="alert" className="text-status-error text-body-sm">
           {generalError}
         </p>
       )}
@@ -170,7 +175,7 @@ export function ProfileForm({ initial, name }: { initial: ProfileValues; name: s
           type="submit"
           variant="link"
           disabled={isSaving || !isDirty}
-          className={TEXT_BUTTON}
+          className="text-ui-button uppercase"
         >
           {isSaving ? t('saving') : t('save')}
         </Button>

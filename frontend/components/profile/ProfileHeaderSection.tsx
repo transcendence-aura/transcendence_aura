@@ -7,7 +7,6 @@ import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useAvatarUpload } from '@/lib/hooks/useAvatarUpload';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import { PROFILE_COUNTS_QUERY } from '@/lib/graphql/queries/profile';
-import { TEXT_BODY_SM } from '@/lib/typography';
 import { AvatarPicker } from './AvatarPicker';
 import { ProfileHeader, ProfileHeaderSkeleton } from './ProfileHeader';
 
@@ -55,7 +54,7 @@ export function ProfileHeaderSection() {
             <Progress value={progress} label={t('uploading')} className="max-w-56" />
           )}
           {error && (
-            <p role="alert" className={`text-status-error ${TEXT_BODY_SM}`}>
+            <p role="alert" className="text-status-error text-body-sm">
               {error}
             </p>
           )}

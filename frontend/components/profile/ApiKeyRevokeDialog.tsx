@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/form/button';
 import { useToast } from '@/components/ui/feedback/toast';
 import { Dialog } from '@/components/ui/overlay/dialog';
 import { ApiKeyError, revokeApiKey } from '@/lib/api-keys/api-keys';
-import { TEXT_BODY_SM, TEXT_BUTTON } from '@/lib/typography';
 
 interface ApiKeyRevokeDialogProps {
   // The key to revoke, or null when the dialog is closed.
@@ -68,7 +67,7 @@ function RevokeActions({
   return (
     <div className="flex flex-col gap-4">
       {error && (
-        <p role="alert" className={`text-status-error ${TEXT_BODY_SM}`}>
+        <p role="alert" className="text-status-error text-body-sm">
           {error}
         </p>
       )}
@@ -78,7 +77,7 @@ function RevokeActions({
           variant="ghost"
           onClick={onClose}
           disabled={isRevoking}
-          className={TEXT_BUTTON}
+          className="text-ui-button uppercase"
         >
           {t('cancel')}
         </Button>
@@ -86,7 +85,7 @@ function RevokeActions({
           type="button"
           onClick={handleRevoke}
           disabled={isRevoking}
-          className={`bg-status-error text-text-inverse cursor-pointer rounded-none px-6 py-3 uppercase transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:opacity-40 ${TEXT_BUTTON}`}
+          className="bg-status-error text-text-inverse cursor-pointer rounded-none px-6 py-3 uppercase transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus disabled:cursor-not-allowed disabled:opacity-40 text-ui-button uppercase"
         >
           {isRevoking ? t('revoking') : t('revokeConfirm')}
         </button>

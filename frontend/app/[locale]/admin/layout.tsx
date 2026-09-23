@@ -9,7 +9,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="bg-page flex min-h-screen flex-col">
       <header className="bg-card border-border-default flex h-16 items-center justify-between border-b px-6 md:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <span className="font-cormorant text-text-primary text-lg tracking-widest">Aura</span>
+          <span className="font-cormorant text-text-primary text-body-lg tracking-widest">
+            Aura
+          </span>
           <Badge variant="dark">Admin</Badge>
         </Link>
 

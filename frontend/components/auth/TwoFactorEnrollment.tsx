@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useMutation } from '@apollo/client/react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/form/button';
@@ -31,6 +32,7 @@ type ConfirmTwoFactorVariables = {
 };
 
 export function TwoFactorEnrollment() {
+  const t = useTranslations('TwoFactorEnrollment');
   const [code, setCode] = useState('');
   const [setup, setSetup] = useState<{
     provisioningUri: string;
@@ -56,20 +58,20 @@ export function TwoFactorEnrollment() {
       const result = data?.setupTwoFactor;
 
       if (!result) {
-        setError('Unable to start two-factor authentication setup.');
+        setError(t('errors.setupFailed'));
         return;
       }
 
       setSetup(result);
       setCode('');
     } catch {
-      setError('Unable to start two-factor authentication setup.');
+      setError(t('errors.setupFailed'));
     }
   };
 
   const handleConfirm = async () => {
     if (!/^\d{6}$/.test(code)) {
-      setError('Please enter the 6-digit authentication code.');
+      setError(t('errors.codeFormat'));
       return;
     }
 
@@ -85,7 +87,7 @@ export function TwoFactorEnrollment() {
       });
 
       if (!data?.confirmTwoFactor.enabled) {
-        setError('Unable to enable two-factor authentication.');
+        setError(t('errors.enableFailed'));
         return;
       }
 
@@ -95,7 +97,7 @@ export function TwoFactorEnrollment() {
       setSetup(null);
       setCode('');
     } catch {
-      setError('The authentication code is invalid or has expired.');
+      setError(t('errors.codeInvalid'));
     }
   };
 
@@ -103,19 +105,15 @@ export function TwoFactorEnrollment() {
     return (
       <div>
         <div className="mb-5 flex items-center gap-2.5">
-          <CheckCircle2 className="h-5 w-5 text-[#7a9e8e]" />
-          <h2 className="font-cormorant text-3xl font-normal text-text-primary">
-            Two-factor authentication enabled
+          <CheckCircle2 className="h-5 w-5 text-status-online" />
+          <h2 className="font-cormorant text-display-title font-normal text-text-primary">
+            {t('enabledTitle')}
           </h2>
         </div>
-        <p className="text-xs leading-relaxed text-text-secondary">
-          Your account is now protected with an authenticator app.
-        </p>
-        <div>
-          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#7a9e8e]" />
-          <p className="text-[12px] leading-relaxed text-text-secondary">
-            You&apos;ll be asked for an authentication code when signing in to your account.
-          </p>
+        <p className="text-ui-label leading-relaxed text-text-secondary">{t('enabledSubtitle')}</p>
+        <div className="mt-6 flex items-start gap-2.5 bg-bg-subtle p-3">
+          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-status-online" />
+          <p className="text-body-base leading-relaxed text-text-secondary">{t('enabledNotice')}</p>
         </div>
       </div>
     );
@@ -124,16 +122,14 @@ export function TwoFactorEnrollment() {
   if (!setup) {
     return (
       <div>
-        <h2 className="font-cormorant mb-1.5 text-3xl font-normal text-text-primary">
-          Two-factor authentication
+        <h2 className="font-cormorant mb-1.5 text-display-title font-cormorant font-normal text-text-primary">
+          {t('title')}
         </h2>
 
-        <p className="mb-6 text-xs leading-relaxed text-text-secondary">
-          Add an extra layer of security to your account using an authenticator app.
-        </p>
+        <p className="mb-6 text-ui-label leading-relaxed text-text-secondary">{t('subtitle')}</p>
 
         {error && (
-          <p role="alert" className="mb-4 text-xs text-brand-accent">
+          <p role="alert" className="mb-4 text-ui-label text-brand-accent">
             {error}
           </p>
         )}
@@ -142,52 +138,40 @@ export function TwoFactorEnrollment() {
           type="button"
           onClick={handleBeginEnrollment}
           disabled={setupLoading}
-          className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-xs font-medium uppercase tracking-wider text-white"
+          className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-ui-label font-medium uppercase tracking-wider text-white"
         >
-          {setupLoading ? 'Preparing setup...' : 'Enable two-factor authentication'}
+          {setupLoading ? t('starting') : t('start')}
         </Button>
 
         <div className="mt-6 flex items-start gap-2.5 bg-bg-subtle p-3">
-          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#7a9e8e]" />
+          <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-status-online" />
 
-          <p className="text-[12px] leading-relaxed text-text-secondary">
-            You&apos;ll need an authenticator app to complete setup.
-          </p>
+          <p className="text-body-base leading-relaxed text-text-secondary">{t('startNotice')}</p>
         </div>
       </div>
     );
   }
   return (
     <div>
-      <h2 className="font-cormorant mb-1.5 text-3xl font-normal text-text-primary">
-        Set up your authenticator app
+      <h2 className="font-cormorant mb-1.5 text-display-title font-cormorant font-normal text-text-primary">
+        {t('setupTitle')}
       </h2>
 
-      <p className="mb-6 text-xs leading-relaxed text-text-secondary">
-        Scan the QR code with your authenticator app, then enter the 6-digit code it generates.
-      </p>
+      <p className="mb-6 text-ui-label leading-relaxed text-text-secondary">{t('setupSubtitle')}</p>
 
       <div className="border-border-default flex justify-center border bg-bg-page p-5">
-        <Image
-          src={setup.qrCode}
-          alt="QR code for two-factor authentication setup"
-          width={224}
-          height={224}
-          unoptimized
-        />
+        <Image src={setup.qrCode} alt={t('qrAlt')} width={224} height={224} unoptimized />
       </div>
 
       <details className="mt-4">
-        <summary className="cursor-pointer text-xs text-text-muted transition-colors hover:text-text-primary">
-          Cannot scan the QR code?
+        <summary className="cursor-pointer text-ui-label text-text-muted transition-colors hover:text-text-primary">
+          {t('cannotScan')}
         </summary>
 
         <div className="mt-3 bg-bg-subtle p-3">
-          <p className="mb-1.5 text-xs text-text-secondary">
-            Enter this setup URI manually in your authenticator app:
-          </p>
+          <p className="mb-1.5 text-ui-label text-text-secondary">{t('manualEntry')}</p>
 
-          <p className="break-all text-[11px] leading-relaxed text-text-muted">
+          <p className="break-all text-body-sm leading-relaxed text-text-muted">
             {setup.provisioningUri}
           </p>
         </div>
@@ -202,11 +186,8 @@ export function TwoFactorEnrollment() {
         aria-busy={confirmLoading}
       >
         <div>
-          <label
-            htmlFor="two-factor-code"
-            className="mb-1.5 block text-xs uppercase tracking-wider text-text-muted"
-          >
-            Authentication code
+          <label htmlFor="two-factor-code" className="mb-1.5 block text-ui-nav text-text-muted">
+            {t('codeLabel')}
           </label>
 
           <input
@@ -227,14 +208,14 @@ export function TwoFactorEnrollment() {
             required
             autoFocus
             disabled={confirmLoading}
-            className={`border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-xs tracking-[0.35em] text-text-primary outline-none transition-colors disabled:opacity-50 ${
+            className={`border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-ui-label tracking-[0.35em] text-text-primary outline-none transition-colors disabled:opacity-50 ${
               error ? 'border-brand-accent' : ''
             }`}
           />
         </div>
 
         {error && (
-          <p role="alert" className="text-xs text-brand-accent">
+          <p role="alert" className="text-ui-label text-brand-accent">
             {error}
           </p>
         )}
@@ -242,19 +223,16 @@ export function TwoFactorEnrollment() {
         <Button
           type="submit"
           disabled={confirmLoading || code.length !== 6}
-          className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-xs font-medium uppercase tracking-wider text-white"
+          className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-ui-label font-medium uppercase tracking-wider text-white"
         >
-          {confirmLoading ? 'Verifying...' : 'Confirm and enable 2FA'}
+          {confirmLoading ? t('confirming') : t('confirm')}
         </Button>
       </form>
 
       <div className="mt-6 flex items-start gap-2.5 bg-bg-subtle p-3">
-        <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#7a9e8e]" />
+        <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-status-online" />
 
-        <p className="text-[12px] leading-relaxed text-text-secondary">
-          Two-factor authentication will only be enabled after the code from your authenticator app
-          has been verified.
-        </p>
+        <p className="text-body-base leading-relaxed text-text-secondary">{t('confirmNotice')}</p>
       </div>
     </div>
   );

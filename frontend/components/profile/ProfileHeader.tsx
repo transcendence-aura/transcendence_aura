@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
-import { TEXT_BODY_SM, TEXT_LABEL, TEXT_STAT, TEXT_SUBTITLE } from '@/lib/typography';
 
 interface ProfileHeaderProps {
   name: string;
@@ -20,8 +19,8 @@ function Stat({ value, label }: { value: number; label: string }) {
 
   return (
     <p className="flex items-baseline gap-2">
-      <span className={`text-text-primary ${TEXT_STAT}`}>{format.number(value)}</span>
-      <span className={`text-text-muted ${TEXT_LABEL}`}>{label}</span>
+      <span className="text-text-primary text-display-stat">{format.number(value)}</span>
+      <span className="text-text-muted text-ui-label uppercase">{label}</span>
     </p>
   );
 }
@@ -45,8 +44,8 @@ export function ProfileHeader({
         {avatar}
 
         <div className="flex min-w-0 flex-col gap-2">
-          <p className={`text-text-primary ${TEXT_SUBTITLE}`}>{name}</p>
-          <p className={`text-text-secondary line-clamp-2 ${TEXT_BODY_SM}`}>
+          <p className="text-text-primary font-cormorant text-display-subtitle">{name}</p>
+          <p className="text-text-secondary line-clamp-2 text-body-sm">
             @{handle}
             {bio ? ` · ${bio}` : ''}
           </p>

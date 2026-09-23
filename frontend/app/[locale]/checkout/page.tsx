@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { OrderSummary } from '@/components/checkout/OrderSummary';
 import { CheckoutForm } from '@/components/checkout/CheckoutForm';
@@ -52,6 +53,7 @@ function formatSlugToTitle(slug?: string): string {
 }
 
 export default function CheckoutPage() {
+  const t = useTranslations('Checkout');
   const cart = useCart() as unknown as CartContextValue;
   const rawItems: RawCartItem[] = cart?.items || [];
   const itemCount: number =
@@ -60,15 +62,13 @@ export default function CheckoutPage() {
   if (itemCount === 0 || rawItems.length === 0) {
     return (
       <div className="mx-auto max-w-7xl px-6 py-20 text-center">
-        <h1 className="text-h2 font-bold mb-4 text-text-primary">Your cart is empty</h1>
-        <p className="text-body-base text-text-muted mb-8">
-          Add some products to your ritual before proceeding to checkout.
-        </p>
+        <h1 className="text-h2 font-bold mb-4 text-text-primary">{t('emptyTitle')}</h1>
+        <p className="text-body-base text-text-muted mb-8">{t('emptySubtitle')}</p>
         <Link
           href="/catalogue"
-          className="inline-block px-6 py-3 bg-brand-dark text-white rounded uppercase text-xs tracking-wider hover:bg-brand-dark/90 transition-colors"
+          className="inline-block px-6 py-3 bg-brand-dark text-white rounded uppercase text-ui-label tracking-wider hover:bg-brand-dark/90 transition-colors"
         >
-          Explore Catalogue
+          {t('exploreCatalogue')}
         </Link>
       </div>
     );
@@ -125,7 +125,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-12 md:px-8">
-      <h1 className="text-h2 font-bold mb-8 text-text-primary">Checkout</h1>
+      <h1 className="text-h2 font-bold mb-8 text-text-primary">{t('title')}</h1>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div>

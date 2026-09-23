@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useMutation } from '@apollo/client/react';
 import { Eye, EyeOff } from 'lucide-react';
@@ -23,14 +24,18 @@ const MAX_NAME_LENGTH = 100;
 // without this limit an account could be created that can never sign in.
 const MAX_PASSWORD_LENGTH = 128;
 
-function getRegisterErrorMessage(error: unknown): string {
+function getRegisterErrorMessage(
+  error: unknown,
+  messages: { emailTaken: string; generic: string },
+): string {
   const message = getValidationErrorMessage(error);
 
-  if (message === 'EMAIL_ALREADY_EXISTS') return 'An account with this email already exists.';
-  return message ?? 'Unable to create your account. Please try again.';
+  if (message === 'EMAIL_ALREADY_EXISTS') return messages.emailTaken;
+  return message ?? messages.generic;
 }
 
 export function RegisterForm() {
+  const t = useTranslations('RegisterForm');
   const [showPassword, setShowPassword] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -51,39 +56,39 @@ export function RegisterForm() {
 
   const validateForm = (): boolean => {
     if (!firstName.trim()) {
-      setError('First name is required.');
+      setError(t('errors.firstNameRequired'));
       return false;
     }
     if (!lastName.trim()) {
-      setError('Last name is required.');
+      setError(t('errors.lastNameRequired'));
       return false;
     }
     if (fullName.length > MAX_NAME_LENGTH) {
-      setError(`First and last name must not exceed ${MAX_NAME_LENGTH} characters in total.`);
+      setError(t('errors.nameTooLong', { max: MAX_NAME_LENGTH }));
       return false;
     }
     if (!email.trim()) {
-      setError('Email is required.');
+      setError(t('errors.emailRequired'));
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address.');
+      setError(t('errors.emailInvalid'));
       return false;
     }
     if (!password) {
-      setError('Password is required.');
+      setError(t('errors.passwordRequired'));
       return false;
     }
     if (password.length < 8) {
-      setError('Password must contain at least 8 characters.');
+      setError(t('errors.passwordTooShort'));
       return false;
     }
     if (password.length > MAX_PASSWORD_LENGTH) {
-      setError(`Password must not exceed ${MAX_PASSWORD_LENGTH} characters.`);
+      setError(t('errors.passwordTooLong', { max: MAX_PASSWORD_LENGTH }));
       return false;
     }
     if (!agreedToTerms) {
-      setError('You must accept the Terms of Service and Privacy Policy.');
+      setError(t('errors.termsRequired'));
       return false;
     }
     return true;
@@ -102,7 +107,12 @@ export function RegisterForm() {
     try {
       await register({ variables: { input: { ...credentials, name: fullName } } });
     } catch (registerError) {
-      setError(getRegisterErrorMessage(registerError));
+      setError(
+        getRegisterErrorMessage(registerError, {
+          emailTaken: t('errors.emailTaken'),
+          generic: t('errors.generic'),
+        }),
+      );
       setIsLoading(false);
       return;
     }
@@ -128,74 +138,64 @@ export function RegisterForm() {
 
   return (
     <div>
-      <h2 className="font-cormorant mb-1.5 text-3xl font-normal text-text-primary">
-        Start your ritual
+      <h2 className="font-cormorant mb-1.5 text-display-title font-cormorant font-normal text-text-primary">
+        {t('title')}
       </h2>
-      <p className="mb-6 text-xs leading-relaxed text-text-secondary">
-        Create your Aura account for faster checkout and personalised recommendations.
-      </p>
+      <p className="mb-6 text-ui-label leading-relaxed text-text-secondary">{t('subtitle')}</p>
 
       <form onSubmit={handleSubmit} className="space-y-3.5">
         {/* Name Row */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-wider text-text-muted">
-              First name
-            </label>
+            <label className="mb-1.5 block text-ui-nav text-text-muted">{t('firstName')}</label>
             <input
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Marie"
-              className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-xs text-text-primary outline-none transition-colors"
+              placeholder={t('firstNamePlaceholder')}
+              className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-ui-label text-text-primary outline-none transition-colors"
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-wider text-text-muted">
-              Last name
-            </label>
+            <label className="mb-1.5 block text-ui-nav text-text-muted">{t('lastName')}</label>
             <input
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              placeholder="Laurent"
-              className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-xs text-text-primary outline-none transition-colors"
+              placeholder={t('lastNamePlaceholder')}
+              className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-ui-label text-text-primary outline-none transition-colors"
             />
           </div>
         </div>
 
         {/* Email */}
         <div>
-          <label className="mb-1.5 block text-xs uppercase tracking-wider text-text-muted">
-            Email address
-          </label>
+          <label className="mb-1.5 block text-ui-nav text-text-muted">{t('email')}</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-xs text-text-primary outline-none transition-colors"
+            placeholder={t('emailPlaceholder')}
+            className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 text-ui-label text-text-primary outline-none transition-colors"
           />
         </div>
 
         {/* Password */}
         <div>
-          <label className="mb-1.5 block text-xs uppercase tracking-wider text-text-muted">
-            Password
-          </label>
+          <label className="mb-1.5 block text-ui-nav text-text-muted">{t('password')}</label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min. 8 characters"
-              className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 pr-10 text-xs text-text-primary outline-none transition-colors"
+              placeholder={t('passwordPlaceholder')}
+              className="border-border-default focus:border-border-focus w-full border bg-bg-page px-3.5 py-2.5 pe-10 text-ui-label text-text-primary outline-none transition-colors"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="text-text-muted hover:text-text-primary absolute top-1/2 right-3 -translate-y-1/2"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="text-text-muted hover:text-text-primary absolute top-1/2 end-3 -translate-y-1/2"
+              aria-label={showPassword ? t('hidePassword') : t('showPassword')}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -214,34 +214,36 @@ export function RegisterForm() {
           />
           <label
             htmlFor="terms"
-            className="cursor-pointer text-xs leading-relaxed text-text-secondary"
+            className="cursor-pointer text-ui-label leading-relaxed text-text-secondary"
           >
-            I agree to the{' '}
-            <span className="border-b border-border-default text-text-primary">
-              Terms of Service
-            </span>{' '}
-            and{' '}
-            <span className="border-b border-border-default text-text-primary">Privacy Policy</span>
+            {t.rich('terms', {
+              terms: (chunks) => (
+                <span className="border-b border-border-default text-text-primary">{chunks}</span>
+              ),
+              privacy: (chunks) => (
+                <span className="border-b border-border-default text-text-primary">{chunks}</span>
+              ),
+            })}
           </label>
         </div>
 
         {/* Error Message */}
-        {error && <p className="text-xs text-brand-accent">{error}</p>}
+        {error && <p className="text-ui-label text-brand-accent">{error}</p>}
 
         {/* Submit Button */}
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-xs font-medium uppercase tracking-wider text-white"
+          className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-ui-label font-medium uppercase tracking-wider text-white"
         >
-          {isLoading ? 'Creating account...' : 'Create account'}
+          {isLoading ? t('submitting') : t('submit')}
         </Button>
       </form>
 
       {/* OAuth Divider */}
       <div className="my-5 flex items-center gap-3">
         <div className="border-border-default flex-1 border-t" />
-        <span className="text-xs uppercase tracking-widest text-text-muted">or continue with</span>
+        <span className="text-ui-button text-text-muted">{t('divider')}</span>
         <div className="border-border-default flex-1 border-t" />
       </div>
 
@@ -250,7 +252,7 @@ export function RegisterForm() {
         {/* Google Button */}
         <button
           type="button"
-          className="border-border-default hover:bg-bg-subtle flex w-full items-center justify-center gap-2.5 border bg-bg-page py-2.5 text-xs text-text-secondary transition-colors"
+          className="border-border-default hover:bg-bg-subtle flex w-full items-center justify-center gap-2.5 border bg-bg-page py-2.5 text-ui-label text-text-secondary transition-colors"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -270,18 +272,18 @@ export function RegisterForm() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
             />
           </svg>
-          <span>Continue with Google</span>
+          <span>{t('google')}</span>
         </button>
 
         {/* Apple Button */}
         <button
           type="button"
-          className="border-border-default hover:bg-bg-subtle flex w-full items-center justify-center gap-2.5 border bg-bg-page py-2.5 text-xs text-text-secondary transition-colors"
+          className="border-border-default hover:bg-bg-subtle flex w-full items-center justify-center gap-2.5 border bg-bg-page py-2.5 text-ui-label text-text-secondary transition-colors"
         >
           <svg className="h-4 w-4 fill-current" viewBox="0 0 170 170" aria-hidden="true">
             <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.7-3.04-7.7-7.75-12.01-14.13-6.42-9.69-11.41-20.73-14.98-33.11-3.57-12.38-5.35-24.32-5.35-35.81 0-15.11 3.8-27.42 11.41-36.93 7.61-9.51 17.06-14.36 28.36-14.55 4.8 0 10.15 1.25 16.05 3.76 5.91 2.51 9.77 3.82 11.59 3.93 1.57-.11 5.61-1.48 12.13-4.12 6.52-2.64 12.03-3.77 16.53-3.39 12.44.86 22.38 5.61 29.83 14.25-10.89 6.58-16.22 15.77-15.99 27.56.23 9.4 3.86 17.38 10.89 23.94 4.15 3.93 8.95 6.82 14.41 8.67-2.3 6.94-5.08 14.35-8.33 22.23zm-32.96-107.4c0-7.39 2.68-14.34 8.04-20.85 5.36-6.51 11.96-10.37 19.8-11.58.23 1.06.35 2.16.35 3.3 0 7.39-2.79 14.4-8.38 21.03-5.59 6.63-12.27 10.51-20.04 11.64-.11-1.07-.17-2.16-.17-3.54z" />
           </svg>
-          <span>Continue with Apple</span>
+          <span>{t('apple')}</span>
         </button>
       </div>
     </div>

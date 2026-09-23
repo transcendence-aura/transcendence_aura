@@ -2,6 +2,7 @@
 
 import { forwardRef, type HTMLAttributes, type MouseEvent } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { Heart } from 'lucide-react';
 import { PriceDisplay } from '@/components/ui/display/PriceDisplay';
@@ -56,6 +57,8 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
   ) => {
     const { addItem } = useCart();
     const { toast } = useToast();
+    const t = useTranslations('Catalogue');
+    const tBadges = useTranslations('ProductBadges');
 
     const rawImage = product.primaryImage?.url || product.media?.[0]?.url;
     const imageUrl =
@@ -84,7 +87,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
 
       if (!isAvailable) {
         toast({
-          message: 'This product is currently unavailable',
+          message: t('unavailable'),
           variant: 'error',
         });
         return;
@@ -102,7 +105,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
       });
 
       toast({
-        message: `Added ${product.name} to cart`,
+        message: t('addedToCart', { name: product.name }),
         variant: 'success',
       });
     };
@@ -122,15 +125,15 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
         {...props}
       >
         {/* Visual Container */}
-        <div className="relative aspect-square overflow-hidden bg-[#FBFBFA] border border-border-default/60 transition-colors group-hover:border-border-focus">
+        <div className="relative aspect-square overflow-hidden bg-page border border-border-default/60 transition-colors group-hover:border-border-focus">
           {/* Top Badges */}
           {!isAvailable ? (
-            <span className="absolute left-2.5 top-2.5 z-10 bg-[#782424] px-2 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white">
-              Sold out
+            <span className="absolute start-2.5 top-2.5 z-10 bg-status-error px-2 py-0.5 text-ui-caption font-medium uppercase tracking-widest text-white">
+              {t('soldOut')}
             </span>
           ) : product.badges && product.badges.length > 0 ? (
-            <span className="absolute left-2.5 top-2.5 z-10 bg-[#2A2421] px-2 py-0.5 text-[9px] font-medium uppercase tracking-widest text-white">
-              {product.badges[0]}
+            <span className="absolute start-2.5 top-2.5 z-10 bg-brand-dark px-2 py-0.5 text-ui-caption font-medium uppercase tracking-widest text-white">
+              {tBadges.has(product.badges[0]) ? tBadges(product.badges[0]) : product.badges[0]}
             </span>
           ) : null}
 
@@ -138,8 +141,8 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
           <button
             type="button"
             onClick={handleWishlistClick}
-            aria-label="Add to wishlist"
-            className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-xs border border-border-default/40 text-text-muted transition-transform hover:scale-110 hover:text-text-primary cursor-pointer"
+            aria-label={t('addToWishlist')}
+            className="absolute end-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-xs border border-border-default/40 text-text-muted transition-transform hover:scale-110 hover:text-text-primary cursor-pointer"
           >
             <Heart
               className={`h-3.5 w-3.5 transition-colors ${
@@ -176,7 +179,9 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
               discountPercentage={lowestPriceVariant.discountPercentage}
             />
             {product.variants && product.variants.length > 1 && (
-              <span className="text-[11px] text-text-muted">{product.variants.length} sizes</span>
+              <span className="text-body-sm text-text-muted">
+                {t('sizeCount', { count: product.variants.length })}
+              </span>
             )}
           </div>
         </div>
@@ -187,9 +192,9 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
             type="button"
             disabled={!isAvailable}
             onClick={handleAddToCart}
-            className="w-full border border-border-default bg-page py-2.5 text-[11px] font-medium uppercase tracking-widest text-text-primary transition-colors hover:border-brand-dark hover:bg-[#2A2421] hover:text-white disabled:opacity-40 disabled:hover:bg-page disabled:hover:text-text-primary disabled:cursor-not-allowed cursor-pointer"
+            className="w-full border border-border-default bg-page py-2.5 text-body-sm font-medium uppercase tracking-widest text-text-primary transition-colors hover:border-brand-dark hover:bg-brand-dark hover:text-white disabled:opacity-40 disabled:hover:bg-page disabled:hover:text-text-primary disabled:cursor-not-allowed cursor-pointer"
           >
-            {isAvailable ? 'Add to bag' : 'Sold out'}
+            {isAvailable ? t('addToBag') : t('soldOut')}
           </button>
         </div>
       </article>

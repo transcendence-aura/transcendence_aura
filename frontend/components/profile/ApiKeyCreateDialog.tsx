@@ -7,7 +7,6 @@ import { FormField } from '@/components/ui/form/form-field';
 import { Input } from '@/components/ui/form/input';
 import { Dialog } from '@/components/ui/overlay/dialog';
 import { ApiKeyError, createApiKey, type CreatedApiKey } from '@/lib/api-keys/api-keys';
-import { TEXT_BODY, TEXT_BUTTON } from '@/lib/typography';
 
 // Same limit as the backend (CreateApiKeyDto).
 const NAME_MAX_LENGTH = 100;
@@ -83,15 +82,20 @@ function CreateForm({
           error={Boolean(error)}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? 'api-key-name-error' : undefined}
-          className={TEXT_BODY}
+          className="text-body-base"
         />
       </FormField>
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="ghost" onClick={onClose} className={TEXT_BUTTON}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onClose}
+          className="text-ui-button uppercase"
+        >
           {t('cancel')}
         </Button>
-        <Button type="submit" disabled={isCreating} className={TEXT_BUTTON}>
+        <Button type="submit" disabled={isCreating} className="text-ui-button uppercase">
           {isCreating ? t('submitting') : t('submit')}
         </Button>
       </div>

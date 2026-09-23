@@ -15,9 +15,9 @@ interface AvatarProps {
 }
 
 const SIZES: Record<AvatarSize, { container: string; text: string; dot: string }> = {
-  sm: { container: 'h-6 w-6', text: 'text-xs', dot: 'h-2 w-2' },
-  md: { container: 'h-9 w-9', text: 'text-sm', dot: 'h-2.5 w-2.5' },
-  lg: { container: 'h-16 w-16', text: 'text-lg', dot: 'h-3 w-3' },
+  sm: { container: 'h-6 w-6', text: 'text-ui-label', dot: 'h-2 w-2' },
+  md: { container: 'h-9 w-9', text: 'text-body-sm', dot: 'h-2.5 w-2.5' },
+  lg: { container: 'h-16 w-16', text: 'text-body-lg', dot: 'h-3 w-3' },
 };
 
 function getInitials(name: string): string {

@@ -1,8 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Leaf } from 'lucide-react';
 
 export function AuthSideBanner() {
+  const t = useTranslations('AuthSideBanner');
+
   return (
     <div className="bg-bg-surface relative flex h-full min-h-[calc(100vh-56px)] flex-col items-center justify-center overflow-hidden p-12">
       <Leaf
@@ -12,12 +15,12 @@ export function AuthSideBanner() {
       />
 
       <div className="relative z-10 text-center">
-        <p className="font-cormorant mb-3 text-2xl font-light italic leading-relaxed text-text-primary">
-          « Your ritual,
+        <p className="font-cormorant mb-3 text-display-subtitle font-light italic leading-relaxed text-text-primary">
+          {t('quoteLine1')}
           <br />
-          beautifully restored. »
+          {t('quoteLine2')}
         </p>
-        <p className="text-[10px] uppercase tracking-widest text-[#4a6a58]">Clean beauty · Aura</p>
+        <p className="text-ui-lang uppercase font-medium text-status-online">{t('signature')}</p>
       </div>
     </div>
   );

@@ -14,10 +14,10 @@ import { LOGOUT_MUTATION } from '@/lib/auth/logout.mutation';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 
 const ITEM_CLASS =
-  'text-text-secondary hover:text-text-primary hover:bg-page focus-visible:outline-border-focus flex w-full items-center gap-3 px-4 py-2.5 text-xs tracking-wider transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2';
+  'text-text-secondary hover:text-text-primary hover:bg-page focus-visible:outline-border-focus flex w-full items-center gap-3 px-4 py-2.5 text-ui-label tracking-wider transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2';
 
 const MOBILE_ITEM_CLASS =
-  'text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors';
+  'text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors';
 
 function useLogout() {
   const router = useRouter();
@@ -103,10 +103,8 @@ export function UserMenu() {
           className="bg-card border-border-default shadow-modal absolute inset-e-0 top-10 z-50 w-56 border py-2"
         >
           <div className="pb-2">
-            <p className="text-text-muted px-4 text-[10px] uppercase tracking-wider">
-              {t('status')}
-            </p>
-            <p className="text-text-primary px-4 text-xs font-medium">{t('connected')}</p>
+            <p className="text-text-muted px-4 text-ui-nav">{t('status')}</p>
+            <p className="text-text-primary px-4 text-ui-label font-medium">{t('connected')}</p>
           </div>
 
           <div className="border-border-default border-t pt-2">

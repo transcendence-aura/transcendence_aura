@@ -1,8 +1,12 @@
+import { useTranslations } from 'next-intl';
+
 interface PasswordStrengthProps {
   password: string;
 }
 
 export function PasswordStrength({ password }: PasswordStrengthProps) {
+  const t = useTranslations('PasswordStrength');
+
   const getStrength = (pwd: string): number => {
     let score = 0;
     if (pwd.length >= 8) score++;
@@ -16,16 +20,16 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
 
   const getLabel = () => {
     if (!password) return '';
-    if (strength <= 2) return 'Weak password';
-    if (strength === 3) return 'Moderate password';
-    return 'Strong password';
+    if (strength <= 2) return t('weak');
+    if (strength === 3) return t('moderate');
+    return t('strong');
   };
 
   const getColorClass = (index: number): string => {
     if (index >= strength) return 'bg-border-default';
     if (strength <= 2) return 'bg-brand-accent';
-    if (strength === 3) return 'bg-[#c8b89a]';
-    return 'bg-[#7a9e8e]';
+    if (strength === 3) return 'bg-brand-accent';
+    return 'bg-status-online';
   };
 
   return (
@@ -39,7 +43,9 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
         ))}
       </div>
       {password && (
-        <p className={`mt-1 text-xs ${strength >= 4 ? 'text-[#7a9e8e]' : 'text-text-muted'}`}>
+        <p
+          className={`mt-1 text-ui-label ${strength >= 4 ? 'text-status-online' : 'text-text-muted'}`}
+        >
           {getLabel()}
         </p>
       )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/form/button';
 import { useToast } from '@/components/ui/feedback/toast';
 import { PaymentMethodSelector } from './PaymentMethodSelector';
@@ -21,6 +22,7 @@ interface CheckoutFormData {
 }
 
 export function CheckoutForm() {
+  const t = useTranslations('Checkout');
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -39,21 +41,21 @@ export function CheckoutForm() {
   const validateForm = (): boolean => {
     const newErrors: Partial<CheckoutFormData> = {};
 
-    if (!formData.fullName.trim()) newErrors.fullName = 'Name is required';
+    if (!formData.fullName.trim()) newErrors.fullName = t('errors.nameRequired');
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      newErrors.email = 'Valid email is required';
+      newErrors.email = t('errors.emailInvalid');
     }
-    if (!formData.streetAddress.trim()) newErrors.streetAddress = 'Address is required';
-    if (!formData.city.trim()) newErrors.city = 'City is required';
-    if (!formData.postalCode.trim()) newErrors.postalCode = 'Postal code is required';
+    if (!formData.streetAddress.trim()) newErrors.streetAddress = t('errors.addressRequired');
+    if (!formData.city.trim()) newErrors.city = t('errors.cityRequired');
+    if (!formData.postalCode.trim()) newErrors.postalCode = t('errors.postalCodeRequired');
 
     if (!formData.billingAddressSame) {
       if (!formData.billingStreetAddress?.trim()) {
-        newErrors.billingStreetAddress = 'Billing address is required';
+        newErrors.billingStreetAddress = t('errors.billingAddressRequired');
       }
-      if (!formData.billingCity?.trim()) newErrors.billingCity = 'City is required';
+      if (!formData.billingCity?.trim()) newErrors.billingCity = t('errors.cityRequired');
       if (!formData.billingPostalCode?.trim()) {
-        newErrors.billingPostalCode = 'Postal code is required';
+        newErrors.billingPostalCode = t('errors.postalCodeRequired');
       }
     }
 
@@ -76,7 +78,7 @@ export function CheckoutForm() {
 
     setTimeout(() => {
       toast({
-        message: 'Payment coming soon',
+        message: t('paymentComingSoon'),
         variant: 'info',
       });
       setIsLoading(false);
@@ -87,11 +89,11 @@ export function CheckoutForm() {
     <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
       {/* Contact Info */}
       <div>
-        <h3 className="text-h4 font-bold mb-4 text-text-primary">Contact Information</h3>
+        <h3 className="text-h4 font-bold mb-4 text-text-primary">{t('contactInfo')}</h3>
         <div className="space-y-4">
           <div>
             <label className="block text-body-sm font-medium mb-2 text-text-primary">
-              Full Name *
+              {t('fullName')}
             </label>
             <input
               type="text"
@@ -99,33 +101,37 @@ export function CheckoutForm() {
               value={formData.fullName}
               onChange={handleInputChange}
               className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
-              placeholder="Jane Doe"
+              placeholder={t('fullNamePlaceholder')}
             />
-            {errors.fullName && <p className="text-sm text-brand-accent mt-1">{errors.fullName}</p>}
+            {errors.fullName && (
+              <p className="text-body-sm text-brand-accent mt-1">{errors.fullName}</p>
+            )}
           </div>
 
           <div>
-            <label className="block text-body-sm font-medium mb-2 text-text-primary">Email *</label>
+            <label className="block text-body-sm font-medium mb-2 text-text-primary">
+              {t('email')}
+            </label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
               className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
-              placeholder="jane@example.com"
+              placeholder={t('emailPlaceholder')}
             />
-            {errors.email && <p className="text-sm text-brand-accent mt-1">{errors.email}</p>}
+            {errors.email && <p className="text-body-sm text-brand-accent mt-1">{errors.email}</p>}
           </div>
         </div>
       </div>
 
       {/* Shipping Address */}
       <div>
-        <h3 className="text-h4 font-bold mb-4 text-text-primary">Shipping Address</h3>
+        <h3 className="text-h4 font-bold mb-4 text-text-primary">{t('shippingAddress')}</h3>
         <div className="space-y-4">
           <div>
             <label className="block text-body-sm font-medium mb-2 text-text-primary">
-              Street Address *
+              {t('street')}
             </label>
             <input
               type="text"
@@ -133,17 +139,17 @@ export function CheckoutForm() {
               value={formData.streetAddress}
               onChange={handleInputChange}
               className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
-              placeholder="123 Rue de la Paix"
+              placeholder={t('streetPlaceholder')}
             />
             {errors.streetAddress && (
-              <p className="text-sm text-brand-accent mt-1">{errors.streetAddress}</p>
+              <p className="text-body-sm text-brand-accent mt-1">{errors.streetAddress}</p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-body-sm font-medium mb-2 text-text-primary">
-                City *
+                {t('city')}
               </label>
               <input
                 type="text"
@@ -151,14 +157,14 @@ export function CheckoutForm() {
                 value={formData.city}
                 onChange={handleInputChange}
                 className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                placeholder="Paris"
+                placeholder={t('cityPlaceholder')}
               />
-              {errors.city && <p className="text-sm text-brand-accent mt-1">{errors.city}</p>}
+              {errors.city && <p className="text-body-sm text-brand-accent mt-1">{errors.city}</p>}
             </div>
 
             <div>
               <label className="block text-body-sm font-medium mb-2 text-text-primary">
-                Postal Code *
+                {t('postalCode')}
               </label>
               <input
                 type="text"
@@ -166,17 +172,17 @@ export function CheckoutForm() {
                 value={formData.postalCode}
                 onChange={handleInputChange}
                 className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
-                placeholder="75001"
+                placeholder={t('postalCodePlaceholder')}
               />
               {errors.postalCode && (
-                <p className="text-sm text-brand-accent mt-1">{errors.postalCode}</p>
+                <p className="text-body-sm text-brand-accent mt-1">{errors.postalCode}</p>
               )}
             </div>
           </div>
 
           <div>
             <label className="block text-body-sm font-medium mb-2 text-text-primary">
-              Country *
+              {t('country')}
             </label>
             <select
               name="country"
@@ -184,12 +190,12 @@ export function CheckoutForm() {
               onChange={handleInputChange}
               className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
             >
-              <option value="FR">France</option>
-              <option value="DE">Germany</option>
-              <option value="IT">Italy</option>
-              <option value="ES">Spain</option>
-              <option value="GB">United Kingdom</option>
-              <option value="US">United States</option>
+              <option value="FR">{t('countries.FR')}</option>
+              <option value="DE">{t('countries.DE')}</option>
+              <option value="IT">{t('countries.IT')}</option>
+              <option value="ES">{t('countries.ES')}</option>
+              <option value="GB">{t('countries.GB')}</option>
+              <option value="US">{t('countries.US')}</option>
             </select>
           </div>
         </div>
@@ -205,14 +211,14 @@ export function CheckoutForm() {
             onChange={handleInputChange}
             className="w-4 h-4 accent-brand-dark"
           />
-          <span className="text-body-base text-text-primary">Billing address same as shipping</span>
+          <span className="text-body-base text-text-primary">{t('billingSame')}</span>
         </label>
 
         {!formData.billingAddressSame && (
           <div className="space-y-4 p-4 bg-card-subtle border border-border-default rounded">
             <div>
               <label className="block text-body-sm font-medium mb-2 text-text-primary">
-                Street Address *
+                {t('street')}
               </label>
               <input
                 type="text"
@@ -222,14 +228,14 @@ export function CheckoutForm() {
                 className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
               />
               {errors.billingStreetAddress && (
-                <p className="text-sm text-brand-accent mt-1">{errors.billingStreetAddress}</p>
+                <p className="text-body-sm text-brand-accent mt-1">{errors.billingStreetAddress}</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-body-sm font-medium mb-2 text-text-primary">
-                  City *
+                  {t('city')}
                 </label>
                 <input
                   type="text"
@@ -239,13 +245,13 @@ export function CheckoutForm() {
                   className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
                 />
                 {errors.billingCity && (
-                  <p className="text-sm text-brand-accent mt-1">{errors.billingCity}</p>
+                  <p className="text-body-sm text-brand-accent mt-1">{errors.billingCity}</p>
                 )}
               </div>
 
               <div>
                 <label className="block text-body-sm font-medium mb-2 text-text-primary">
-                  Postal Code *
+                  {t('postalCode')}
                 </label>
                 <input
                   type="text"
@@ -255,7 +261,7 @@ export function CheckoutForm() {
                   className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
                 />
                 {errors.billingPostalCode && (
-                  <p className="text-sm text-brand-accent mt-1">{errors.billingPostalCode}</p>
+                  <p className="text-body-sm text-brand-accent mt-1">{errors.billingPostalCode}</p>
                 )}
               </div>
             </div>
@@ -276,7 +282,7 @@ export function CheckoutForm() {
         disabled={isLoading}
         className="w-full py-3 text-h4 font-bold bg-brand-dark text-white uppercase tracking-wider"
       >
-        {isLoading ? 'Processing...' : 'Proceed to Payment'}
+        {isLoading ? t('submitting') : t('submit')}
       </Button>
     </form>
   );

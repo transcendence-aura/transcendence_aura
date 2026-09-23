@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/form/button';
 import { useToast } from '@/components/ui/feedback/toast';
 import { Dialog } from '@/components/ui/overlay/dialog';
 import { ApiDocsLink } from './ApiDocsLink';
-import { TEXT_BODY, TEXT_BODY_SM, TEXT_BUTTON, TEXT_LABEL } from '@/lib/typography';
 
 interface ApiKeyRevealDialogProps {
   // The raw key, or null when there is nothing to show (the dialog is closed).
@@ -49,17 +48,17 @@ function RevealContent({ apiKey, onDone }: { apiKey: string; onDone: () => void 
       >
         <TriangleAlert aria-hidden="true" className="text-text-primary mt-0.5 h-5 w-5 shrink-0" />
         <div className="flex flex-col gap-1">
-          <p className={`text-text-primary ${TEXT_LABEL}`}>{t('warningTitle')}</p>
-          <p className={`text-text-secondary ${TEXT_BODY_SM}`}>{t('warning')}</p>
+          <p className="text-text-primary text-ui-label uppercase">{t('warningTitle')}</p>
+          <p className="text-text-secondary text-body-sm">{t('warning')}</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <p className={`text-text-muted ${TEXT_LABEL}`}>{t('keyLabel')}</p>
+        <p className="text-text-muted text-ui-label uppercase">{t('keyLabel')}</p>
         <div className="flex items-stretch gap-2">
           <code
             dir="ltr"
-            className={`bg-card border-border-default text-text-primary min-w-0 flex-1 border px-4 py-3 break-all select-all ${TEXT_BODY}`}
+            className="bg-card border-border-default text-text-primary min-w-0 flex-1 border px-4 py-3 break-all select-all text-body-base"
           >
             {apiKey}
           </code>
@@ -67,7 +66,7 @@ function RevealContent({ apiKey, onDone }: { apiKey: string; onDone: () => void 
             type="button"
             variant="ghost"
             onClick={handleCopy}
-            className={`flex shrink-0 items-center gap-2 ${TEXT_BUTTON}`}
+            className="flex shrink-0 items-center gap-2 text-ui-button uppercase"
           >
             {isCopied ? (
               <Check aria-hidden="true" className="h-4 w-4" />
@@ -81,12 +80,12 @@ function RevealContent({ apiKey, onDone }: { apiKey: string; onDone: () => void 
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <p className={`text-text-muted ${TEXT_BODY_SM}`}>{t('docsNext')}</p>
+          <p className="text-text-muted text-body-sm">{t('docsNext')}</p>
           <div>
             <ApiDocsLink>{t('docsLink')}</ApiDocsLink>
           </div>
         </div>
-        <Button type="button" onClick={onDone} className={TEXT_BUTTON}>
+        <Button type="button" onClick={onDone} className="text-ui-button uppercase">
           {t('done')}
         </Button>
       </div>

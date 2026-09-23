@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useState, use } from 'react';
 import { ShoppingCart } from 'lucide-react';
@@ -187,6 +188,8 @@ export default function ProductPage({ params }: ProductPageProps) {
   const { slug } = use(params);
   const { toast } = useToast();
   const { addItem } = useCart();
+  const t = useTranslations('Product');
+  const tBadges = useTranslations('ProductBadges');
 
   // TODO: Replace fallback resolution with Apollo useQuery(GET_PRODUCT_BY_SLUG, { variables: { slug } })
   const product: ProductMock = CATALOG_PRODUCTS[slug] || {
@@ -250,7 +253,7 @@ export default function ProductPage({ params }: ProductPageProps) {
     });
 
     toast({
-      message: `Added ${currentVariant.label} to cart`,
+      message: t('addedToCart', { name: product.name, size: currentVariant.label }),
       variant: 'success',
     });
   };
@@ -259,7 +262,7 @@ export default function ProductPage({ params }: ProductPageProps) {
     <div className="bg-page min-h-screen">
       {/* Breadcrumb */}
       <nav className="px-6 py-4 text-body-sm text-text-muted border-b border-border-default">
-        <Link href="/">Home</Link> /{' '}
+        <Link href="/">{t('home')}</Link> /{' '}
         <Link href={`/catalogue?category=${product.category.slug}`}>{product.category.name}</Link> /{' '}
         <span className="text-text-primary">{product.name}</span>
       </nav>
@@ -271,8 +274,12 @@ export default function ProductPage({ params }: ProductPageProps) {
           {productImage && (
             <div className="relative aspect-square bg-subtle rounded overflow-hidden">
               {product.badges?.[0] && (
-                <div className="absolute top-4 left-4 z-10">
-                  <Badge>{product.badges[0]}</Badge>
+                <div className="absolute top-4 start-4 z-10">
+                  <Badge>
+                    {tBadges.has(product.badges[0])
+                      ? tBadges(product.badges[0])
+                      : product.badges[0]}
+                  </Badge>
                 </div>
               )}
               <Image
@@ -292,12 +299,12 @@ export default function ProductPage({ params }: ProductPageProps) {
             <p className="text-ui-label text-text-muted mb-2 uppercase tracking-wide">
               {product.category.name}
             </p>
-            <h1 className="font-cormorant text-5xl text-text-primary font-bold mb-3 leading-tight">
+            <h1 className="font-cormorant text-display-hero text-text-primary font-bold mb-3 leading-tight">
               {product.name}
             </h1>
             <p className="text-body-base text-text-muted mb-4">{product.shortDescription}</p>
             <div className="text-body-sm text-text-muted">
-              {product.rating.average} ⭐ {product.rating.count} reviews
+              {product.rating.average} ⭐ {t('reviewCount', { count: product.rating.count })}
             </div>
           </div>
 
@@ -317,29 +324,29 @@ export default function ProductPage({ params }: ProductPageProps) {
             <button
               type="button"
               onClick={handleAddToCart}
-              className="flex-1 bg-text-primary text-page py-3 font-medium text-body-base hover:opacity-90 flex items-center justify-center gap-2 transition-opacity cursor-pointer"
+              className="flex-1 bg-text-primary text-page py-3 font-medium text-body-base uppercase hover:opacity-90 flex items-center justify-center gap-2 transition-opacity cursor-pointer"
             >
               <ShoppingCart size={18} />
-              ADD TO BAG
+              {t('addToBag')}
             </button>
             <WishlistToggle />
           </div>
 
           {/* Stock Info */}
-          <p className="text-body-sm text-text-muted">✓ In stock — Free delivery over €60</p>
+          <p className="text-body-sm text-text-muted">{t('stockNotice')}</p>
 
           {/* Accordions */}
           <div className="border-t border-border-default pt-6 space-y-0">
-            <AccordionItem id="description" title="Description">
+            <AccordionItem id="description" title={t('description')}>
               <p className="text-body-sm text-text-primary">{product.content.description}</p>
             </AccordionItem>
-            <AccordionItem id="ingredients" title="Key Ingredients">
+            <AccordionItem id="ingredients" title={t('ingredients')}>
               <p className="text-body-sm text-text-primary">{product.content.keyIngredients}</p>
             </AccordionItem>
-            <AccordionItem id="usage" title="How to use">
+            <AccordionItem id="usage" title={t('howToUse')}>
               <p className="text-body-sm text-text-primary">{product.content.howToUse}</p>
             </AccordionItem>
-            <AccordionItem id="shipping" title="Shipping & Returns">
+            <AccordionItem id="shipping" title={t('shipping')}>
               <p className="text-body-sm text-text-primary">{product.content.shippingInfo}</p>
             </AccordionItem>
           </div>

@@ -1,9 +1,10 @@
 'use client';
 
-import { Link } from '@/i18n/navigation';
-import { usePathname } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
+import { Link, usePathname } from '@/i18n/navigation';
 
 export function AuthTabs() {
+  const t = useTranslations('AuthTabs');
   const pathname = usePathname();
   const isSignIn = pathname.includes('/login');
 
@@ -11,11 +12,11 @@ export function AuthTabs() {
     <div className="mb-8 flex items-center justify-center gap-4">
       <Link
         href="/login"
-        className={`text-xs uppercase tracking-wider transition-colors ${
+        className={`text-ui-nav transition-colors ${
           isSignIn ? 'text-text-primary font-medium' : 'text-text-muted hover:text-text-primary'
         }`}
       >
-        Sign in
+        {t('signIn')}
       </Link>
 
       {/* Separator */}
@@ -23,11 +24,11 @@ export function AuthTabs() {
 
       <Link
         href="/register"
-        className={`text-xs uppercase tracking-wider transition-colors ${
+        className={`text-ui-nav transition-colors ${
           !isSignIn ? 'text-text-primary font-medium' : 'text-text-muted hover:text-text-primary'
         }`}
       >
-        Create account
+        {t('createAccount')}
       </Link>
     </div>
   );
