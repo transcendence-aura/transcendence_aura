@@ -7,6 +7,7 @@ export enum AnalyticsEventType {
   WISHLIST_ITEM_ADDED = 'WISHLIST_ITEM_ADDED',
   USER_FOLLOWED = 'USER_FOLLOWED',
   MESSAGE_SENT = 'MESSAGE_SENT',
+  PASSWORD_CHANGED = 'PASSWORD_CHANGED',
 }
 
 export enum AnalyticsTargetType {

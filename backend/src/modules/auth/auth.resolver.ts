@@ -1,6 +1,7 @@
 import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordInput } from './dto/change-password.input';
 import { UserType } from './auth.model';
 import { LoginInput } from './dto/login.input';
 import { LoginResponse, RefreshResponse } from './dto/login-response.model';
@@ -173,6 +174,27 @@ export class AuthResolver {
     },
   ): Promise<TwoFactorConfirmResponse> {
     return this.twoFactorService.confirmEnrollment(context.req.userId!, input.code);
+  }
+
+  @UseGuards(RolesGuard)
+  @Mutation(() => Boolean)
+  async changePassword(
+    @Args('input') input: ChangePasswordInput,
+    @Context()
+    context: {
+      req: AuthenticatedRequest;
+      res: Response;
+    },
+  ): Promise<boolean> {
+    await this.authService.changePassword(context.req.userId!, input);
+
+    // The service just revoked every session for this user, this request's
+    // own included: clear its cookies too, so the browser doesn't keep
+    // presenting a refresh token that is already dead.
+    context.res.clearCookie(ACCESS_COOKIE_NAME, getAccessCookieClearOptions());
+    context.res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieClearOptions());
+
+    return true;
   }
 
   @Mutation(() => VerifyMfaResponse)

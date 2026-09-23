@@ -26,6 +26,7 @@ A type must be added there before any code is allowed to emit it.
 | `WISHLIST_ITEM_ADDED` | `addWishlistItem` mutation runs                                                                                 | The user                             | `PRODUCT` / product id    |
 | `USER_FOLLOWED`       | `followUser` mutation runs, and the follow is newly created (idempotent no-op on repeat calls does not re-emit) | The follower                         | `USER` / followed user id |
 | `MESSAGE_SENT`        | `sendMessage` mutation runs                                                                                     | The sender                           | `MESSAGE` / message id    |
+| `PASSWORD_CHANGED`    | `changePassword` mutation succeeds                                                                              | The user                             | none                      |
 
 ## Product views and anonymous browsing
 
