@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useQuery } from '@apollo/client/react';
+import { useApolloClient, useQuery } from '@apollo/client/react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
@@ -15,16 +15,23 @@ import { FeedItem } from '@/components/circle/FeedItem';
 // folds them into `data` - without this, a tab left open for a while would
 // grow `liveItems` forever.
 const MAX_LIVE_ITEMS = 50;
+const PAGE_SIZE = 20;
 
 export default function CirclePage() {
   const isAuthenticated = useIsAuthenticated();
   const t = useTranslations('CircleFeed');
   const { on } = useRealtime();
+  const client = useApolloClient();
   const [liveItems, setLiveItems] = useState<CircleFeedItem[]>([]);
+  const [olderItems, setOlderItems] = useState<CircleFeedItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [nextPageOverride, setNextPageOverride] = useState<boolean | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const { data, loading, error, refetch } = useQuery(CIRCLE_FEED_QUERY, {
     skip: !isAuthenticated,
     fetchPolicy: 'cache-and-network',
+    variables: { pagination: { page: 1, limit: PAGE_SIZE } },
   });
 
   useEffect(() => {
@@ -38,11 +45,31 @@ export default function CirclePage() {
     });
   }, [on]);
 
+  const handleLoadMore = async () => {
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    try {
+      const { data: more } = await client.query({
+        query: CIRCLE_FEED_QUERY,
+        variables: { pagination: { page: nextPage, limit: PAGE_SIZE } },
+        fetchPolicy: 'network-only',
+      });
+      if (!more) return;
+      setOlderItems((prev) => [...prev, ...more.circleFeed.items]);
+      setNextPageOverride(more.circleFeed.hasNextPage);
+      setPage(nextPage);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   const fetchedItems = data?.circleFeed.items ?? [];
   const items = [
     ...liveItems.filter((item) => !fetchedItems.some((f) => f.id === item.id)),
     ...fetchedItems,
+    ...olderItems,
   ];
+  const hasNextPage = nextPageOverride ?? data?.circleFeed.hasNextPage ?? false;
 
   if (loading && items.length === 0) {
     return (
@@ -90,6 +117,13 @@ export default function CirclePage() {
           {items.map((item) => (
             <FeedItem key={item.id} item={item} />
           ))}
+          {hasNextPage && (
+            <div className="flex justify-center py-8">
+              <Button onClick={handleLoadMore} disabled={loadingMore} className="px-6 py-3">
+                {t('loadMore')}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

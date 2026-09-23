@@ -41,7 +41,8 @@
     "now": "now",
     "newFollow": "{actor} started following {followedUser}",
     "newFollowFallback": "{actor} started following someone",
-    "wishlistAdded": "{actor} added this to their wishlist"
+    "wishlistAdded": "{actor} added this to their wishlist",
+    "loadMore": "Load more"
   },
   "Footer": {
     "tagline": "Pure botanical formulations for mindful skin rituals.",

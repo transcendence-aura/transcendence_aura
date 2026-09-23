@@ -28,30 +28,40 @@ export interface CircleFeedQueryData {
   circleFeed: CircleFeedPage;
 }
 
-export const CIRCLE_FEED_QUERY: TypedDocumentNode<CircleFeedQueryData> = gql`
-  query CircleFeed {
-    circleFeed {
-      items {
-        id
-        type
-        createdAt
-        actor {
+export interface CircleFeedPaginationInput {
+  page?: number;
+  limit?: number;
+}
+
+export interface CircleFeedQueryVariables {
+  pagination?: CircleFeedPaginationInput;
+}
+
+export const CIRCLE_FEED_QUERY: TypedDocumentNode<CircleFeedQueryData, CircleFeedQueryVariables> =
+  gql`
+    query CircleFeed($pagination: CircleFeedPaginationInput) {
+      circleFeed(pagination: $pagination) {
+        items {
           id
-          name
-          handle
+          type
+          createdAt
+          actor {
+            id
+            name
+            handle
+          }
+          followedUser {
+            id
+            name
+            handle
+          }
+          product {
+            ...ProductCardFields
+          }
         }
-        followedUser {
-          id
-          name
-          handle
-        }
-        product {
-          ...ProductCardFields
-        }
+        total
+        hasNextPage
       }
-      total
-      hasNextPage
     }
-  }
-  ${PRODUCT_CARD_FIELDS}
-`;
+    ${PRODUCT_CARD_FIELDS}
+  `;

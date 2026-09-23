@@ -41,7 +41,8 @@
     "now": "maintenant",
     "newFollow": "{actor} a commencé à suivre {followedUser}",
     "newFollowFallback": "{actor} a commencé à suivre quelqu'un",
-    "wishlistAdded": "{actor} a ajouté ceci à ses favoris"
+    "wishlistAdded": "{actor} a ajouté ceci à ses favoris",
+    "loadMore": "Charger plus"
   },
   "Footer": {
     "tagline": "Des formulations botaniques pures pour des rituels de soin attentifs.",

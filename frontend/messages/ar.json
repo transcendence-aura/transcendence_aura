@@ -41,7 +41,8 @@
     "now": "الآن",
     "newFollow": "بدأ {actor} متابعة {followedUser}",
     "newFollowFallback": "بدأ {actor} متابعة شخص ما",
-    "wishlistAdded": "أضاف {actor} هذا إلى قائمة المفضلة"
+    "wishlistAdded": "أضاف {actor} هذا إلى قائمة المفضلة",
+    "loadMore": "تحميل المزيد"
   },
   "Footer": {
     "tagline": "تركيبات نباتية نقية لطقوس عناية واعية بالبشرة.",
