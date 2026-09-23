@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { PRODUCTS_QUERY, type ProductsQueryResponse } from '@/lib/graphql/queries/products';
 import { toSearchQuery } from '@/lib/search/to-search-query';
+import { useWishlist } from '@/lib/hooks/useWishlist';
 
 const RESULTS_PER_PAGE = 12;
 const SKELETON_COUNT = 6;
@@ -29,6 +30,8 @@ export function SearchResults({ term }: { term: string }) {
   const products = data?.products.items ?? [];
   const total = data?.products.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / RESULTS_PER_PAGE));
+
+  const { isInWishlist, toggle: toggleWishlist } = useWishlist();
 
   return (
     <div className="bg-page min-h-screen">
@@ -77,7 +80,12 @@ export function SearchResults({ term }: { term: string }) {
           <>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-3">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isFavorite={isInWishlist(product.id)}
+                  onToggleWishlist={toggleWishlist}
+                />
               ))}
             </div>
 

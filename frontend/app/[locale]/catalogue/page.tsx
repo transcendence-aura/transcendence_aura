@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { useCart } from '@/lib/hooks/useCart';
 import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue';
+import { useWishlist } from '@/lib/hooks/useWishlist';
 import { useToast } from '@/components/ui/feedback/toast';
 import { isLocalMediaUrl } from '@/lib/media/image-url';
 import { CATALOGUE_CATEGORIES } from '@/lib/catalogue/categories';
@@ -67,9 +68,7 @@ function CatalogueContent() {
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  // Client-side only for now: the wishlist mutations exist (see WishlistToggle on the product
-  // page) but nothing persists this toggle yet - same known gap, not introduced by this page.
-  const [wishlist, setWishlist] = useState<string[]>([]);
+  const { isInWishlist, toggle: toggleWishlist } = useWishlist();
 
   const { data, loading, error, refetch } = useQuery<ProductsQueryResponse>(PRODUCTS_QUERY, {
     // Revalidates on every mount/variable change instead of trusting a possibly stale cache entry
@@ -102,12 +101,6 @@ function CatalogueContent() {
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
     if (typeof window !== 'undefined') sessionStorage.setItem('catalogue_view', mode);
-  };
-
-  const toggleWishlist = (productId: string) => {
-    setWishlist((prev) =>
-      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
-    );
   };
 
   const handlePriceChange = (range: [number, number]) => {
@@ -393,7 +386,7 @@ function CatalogueContent() {
                     <ProductCard
                       key={product.id}
                       product={product}
-                      isFavorite={wishlist.includes(product.id)}
+                      isFavorite={isInWishlist(product.id)}
                       onToggleWishlist={toggleWishlist}
                     />
                   ))}
@@ -401,7 +394,7 @@ function CatalogueContent() {
               ) : (
                 <div className="divide-y divide-border-default/60">
                   {products.map((product) => {
-                    const isFavorite = wishlist.includes(product.id);
+                    const isFavorite = isInWishlist(product.id);
                     const isAvailable = product.variants[0]?.isAvailable ?? true;
 
                     return (

@@ -63,7 +63,7 @@ export function WishlistGrid({ products }: WishlistGridProps) {
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {products.map((product) => (
         <div key={product.id} className="group relative">
-          <ProductCard product={product} />
+          <ProductCard product={product} showWishlistButton={false} />
 
           <button
             type="button"
