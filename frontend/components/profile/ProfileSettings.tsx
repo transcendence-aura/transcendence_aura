@@ -13,7 +13,6 @@ import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { ME_QUERY } from '@/lib/graphql/queries/me';
 import { ApiKeySection } from './ApiKeySection';
 import { EmailChangeDialog } from './EmailChangeDialog';
-import { TEXT_BADGE, TEXT_BODY, TEXT_BODY_SM, TEXT_BUTTON } from '@/lib/typography';
 import { ProfileForm } from './ProfileForm';
 import { SettingsRow, SettingsSection } from './SettingsSection';
 
@@ -21,13 +20,14 @@ import { SettingsRow, SettingsSection } from './SettingsSection';
 const NOTIFICATION_PREFERENCES = ['newMessages', 'newFollowers', 'newsletter'] as const;
 
 // Same look as Button's "link" variant, for a navigation link.
-const LINK_CLASS = `text-text-primary underline underline-offset-4 hover:opacity-70 ${TEXT_BUTTON}`;
+const LINK_CLASS =
+  'text-text-primary underline underline-offset-4 hover:opacity-70 text-ui-button uppercase';
 
 function ComingSoon() {
   const t = useTranslations('ProfileSettings');
 
   return (
-    <Badge variant="muted" className={TEXT_BADGE}>
+    <Badge variant="muted" className="text-ui-badge uppercase">
       {t('comingSoon')}
     </Badge>
   );
@@ -81,8 +81,8 @@ export function ProfileSettings() {
   if (error) {
     return (
       <div className="flex flex-col items-start gap-4">
-        <p className={`text-text-muted ${TEXT_BODY}`}>{t('loadFailed')}</p>
-        <Button onClick={handleRetry} disabled={isRetrying} className={TEXT_BUTTON}>
+        <p className="text-text-muted text-body-base">{t('loadFailed')}</p>
+        <Button onClick={handleRetry} disabled={isRetrying} className="text-ui-button uppercase">
           {isRetrying ? t('retrying') : t('retry')}
         </Button>
       </div>
@@ -110,12 +110,12 @@ export function ProfileSettings() {
       <SettingsSection title={t('security')}>
         <div>
           <SettingsRow label={t('emailAddress')}>
-            <span className={`text-text-secondary break-all ${TEXT_BODY_SM}`}>{email}</span>
+            <span className="text-text-secondary break-all text-body-sm">{email}</span>
             <Button
               type="button"
               variant="link"
               onClick={() => setIsEmailDialogOpen(true)}
-              className={TEXT_BUTTON}
+              className="text-ui-button uppercase"
             >
               {t('changeEmail')}
             </Button>

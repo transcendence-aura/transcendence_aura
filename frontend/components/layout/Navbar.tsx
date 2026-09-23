@@ -27,7 +27,7 @@ export function Navbar() {
   return (
     <nav className="bg-card border-border-default flex h-16 items-center justify-between border-b px-6 md:px-8">
       {/* Left Section: Logo */}
-      <Link href="/" className="font-cormorant text-text-primary text-lg tracking-widest">
+      <Link href="/" className="font-cormorant text-text-primary text-body-lg tracking-widest">
         Aura
       </Link>
 
@@ -35,19 +35,19 @@ export function Navbar() {
       <div className="hidden md:flex items-center gap-8">
         <Link
           href="/catalogue"
-          className="text-text-secondary hover:text-text-primary text-xs uppercase tracking-wider transition-colors"
+          className="text-text-secondary hover:text-text-primary text-ui-nav transition-colors"
         >
           {t('shop')}
         </Link>
         <Link
-          href="/journal"
-          className="text-text-secondary hover:text-text-primary text-xs uppercase tracking-wider transition-colors"
+          href="/circle"
+          className="text-text-secondary hover:text-text-primary text-ui-nav transition-colors"
         >
-          {t('journal')}
+          Circle
         </Link>
         <Link
           href="/about"
-          className="text-text-secondary hover:text-text-primary text-xs uppercase tracking-wider transition-colors"
+          className="text-text-secondary hover:text-text-primary text-ui-nav transition-colors"
         >
           {t('about')}
         </Link>
@@ -98,7 +98,7 @@ export function Navbar() {
         </div>
 
         {/* Desktop Language Switcher */}
-        <div className="hidden sm:flex items-center border-l border-border-default pl-3 text-[10px] tracking-wider uppercase">
+        <div className="hidden sm:flex items-center border-l border-border-default pl-3 text-ui-label tracking-wider uppercase">
           {routing.locales.map((lang, index) => (
             <div key={lang} className="flex items-center">
               <button
@@ -145,21 +145,21 @@ export function Navbar() {
           <Link
             href="/catalogue"
             onClick={() => setMenuOpen(false)}
-            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors"
+            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors"
           >
             {t('shop')}
           </Link>
           <Link
-            href="/journal"
+            href="/circle"
             onClick={() => setMenuOpen(false)}
-            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors"
+            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors"
           >
-            {t('journal')}
+            Circle
           </Link>
           <Link
             href="/about"
             onClick={() => setMenuOpen(false)}
-            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors"
+            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors"
           >
             {t('about')}
           </Link>
@@ -177,16 +177,14 @@ export function Navbar() {
           <Link
             href="/checkout"
             onClick={() => setMenuOpen(false)}
-            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors flex items-center gap-2"
+            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors flex items-center gap-2"
           >
             <ShoppingBag className="h-4 w-4" /> {t('cartMobile')}
           </Link>
 
           {/* Mobile Language Selection */}
           <div className="flex items-center gap-2 border-t border-border-default pt-4">
-            <span className="text-[10px] uppercase tracking-wider text-text-muted mr-2">
-              {t('language')}
-            </span>
+            <span className="text-ui-nav text-text-muted mr-2">{t('language')}</span>
             {routing.locales.map((lang) => (
               <button
                 key={lang}
@@ -195,7 +193,7 @@ export function Navbar() {
                   setMenuOpen(false);
                   router.replace(pathname, { locale: lang });
                 }}
-                className={`text-xs px-2 py-1 rounded border transition-colors uppercase ${
+                className={`text-ui-label px-2 py-1 rounded border transition-colors uppercase ${
                   locale === lang
                     ? 'border-brand-dark bg-brand-dark text-white font-medium'
                     : 'border-border-default text-text-secondary'

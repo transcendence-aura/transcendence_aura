@@ -4,80 +4,79 @@
 
 @theme {
   /* Fonts */
-  --font-family-cormorant: 'Cormorant Garamond', serif;
-  --font-family-jost: 'Jost', sans-serif;
-  --font-family-noto-arabic: 'Noto Sans Arabic', sans-serif;
+  --font-sans: 'Jost', sans-serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+  --font-jost: 'Jost', sans-serif;
+  --font-noto-arabic: 'Noto Sans Arabic', sans-serif;
 
   /* Display Typography */
-  --font-size-display-hero: 48px;
-  --line-height-display-hero: 1.08;
-  --font-weight-display-hero: 300;
-  --font-style-display-hero: italic;
+  --text-display-hero: 48px;
+  --text-display-hero--line-height: 1.08;
+  --text-display-hero--font-weight: 300;
 
-  --font-size-display-title: 30px;
-  --line-height-display-title: 1.2;
-  --font-weight-display-title: 400;
+  --text-display-title: 30px;
+  --text-display-title--line-height: 1.2;
+  --text-display-title--font-weight: 400;
 
-  --font-size-display-subtitle: 22px;
-  --line-height-display-subtitle: 1.3;
-  --font-weight-display-subtitle: 400;
+  --text-display-subtitle: 22px;
+  --text-display-subtitle--line-height: 1.3;
+  --text-display-subtitle--font-weight: 400;
 
-  --font-size-display-product: 18px;
-  --line-height-display-product: 1.4;
-  --font-weight-display-product: 400;
-  --font-style-display-product: italic;
+  --text-display-product: 18px;
+  --text-display-product--line-height: 1.4;
+  --text-display-product--font-weight: 400;
 
-  --font-size-display-stat: 24px;
-  --line-height-display-stat: 1;
-  --font-weight-display-stat: 300;
+  --text-display-stat: 24px;
+  --text-display-stat--line-height: 1;
+  --text-display-stat--font-weight: 300;
 
   /* Body Typography */
-  --font-size-body-lg: 13px;
-  --line-height-body-lg: 1.85;
-  --font-weight-body-lg: 300;
+  --text-body-lg: 13px;
+  --text-body-lg--line-height: 1.85;
+  --text-body-lg--font-weight: 300;
 
-  --font-size-body-base: 12px;
-  --line-height-body-base: 1.8;
-  --font-weight-body-base: 300;
+  --text-body-base: 12px;
+  --text-body-base--line-height: 1.8;
+  --text-body-base--font-weight: 300;
 
-  --font-size-body-sm: 11px;
-  --line-height-body-sm: 1.7;
-  --font-weight-body-sm: 300;
+  --text-body-sm: 11px;
+  --text-body-sm--line-height: 1.7;
+  --text-body-sm--font-weight: 300;
 
   /* UI Typography */
-  --font-size-ui-nav: 10px;
-  --line-height-ui-nav: 1;
-  --font-weight-ui-nav: 400;
-  --letter-spacing-ui-nav: 0.12em;
+  --text-ui-nav: 10px;
+  --text-ui-nav--line-height: 1;
+  --text-ui-nav--font-weight: 400;
+  --text-ui-nav--letter-spacing: 0.12em;
 
-  --font-size-ui-button: 10px;
-  --line-height-ui-button: 1;
-  --font-weight-ui-button: 500;
-  --letter-spacing-ui-button: 0.1em;
+  --text-ui-button: 10px;
+  --text-ui-button--line-height: 1;
+  --text-ui-button--font-weight: 500;
+  --text-ui-button--letter-spacing: 0.1em;
 
-  --font-size-ui-label: 9px;
-  --line-height-ui-label: 1;
-  --font-weight-ui-label: 500;
-  --letter-spacing-ui-label: 0.18em;
+  --text-ui-label: 9px;
+  --text-ui-label--line-height: 1;
+  --text-ui-label--font-weight: 500;
+  --text-ui-label--letter-spacing: 0.18em;
 
-  --font-size-ui-caption: 9px;
-  --line-height-ui-caption: 1.5;
-  --font-weight-ui-caption: 300;
-  --letter-spacing-ui-caption: 0.06em;
+  --text-ui-caption: 9px;
+  --text-ui-caption--line-height: 1.5;
+  --text-ui-caption--font-weight: 300;
+  --text-ui-caption--letter-spacing: 0.06em;
 
-  --font-size-ui-price: 12px;
-  --line-height-ui-price: 1;
-  --font-weight-ui-price: 400;
+  --text-ui-price: 12px;
+  --text-ui-price--line-height: 1;
+  --text-ui-price--font-weight: 400;
 
-  --font-size-ui-badge: 8px;
-  --line-height-ui-badge: 1;
-  --font-weight-ui-badge: 500;
-  --letter-spacing-ui-badge: 0.08em;
+  --text-ui-badge: 8px;
+  --text-ui-badge--line-height: 1;
+  --text-ui-badge--font-weight: 500;
+  --text-ui-badge--letter-spacing: 0.08em;
 
-  --font-size-ui-lang: 9px;
-  --line-height-ui-lang: 1;
-  --font-weight-ui-lang: 500;
-  --letter-spacing-ui-lang: 0.1em;
+  --text-ui-lang: 9px;
+  --text-ui-lang--line-height: 1;
+  --text-ui-lang--font-weight: 500;
+  --text-ui-lang--letter-spacing: 0.1em;
 
   /* Colors - Backgrounds */
   --color-page: #fafaf8;
@@ -122,9 +121,6 @@
   --spacing-12: 48px;
   --spacing-16: 64px;
 
-  /* Max Width */
-  --max-width-6xl: 72rem;
-
   /* Border Radius */
   --radius-none: 0px;
   --radius-sm: 4px;
@@ -139,5 +135,6 @@
 }
 
 :lang(ar) {
-  --font-family-jost: 'Noto Sans Arabic', sans-serif;
+  --font-sans: 'Noto Sans Arabic', sans-serif;
+  --font-jost: 'Noto Sans Arabic', sans-serif;
 }

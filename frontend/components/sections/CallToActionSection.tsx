@@ -18,9 +18,7 @@ export const CallToActionSection = () => {
       <div className="mx-auto max-w-2xl px-4 md:px-8 text-center space-y-6">
         <p className="text-ui-label text-text-muted uppercase tracking-widest">{t('eyebrow')}</p>
 
-        <h2 className="font-cormorant text-text-primary text-5xl md:text-6xl font-light">
-          {t('title')}
-        </h2>
+        <h2 className="font-cormorant text-text-primary text-display-hero">{t('title')}</h2>
 
         <p className="text-body-base text-text-secondary">{t('subtitle')}</p>
 

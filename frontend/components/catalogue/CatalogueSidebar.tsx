@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { SearchInput } from '@/components/ui/form/search-input';
 import { CATALOGUE_CATEGORIES } from '@/lib/catalogue/categories';
 import { CATALOGUE_COLLECTIONS } from '@/lib/catalogue/collections';
@@ -52,7 +53,7 @@ function PriceBoundInput({
   return (
     <div>
       <div className="relative">
-        <span className="text-body-sm text-text-muted pointer-events-none absolute top-1/2 left-2 -translate-y-1/2">
+        <span className="text-body-sm text-text-muted pointer-events-none absolute top-1/2 inset-s-2 -translate-y-1/2">
           €
         </span>
         <input
@@ -84,7 +85,7 @@ function PriceBoundInput({
               setError(null);
             }
           }}
-          className={`w-16 border bg-page py-1.5 pr-1 pl-5 text-body-sm text-text-primary font-jost outline-none ${
+          className={`w-16 border bg-page py-1.5 pe-1 ps-5 text-body-sm text-text-primary font-jost outline-none ${
             error ? 'border-status-error' : 'border-border-default'
           }`}
         />
@@ -110,6 +111,7 @@ export const CatalogueSidebar = ({
   onPriceChange,
   priceRange,
 }: CatalogueSidebarProps) => {
+  const t = useTranslations('CatalogueFilters');
   const [expandedSections, setExpandedSections] = useState({
     collection: false,
     category: false,
@@ -125,14 +127,14 @@ export const CatalogueSidebar = ({
   };
 
   return (
-    <aside className="border-r border-border-default p-5">
+    <aside className="border-e border-border-default p-5">
       {/* Search - combines with every filter below (sent together as one query). */}
       <div className="mb-6">
         <SearchInput
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search products..."
-          aria-label="Search products"
+          placeholder={t('searchPlaceholder')}
+          aria-label={t('searchLabel')}
         />
       </div>
 
@@ -143,7 +145,7 @@ export const CatalogueSidebar = ({
           onClick={() => toggleSection('collection')}
           className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
         >
-          Collection
+          {t('collection')}
           <span
             className={`text-brand-dark transition-transform ${expandedSections.collection ? 'rotate-90' : ''}`}
           >
@@ -162,7 +164,7 @@ export const CatalogueSidebar = ({
                 className="w-4 h-4 accent-text-primary cursor-pointer"
               />
               <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                All
+                {t('all')}
               </span>
             </label>
             {CATALOGUE_COLLECTIONS.map((collection) => (
@@ -178,7 +180,7 @@ export const CatalogueSidebar = ({
                   className="w-4 h-4 accent-text-primary cursor-pointer"
                 />
                 <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                  {collection.name}
+                  {t(`collections.${collection.slug}`)}
                 </span>
               </label>
             ))}
@@ -193,7 +195,7 @@ export const CatalogueSidebar = ({
           onClick={() => toggleSection('category')}
           className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
         >
-          Category
+          {t('category')}
           <span
             className={`text-brand-dark transition-transform ${expandedSections.category ? 'rotate-90' : ''}`}
           >
@@ -212,7 +214,7 @@ export const CatalogueSidebar = ({
                 className="w-4 h-4 accent-text-primary cursor-pointer"
               />
               <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                All
+                {t('all')}
               </span>
             </label>
             {CATALOGUE_CATEGORIES.map((category) => (
@@ -228,7 +230,7 @@ export const CatalogueSidebar = ({
                   className="w-4 h-4 accent-text-primary cursor-pointer"
                 />
                 <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                  {category.name}
+                  {t(`categories.${category.slug}`)}
                 </span>
               </label>
             ))}
@@ -243,7 +245,7 @@ export const CatalogueSidebar = ({
           onClick={() => toggleSection('family')}
           className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
         >
-          Product Family
+          {t('family')}
           <span
             className={`text-brand-dark transition-transform ${expandedSections.family ? 'rotate-90' : ''}`}
           >
@@ -262,7 +264,7 @@ export const CatalogueSidebar = ({
                 className="w-4 h-4 accent-text-primary cursor-pointer"
               />
               <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                All
+                {t('all')}
               </span>
             </label>
             {CATALOGUE_PRODUCT_FAMILIES.map((family) => (
@@ -278,7 +280,7 @@ export const CatalogueSidebar = ({
                   className="w-4 h-4 accent-text-primary cursor-pointer"
                 />
                 <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                  {family.name}
+                  {t(`families.${family.slug}`)}
                 </span>
               </label>
             ))}
@@ -293,7 +295,7 @@ export const CatalogueSidebar = ({
           onClick={() => toggleSection('price')}
           className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
         >
-          Price
+          {t('price')}
           <span
             className={`text-brand-dark transition-transform ${expandedSections.price ? 'rotate-90' : ''}`}
           >
@@ -306,15 +308,19 @@ export const CatalogueSidebar = ({
             <PriceBoundInput
               value={priceRange[0]}
               onCommit={(min) => onPriceChange([min, priceRange[1]])}
-              validate={(min) => (min > priceRange[1] ? `Max is €${priceRange[1]}` : null)}
-              ariaLabel="Minimum price"
+              validate={(min) =>
+                min > priceRange[1] ? t('maxIs', { value: priceRange[1] }) : null
+              }
+              ariaLabel={t('minPrice')}
             />
             <span className="text-body-sm text-text-muted pt-1.5">—</span>
             <PriceBoundInput
               value={priceRange[1]}
               onCommit={(max) => onPriceChange([priceRange[0], max])}
-              validate={(max) => (max < priceRange[0] ? `Min is €${priceRange[0]}` : null)}
-              ariaLabel="Maximum price"
+              validate={(max) =>
+                max < priceRange[0] ? t('minIs', { value: priceRange[0] }) : null
+              }
+              ariaLabel={t('maxPrice')}
             />
           </div>
         )}

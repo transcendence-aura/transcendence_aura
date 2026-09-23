@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation } from '@apollo/client/react';
+import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 import { ProductCard } from '@/components/cards/ProductCard';
 import { REMOVE_FROM_WISHLIST, GET_WISHLIST } from '@/lib/graphql/queries/wishlist';
@@ -14,6 +15,7 @@ interface WishlistGridProps {
 
 export function WishlistGrid({ products }: WishlistGridProps) {
   const { toast } = useToast();
+  const t = useTranslations('Wishlist');
 
   const [removeWishlistItem] = useMutation(REMOVE_FROM_WISHLIST, {
     optimisticResponse: {
@@ -21,13 +23,13 @@ export function WishlistGrid({ products }: WishlistGridProps) {
     },
     onCompleted: () => {
       toast({
-        message: 'Removed from wishlist',
+        message: t('removed'),
         variant: 'success',
       });
     },
     onError: () => {
       toast({
-        message: 'Failed to remove from wishlist',
+        message: t('removeFailed'),
         variant: 'error',
       });
     },
@@ -66,8 +68,8 @@ export function WishlistGrid({ products }: WishlistGridProps) {
           <button
             type="button"
             onClick={(e) => handleRemove(e, product.id)}
-            className="hover:bg-brand-accent absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:text-white"
-            aria-label={`Remove ${product.name} from wishlist`}
+            className="hover:bg-brand-accent absolute top-3 inset-e-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md transition-colors hover:text-white"
+            aria-label={t('removeItem', { name: product.name })}
           >
             <X className="h-4 w-4" />
           </button>

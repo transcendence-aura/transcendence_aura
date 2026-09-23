@@ -103,7 +103,7 @@ const ToastCard = ({ item, onClose }: ToastCardProps) => {
   return (
     <div
       role="status"
-      className={`shadow-card flex items-center justify-between gap-3 border-l-4 border-y border-r border-border-default p-4 text-xs font-medium text-text-primary transition-all ${style.bg} ${style.border}`}
+      className={`shadow-card flex items-center justify-between gap-3 border-l-4 border-y border-r border-border-default p-4 text-ui-label font-medium text-text-primary transition-all ${style.bg} ${style.border}`}
     >
       <div className="flex items-center gap-3">
         {style.icon}

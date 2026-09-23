@@ -155,10 +155,10 @@ export function NotificationBell() {
                 onClick={() => setOpen(false)}
                 className="hover:bg-page flex flex-col gap-1 px-4 py-3 transition-colors"
               >
-                <span className="text-xs leading-[1.8] text-text-primary">
+                <span className="text-ui-label leading-[1.8] text-text-primary">
                   {notificationText(notification)}
                 </span>
-                <span className="text-[9px] leading-[1.5] tracking-[0.06em] text-text-muted">
+                <span className="text-ui-caption leading-[1.5] tracking-[0.06em] text-text-muted">
                   {formatRelativeTime(notification.createdAt, t('now'))}
                 </span>
               </Link>

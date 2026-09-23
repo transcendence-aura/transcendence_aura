@@ -4,9 +4,9 @@ export default function SecurityPage() {
   return (
     <main className="mx-auto w-full max-w-2xl px-6 py-12">
       <div>
-        <h1 className="text-3xl font-semibold">Security</h1>
+        <h1 className="text-display-title font-cormorant font-semibold">Security</h1>
 
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-body-sm text-neutral-600">
           Manage the security settings for your account.
         </p>
       </div>

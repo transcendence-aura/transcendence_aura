@@ -10,7 +10,6 @@ import { Dialog } from '@/components/ui/overlay/dialog';
 import { useToast } from '@/components/ui/feedback/toast';
 import { getProfileServerError, validateEmail } from '@/lib/profile/profile-fields';
 import { UPDATE_MY_PROFILE_MUTATION } from '@/lib/graphql/queries/profile';
-import { TEXT_BODY, TEXT_BUTTON } from '@/lib/typography';
 
 interface EmailChangeDialogProps {
   isOpen: boolean;
@@ -75,15 +74,20 @@ function EmailChangeForm({ currentEmail, onClose }: { currentEmail: string; onCl
           error={Boolean(error)}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? 'email-change-error' : undefined}
-          className={TEXT_BODY}
+          className="text-body-base"
         />
       </FormField>
 
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="ghost" onClick={onClose} className={TEXT_BUTTON}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onClose}
+          className="text-ui-button uppercase"
+        >
           {t('cancel')}
         </Button>
-        <Button type="submit" disabled={isSaving} className={TEXT_BUTTON}>
+        <Button type="submit" disabled={isSaving} className="text-ui-button uppercase">
           {isSaving ? t('saving') : t('save')}
         </Button>
       </div>

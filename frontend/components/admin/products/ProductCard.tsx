@@ -14,12 +14,12 @@ export function ProductCard({ product, onEdit }: { product: AdminProduct; onEdit
     <div className="border-border-default bg-card flex flex-col border">
       <div className="bg-page relative aspect-square">
         {!product.isActive && (
-          <span className="bg-status-error absolute left-3 top-3 z-10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest text-white">
+          <span className="bg-status-error absolute left-3 top-3 z-10 px-2 py-0.5 text-ui-label font-medium uppercase tracking-widest text-white">
             Inactive
           </span>
         )}
         {product.badges.length > 0 && (
-          <span className="bg-brand-dark absolute bottom-3 left-3 z-10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest text-white">
+          <span className="bg-brand-dark absolute bottom-3 left-3 z-10 px-2 py-0.5 text-ui-label font-medium uppercase tracking-widest text-white">
             {product.badges[0]}
           </span>
         )}

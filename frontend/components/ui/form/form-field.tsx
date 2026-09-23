@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { TEXT_BODY_SM, TEXT_LABEL } from '@/lib/typography';
 
 interface FormFieldProps {
   label: string;
@@ -13,16 +12,16 @@ interface FormFieldProps {
 export function FormField({ label, htmlFor, error, hint, children }: FormFieldProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className={`text-text-muted ${TEXT_LABEL}`}>
+      <label htmlFor={htmlFor} className="text-text-muted text-ui-label uppercase">
         {label}
       </label>
       {children}
       {error ? (
-        <p id={`${htmlFor}-error`} role="alert" className={`text-status-error ${TEXT_BODY_SM}`}>
+        <p id={`${htmlFor}-error`} role="alert" className="text-status-error text-body-sm">
           {error}
         </p>
       ) : hint ? (
-        <p className={`text-text-muted ${TEXT_BODY_SM}`}>{hint}</p>
+        <p className="text-text-muted text-body-sm">{hint}</p>
       ) : null}
     </div>
   );

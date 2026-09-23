@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { getActiveApiKey } from '@/lib/api-keys/api-keys';
 import { useMyApiKeys } from '@/lib/hooks/useMyApiKeys';
-import { TEXT_BADGE, TEXT_BODY, TEXT_BUTTON } from '@/lib/typography';
 import { ApiDocsLink } from './ApiDocsLink';
 import { ApiKeyCreateDialog } from './ApiKeyCreateDialog';
 import { ApiKeyRevealDialog } from './ApiKeyRevealDialog';
@@ -42,8 +41,8 @@ export function ApiKeySection() {
 
       {hasError && !keys && (
         <div className="flex flex-col items-start gap-4">
-          <p className={`text-text-muted ${TEXT_BODY}`}>{t('loadFailed')}</p>
-          <Button onClick={handleRetry} disabled={isRetrying} className={TEXT_BUTTON}>
+          <p className="text-text-muted text-body-base">{t('loadFailed')}</p>
+          <Button onClick={handleRetry} disabled={isRetrying} className="text-ui-button uppercase">
             {isRetrying ? t('retrying') : t('retry')}
           </Button>
         </div>
@@ -51,7 +50,11 @@ export function ApiKeySection() {
 
       {keys && !activeKey && (
         <SettingsRow label={t('rowLabel')} description={t('rowDescription')}>
-          <Button type="button" onClick={() => setIsCreateOpen(true)} className={TEXT_BUTTON}>
+          <Button
+            type="button"
+            onClick={() => setIsCreateOpen(true)}
+            className="text-ui-button uppercase"
+          >
             {t('create')}
           </Button>
         </SettingsRow>
@@ -64,14 +67,14 @@ export function ApiKeySection() {
             date: format.dateTime(new Date(activeKey.createdAt), { dateStyle: 'medium' }),
           })} · ${t('personalReminder')}`}
         >
-          <Badge variant="muted" className={TEXT_BADGE}>
+          <Badge variant="muted" className="text-ui-badge uppercase">
             {t('active')}
           </Badge>
           <Button
             type="button"
             variant="link"
             onClick={() => setKeyToRevoke(activeKey.id)}
-            className={TEXT_BUTTON}
+            className="text-ui-button uppercase"
           >
             {t('revoke')}
           </Button>

@@ -42,7 +42,7 @@ export const WishlistToggle = ({ onToggle }: WishlistToggleProps) => {
       aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
       aria-pressed={isInWishlist}
     >
-      <span className="text-lg">{isInWishlist ? '♥' : '♡'}</span>
+      <span className="text-body-lg">{isInWishlist ? '♥' : '♡'}</span>
     </button>
   );
 };

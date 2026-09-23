@@ -1,14 +1,17 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface PaymentMethodSelectorProps {
   value: string;
   onChange: (value: string) => void;
 }
 
 export function PaymentMethodSelector({ value, onChange }: PaymentMethodSelectorProps) {
+  const t = useTranslations('Checkout');
   return (
     <div>
-      <h3 className="text-h4 font-bold mb-4 text-text-primary">Payment Method</h3>
+      <h3 className="text-h4 font-bold mb-4 text-text-primary">{t('paymentMethod')}</h3>
       <div className="space-y-3">
         {/* Credit Card with Visa / MC / Amex Logo */}
         <label
@@ -28,14 +31,14 @@ export function PaymentMethodSelector({ value, onChange }: PaymentMethodSelector
               className="mt-1 accent-brand-dark"
             />
             <div>
-              <p className="text-body-base font-medium text-text-primary">Credit or Debit Card</p>
-              <p className="text-sm text-text-muted">Visa, Mastercard, Amex</p>
+              <p className="text-body-base font-medium text-text-primary">{t('card')}</p>
+              <p className="text-body-sm text-text-muted">{t('cardHint')}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
             {/* Visa */}
-            <span className="inline-flex items-center justify-center h-6 px-1.5 bg-[#1A1F71] text-white text-[9px] font-extrabold italic rounded tracking-tighter">
+            <span className="inline-flex items-center justify-center h-6 px-1.5 bg-[#1A1F71] text-white text-ui-caption font-extrabold italic rounded tracking-tighter">
               VISA
             </span>
             {/* Mastercard */}
@@ -46,7 +49,7 @@ export function PaymentMethodSelector({ value, onChange }: PaymentMethodSelector
               </span>
             </span>
             {/* Amex */}
-            <span className="inline-flex items-center justify-center h-6 px-1.5 bg-[#006FCF] text-white text-[8px] font-bold rounded">
+            <span className="inline-flex items-center justify-center h-6 px-1.5 bg-[#006FCF] text-white text-ui-badge uppercase font-medium font-bold rounded">
               AMEX
             </span>
           </div>
@@ -70,8 +73,8 @@ export function PaymentMethodSelector({ value, onChange }: PaymentMethodSelector
               className="mt-1 accent-brand-dark"
             />
             <div>
-              <p className="text-body-base font-medium text-text-primary">PayPal</p>
-              <p className="text-sm text-text-muted">Fast & safe digital checkout</p>
+              <p className="text-body-base font-medium text-text-primary">{t('paypal')}</p>
+              <p className="text-body-sm text-text-muted">{t('paypalHint')}</p>
             </div>
           </div>
 
