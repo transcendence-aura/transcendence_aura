@@ -12,7 +12,6 @@ import {
   UNFOLLOW_USER_MUTATION,
   type PublicProfile,
 } from '@/lib/graphql/queries/profile';
-import { TEXT_BUTTON } from '@/lib/typography';
 
 interface FollowButtonProps {
   targetUserId: string;
@@ -37,7 +36,7 @@ export function FollowButton({
     return (
       <Link
         href={`/login?returnTo=${encodeURIComponent(`/profile/${handle}`)}`}
-        className={`inline-block w-fit ${TEXT_BUTTON} text-text-inverse bg-brand-dark hover:bg-brand-darker px-3 py-1.5 transition-colors`}
+        className="text-ui-button uppercase inline-block w-fit text-text-inverse bg-brand-dark hover:bg-brand-darker px-3 py-1.5 transition-colors"
       >
         {t('logInToFollow')}
       </Link>
@@ -102,7 +101,7 @@ export function FollowButton({
           handleToggle();
         }
       }}
-      className={`inline-block w-fit cursor-pointer select-none ${TEXT_BUTTON} px-3 py-1.5 transition-colors ${
+      className={`text-ui-button uppercase inline-block w-fit cursor-pointer select-none px-3 py-1.5 transition-colors ${
         isFollowing
           ? 'text-text-muted hover:text-status-error border border-border-default'
           : 'text-text-inverse bg-brand-dark hover:bg-brand-darker'

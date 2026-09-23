@@ -13,7 +13,6 @@ import { ME_QUERY } from '@/lib/graphql/queries/me';
 import { PUBLIC_PROFILE_QUERY } from '@/lib/graphql/queries/profile';
 import { ProfileHeader, ProfileHeaderSkeleton } from '@/components/profile/ProfileHeader';
 import { FollowButton } from '@/components/profile/FollowButton';
-import { TEXT_SUBTITLE } from '@/lib/typography';
 
 interface PublicProfilePageProps {
   params: Promise<{ handle: string }>;
@@ -79,7 +78,9 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
       <div className="flex flex-col gap-8 px-6 py-8 md:px-8">
         {profile.recentFollows.length > 0 && (
           <section className="flex flex-col gap-3">
-            <h2 className={`text-text-primary ${TEXT_SUBTITLE}`}>{t('recentlyFollowed')}</h2>
+            <h2 className="text-text-primary font-cormorant text-display-subtitle">
+              {t('recentlyFollowed')}
+            </h2>
             <div className="flex flex-col gap-3">
               {profile.recentFollows.map((followed) => (
                 <Link
@@ -100,7 +101,9 @@ export default function PublicProfilePage({ params }: PublicProfilePageProps) {
 
         {profile.recentWishlistAdds.length > 0 && (
           <section className="flex flex-col gap-3">
-            <h2 className={`text-text-primary ${TEXT_SUBTITLE}`}>{t('recentlyAdded')}</h2>
+            <h2 className="text-text-primary font-cormorant text-display-subtitle">
+              {t('recentlyAdded')}
+            </h2>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {profile.recentWishlistAdds.map((product) => (
                 <ProductCard key={product.id} product={product} />
