@@ -239,12 +239,18 @@ export class ConversationService {
     const recipientId =
       conversation.userOneId === userId ? conversation.userTwoId : conversation.userOneId;
 
-    await this.notificationService.create({
-      userId: recipientId,
-      type: NotificationTypeEnum.MESSAGE,
-      actorId: userId,
-      body: input.content,
-    });
+    // A PENDING conversation's first (and only possible, per the guard above)
+    // message from the initiator already triggered a "wants to start a
+    // conversation" notification in startConversation - sending a second
+    // "sent you a message" notification for the same event is redundant.
+    if (conversation.status !== ConversationStatus.PENDING) {
+      await this.notificationService.create({
+        userId: recipientId,
+        type: NotificationTypeEnum.MESSAGE,
+        actorId: userId,
+        body: input.content,
+      });
+    }
 
     return mapped;
   }
