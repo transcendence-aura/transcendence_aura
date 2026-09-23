@@ -37,6 +37,7 @@ enum TokenRevocationReason {
   LOGOUT
   ADMIN_REVOKED
   INACTIVE_USER
+  PASSWORD_CHANGED
 }
 
 model User {

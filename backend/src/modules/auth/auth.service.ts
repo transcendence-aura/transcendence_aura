@@ -1,9 +1,16 @@
-import { Injectable, ConflictException, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ConflictException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import { Prisma, UserRole, UserStatus } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { RegisterDto } from './dto/register.dto';
+import { ChangePasswordInput } from './dto/change-password.input';
 import { ConfigService } from '@nestjs/config';
 
 import { AppConfiguration } from '../../config/configuration';
@@ -264,6 +271,36 @@ export class AuthService {
       requiresMfa: false,
       ...session,
     };
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordInput): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    const currentPasswordMatches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!currentPasswordMatches) {
+      throw new BadRequestException('INVALID_CURRENT_PASSWORD');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, SALT_ROUNDS);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    // A leaked or stolen session should not survive a password change: every
+    // refresh token, including the one behind the request that just changed
+    // it, is revoked so all devices (this one too) must sign in again.
+    await this.refreshTokenService.revokeAllForUser(userId, 'PASSWORD_CHANGED');
+
+    await this.analyticsService.record(AnalyticsEventType.PASSWORD_CHANGED, userId);
   }
 
   async verifyMfa(mfaPendingToken: string, code: string): Promise<AuthenticatedSession> {
