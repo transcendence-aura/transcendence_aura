@@ -3,11 +3,11 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useQuery } from '@apollo/client/react';
-// import { useRouter } from 'next/navigation'; // TODO: Uncomment once auth is functionnal
 import { GET_WISHLIST } from '@/lib/graphql/queries/wishlist';
 import { WishlistGrid, type WishlistProduct } from '@/components/wishlist/WishlistGrid';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
+import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 
 interface WishlistQueryResponse {
   wishlist: WishlistProduct[];
@@ -15,26 +15,16 @@ interface WishlistQueryResponse {
 
 export default function WishlistPage() {
   const t = useTranslations('Wishlist');
-  // TODO: Uncomment useRouter and useEffect once /login route and auth are implemented
-  // const router = useRouter();
-
-  // TODO: Replace simulated auth flags with useQuery(GET_CURRENT_USER) once backend user auth is integrated
-  const isAuthenticated = true;
-  const userLoading = false;
-
-  /*
-  useEffect(() => {
-    if (!userLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [userLoading, isAuthenticated, router]);
-  */
+  // The proxy already redirects to /login before this page ever renders without a session
+  // (`wishlist` is in PROTECTED_SEGMENTS) - this only decides whether to skip the query while the
+  // client's own auth state is still catching up.
+  const isAuthenticated = useIsAuthenticated();
 
   const { data, loading, error, refetch } = useQuery<WishlistQueryResponse>(GET_WISHLIST, {
     skip: !isAuthenticated,
   });
 
-  if (userLoading || loading) {
+  if (!isAuthenticated || loading) {
     return <WishlistSkeleton />;
   }
 

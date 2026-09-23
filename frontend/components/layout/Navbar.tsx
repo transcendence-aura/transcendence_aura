@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { CartDot } from '@/components/ui/feedback/cart-dot';
+import { WishlistDot } from '@/components/ui/feedback/wishlist-dot';
 import { RealtimeStatusDot } from '@/components/ui/feedback/realtime-status-dot';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { UserMenu, UserMenuMobile } from '@/components/layout/UserMenu';
@@ -77,13 +78,16 @@ export function Navbar() {
         </Link>
 
         {/* Wishlist */}
-        <Link
-          href="/wishlist"
-          aria-label={t('wishlist')}
-          className="text-text-secondary hover:text-text-primary transition-colors"
-        >
-          <Heart className="h-5 w-5" />
-        </Link>
+        <div className="relative">
+          <Link
+            href="/wishlist"
+            aria-label={t('wishlist')}
+            className="text-text-secondary hover:text-text-primary transition-colors flex items-center"
+          >
+            <Heart className="h-5 w-5" />
+            <WishlistDot />
+          </Link>
+        </div>
 
         {/* Cart Trigger */}
         <div className="relative">

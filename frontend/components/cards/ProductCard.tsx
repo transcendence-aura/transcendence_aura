@@ -41,6 +41,9 @@ export interface ProductCardProps extends HTMLAttributes<HTMLDivElement> {
   href?: string;
   isFavorite?: boolean;
   onToggleWishlist?: (productId: string) => void;
+  /** Hide the floating wishlist heart - e.g. on the wishlist page, which already has its own
+   *  remove button and would otherwise overlap it. Defaults to shown everywhere else. */
+  showWishlistButton?: boolean;
 }
 
 export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
@@ -51,6 +54,7 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
       className = '',
       isFavorite = false,
       onToggleWishlist,
+      showWishlistButton = true,
       ...props
     },
     ref,
@@ -138,18 +142,20 @@ export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
           ) : null}
 
           {/* Floating Wishlist Button */}
-          <button
-            type="button"
-            onClick={handleWishlistClick}
-            aria-label={t('addToWishlist')}
-            className="absolute end-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-xs border border-border-default/40 text-text-muted transition-transform hover:scale-110 hover:text-text-primary cursor-pointer"
-          >
-            <Heart
-              className={`h-3.5 w-3.5 transition-colors ${
-                isFavorite ? 'fill-red-600 text-red-600' : ''
-              }`}
-            />
-          </button>
+          {showWishlistButton && (
+            <button
+              type="button"
+              onClick={handleWishlistClick}
+              aria-label={t('addToWishlist')}
+              className="absolute end-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 backdrop-blur-xs border border-border-default/40 text-text-muted transition-transform hover:scale-110 hover:text-text-primary cursor-pointer"
+            >
+              <Heart
+                className={`h-3.5 w-3.5 transition-colors ${
+                  isFavorite ? 'fill-red-600 text-red-600' : ''
+                }`}
+              />
+            </button>
+          )}
 
           <Image
             src={imageUrl}
