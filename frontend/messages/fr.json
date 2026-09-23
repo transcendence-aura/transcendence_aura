@@ -392,6 +392,8 @@
     "retry": "Réessayer",
     "empty": "Votre liste de favoris est vide",
     "continueShopping": "Continuer mes achats",
+    "added": "Ajouté aux favoris",
+    "addFailed": "Impossible d'ajouter ce produit aux favoris",
     "removed": "Retiré des favoris",
     "removeFailed": "Impossible de retirer ce produit des favoris",
     "removeItem": "Retirer {name} des favoris"

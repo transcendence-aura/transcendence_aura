@@ -392,6 +392,8 @@
     "retry": "Try again",
     "empty": "Your wishlist is empty",
     "continueShopping": "Continue shopping",
+    "added": "Added to wishlist",
+    "addFailed": "Failed to add to wishlist",
     "removed": "Removed from wishlist",
     "removeFailed": "Failed to remove from wishlist",
     "removeItem": "Remove {name} from wishlist"

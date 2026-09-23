@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client/react';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useToast } from '@/components/ui/feedback/toast';
@@ -22,6 +23,7 @@ export function useWishlist() {
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
+  const t = useTranslations('Wishlist');
 
   const { data } = useQuery<WishlistQueryResponse>(GET_WISHLIST, {
     skip: !isAuthenticated,
@@ -67,13 +69,13 @@ export function useWishlist() {
     try {
       if (wasInWishlist) {
         await removeWishlistItem({ variables: { input: { productId } } });
-        toast({ message: 'Removed from wishlist', variant: 'success' });
+        toast({ message: t('removed'), variant: 'success' });
       } else {
         await addWishlistItem({ variables: { input: { productId } } });
-        toast({ message: 'Added to wishlist', variant: 'success' });
+        toast({ message: t('added'), variant: 'success' });
       }
     } catch {
-      toast({ message: 'Something went wrong. Please try again.', variant: 'error' });
+      toast({ message: wasInWishlist ? t('removeFailed') : t('addFailed'), variant: 'error' });
     } finally {
       setPending((prev) => {
         if (!(productId in prev)) return prev;
