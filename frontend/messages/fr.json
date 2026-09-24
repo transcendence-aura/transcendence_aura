@@ -71,18 +71,9 @@
   },
   "FeaturedCollections": {
     "title": "Nos univers",
-    "skincareOils": {
-      "name": "Soins & huiles",
-      "description": "Soins naturels et huiles nourrissantes pour votre rituel du quotidien."
-    },
-    "faceCare": {
-      "name": "Soins du visage",
-      "description": "Sérums et soins ciblés pour une peau saine et lumineuse."
-    },
-    "ritualsSun": {
-      "name": "Rituels & protections solaires",
-      "description": "Complétez votre routine avec nos soins solaires et nos coffrets rituels."
-    }
+    "loadFailed": "Impossible de charger les collections",
+    "retry": "Réessayer",
+    "serumsOilsDescription": "Soins naturels et huiles nourrissantes pour votre rituel du quotidien."
   },
   "Newsletter": {
     "eyebrow": "Newsletter",

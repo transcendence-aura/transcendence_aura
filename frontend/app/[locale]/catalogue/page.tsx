@@ -37,6 +37,12 @@ const DEFAULT_PRICE_RANGE: [number, number] = [0, 500];
 
 const SKELETON_COUNT = 9;
 
+// A URL param is only trusted as a filter value when it matches a known slug - a bogus/stale one
+// silently falls back to "All" instead of being sent to the backend as-is.
+function resolveKnownSlug(slug: string | null, known: readonly { slug: string }[]): string | null {
+  return known.some((item) => item.slug === slug) ? slug : null;
+}
+
 function CatalogueContent() {
   const t = useTranslations('Catalogue');
   const tFilters = useTranslations('CatalogueFilters');
@@ -44,7 +50,8 @@ function CatalogueContent() {
   const format = useFormatter();
   const { addItem } = useCart();
   const { toast } = useToast();
-  const searchTerm = useSearchParams().get('q')?.trim() ?? '';
+  const searchParams = useSearchParams();
+  const searchTerm = searchParams.get('q')?.trim() ?? '';
 
   // The sidebar's own search box (distinct from `searchTerm` above, the navbar's search which
   // swaps this whole view for SearchResults): it stays on this page and combines with the other
@@ -63,9 +70,31 @@ function CatalogueContent() {
   // null: no filter ("All"). The backend only accepts one collectionSlug/categorySlug/
   // productFamilySlug at a time each, but the three combine together (a product must match all
   // of them when several are set).
-  const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  // Pre-selected from a `?collection=`/`?category=` param (set by the home page's collection
+  // cards). Lazy initializers only run once, on the very first render - the effect below is what
+  // keeps this in sync afterwards, this just avoids starting on "All" and flashing to the right
+  // filter a moment later on that first render.
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(() =>
+    resolveKnownSlug(searchParams.get('collection'), CATALOGUE_COLLECTIONS),
+  );
+  // Same idea as `selectedCollection` above, but for a `?category=` param (e.g. the "Serums &
+  // Oils" card on the home page, which links to a category rather than a full collection).
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(() =>
+    resolveKnownSlug(searchParams.get('category'), CATALOGUE_CATEGORIES),
+  );
   const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
+
+  // Re-syncs selectedCollection/selectedCategory whenever the URL's own params change after that
+  // first render - e.g. the navbar search replacing the URL with `/catalogue?q=...` (dropping
+  // `collection`), or the browser back/forward between two different `/catalogue?...` entries.
+  // Without this, the lazy initializers above only ever ran once, so a stale filter kept applying
+  // silently after the URL had already moved on. Sidebar clicks never touch the URL, so they don't
+  // trigger this effect and aren't fought by it.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedCollection(resolveKnownSlug(searchParams.get('collection'), CATALOGUE_COLLECTIONS));
+    setSelectedCategory(resolveKnownSlug(searchParams.get('category'), CATALOGUE_CATEGORIES));
+  }, [searchParams]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const { isInWishlist, toggle: toggleWishlist } = useWishlist();

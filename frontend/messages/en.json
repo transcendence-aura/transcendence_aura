@@ -71,18 +71,9 @@
   },
   "FeaturedCollections": {
     "title": "Shop by Category",
-    "skincareOils": {
-      "name": "Skincare & Oils",
-      "description": "Natural skincare and nourishing oils for your daily ritual."
-    },
-    "faceCare": {
-      "name": "Face Care",
-      "description": "Targeted treatments and serums for radiant and healthy skin."
-    },
-    "ritualsSun": {
-      "name": "Rituals & Sun",
-      "description": "Complete your routine with our sun care and ritual sets."
-    }
+    "loadFailed": "Failed to load collections",
+    "retry": "Try again",
+    "serumsOilsDescription": "Natural skincare and nourishing oils for your daily ritual."
   },
   "Newsletter": {
     "eyebrow": "Enter the circle",

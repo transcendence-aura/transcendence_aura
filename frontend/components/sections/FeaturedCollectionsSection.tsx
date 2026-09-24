@@ -1,34 +1,23 @@
 'use client';
 
-import { Suspense } from 'react';
 import { useTranslations } from 'next-intl';
+import { useQuery } from '@apollo/client/react';
 import { CollectionCard } from '@/components/cards/CollectionCard';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
+import { Button } from '@/components/ui/form/button';
+import { GET_COLLECTIONS, type CollectionsQueryResponse } from '@/lib/graphql/queries/collections';
 
-/* TODO: To Be Deleted once GraphQL API is ready */
-const FEATURED_COLLECTIONS = [
-  {
-    id: 'col-1',
-    key: 'skincareOils',
-    slug: 'skincare-oils',
-    productCount: 8,
-    imagePlaceholder: '/images/landing/category-skincare-oils.png',
-  },
-  {
-    id: 'col-2',
-    key: 'faceCare',
-    slug: 'face-care',
-    productCount: 12,
-    imagePlaceholder: '/images/landing/category-face-care.png',
-  },
-  {
-    id: 'col-3',
-    key: 'ritualsSun',
-    slug: 'rituals-sun',
-    productCount: 6,
-    imagePlaceholder: '/images/landing/category-rituals-sun.png',
-  },
-] as const;
+// Always served from /public, never from the backend: heroImageUrl is a wide banner (1500x200),
+// but CollectionCard shows it in a square crop - it'd be zoomed into a thin sliver. No square photo
+// exists yet for hair care specifically, so it borrows this one until a dedicated one is added.
+const COLLECTION_IMAGES: Record<string, string> = {
+  'clean-beauty-skincare': '/images/landing/category-face-care.png',
+  'botanical-hair-care': '/images/landing/category-rituals-sun.png',
+};
+
+// Serums & Oils isn't its own collection (it's a category inside Clean Beauty Skincare), but gets
+// its own card here rather than through the `collections` query - a static entry, not fetched.
+const SERUMS_OILS_IMAGE = '/images/landing/category-skincare-oils.png';
 
 /* Skeleton loading card for collections grid */
 const SkeletonCard = () => (
@@ -42,6 +31,14 @@ const SkeletonCard = () => (
 /* Collections grid component */
 export const FeaturedCollectionsSection = () => {
   const t = useTranslations('FeaturedCollections');
+  const tFilters = useTranslations('CatalogueFilters');
+  const { data, loading, error, refetch } = useQuery<CollectionsQueryResponse>(GET_COLLECTIONS);
+
+  // Only collections with a local image are shown - a newly created one with no entry yet in
+  // COLLECTION_IMAGES simply doesn't appear here rather than falling back to a DB image.
+  const collections = (data?.collections ?? []).filter((collection) =>
+    Boolean(COLLECTION_IMAGES[collection.slug]),
+  );
 
   return (
     <section className="bg-subtle py-16 md:py-24">
@@ -52,30 +49,49 @@ export const FeaturedCollectionsSection = () => {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <Suspense
-            fallback={[...Array(3)].map((_, i) => (
+        {loading ? (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
-          >
-            {FEATURED_COLLECTIONS.map((collection) => (
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <p className="text-body-base text-text-muted">{t('loadFailed')}</p>
+            <Button onClick={() => refetch()}>{t('retry')}</Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {collections.map((collection) => (
               <CollectionCard
                 key={collection.id}
                 collection={{
                   id: collection.id,
-                  name: t(`${collection.key}.name`),
+                  name: collection.name,
                   slug: collection.slug,
-                  description: t(`${collection.key}.description`),
-                  productCount: collection.productCount,
+                  description: collection.description ?? undefined,
                   image: {
-                    url: collection.imagePlaceholder,
-                    altText: t(`${collection.key}.name`),
+                    url: COLLECTION_IMAGES[collection.slug],
+                    altText: collection.name,
                   },
                 }}
               />
             ))}
-          </Suspense>
-        </div>
+            <CollectionCard
+              href="/catalogue?category=serums-and-oils"
+              collection={{
+                id: 'serums-and-oils',
+                name: tFilters('categories.serums-and-oils'),
+                slug: 'serums-and-oils',
+                description: t('serumsOilsDescription'),
+                image: {
+                  url: SERUMS_OILS_IMAGE,
+                  altText: tFilters('categories.serums-and-oils'),
+                },
+              }}
+            />
+          </div>
+        )}
       </div>
     </section>
   );
