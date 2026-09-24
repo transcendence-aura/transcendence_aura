@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useApolloClient, useMutation } from '@apollo/client/react';
-import { Star, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Star, Trash2 } from 'lucide-react';
 import { Dialog } from '@/components/ui/overlay/dialog';
 import { Input } from '@/components/ui/form/input';
 import { Textarea } from '@/components/ui/form/textarea';
@@ -41,6 +41,67 @@ function sameIds(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
   const set = new Set(a);
   return b.every((id) => set.has(id));
+}
+
+// Collection/Category/Product Family all render the exact same "checkbox list behind a
+// collapsible header" shape, just with a different label/option set/selection - factored out
+// instead of repeating it 3x. Closed by default (same reasoning as VariantRow: with all three of
+// these plus everything else in the form, showing every checkbox at once made the dialog long to
+// scan) but still shows what's currently selected as a one-line summary, so collapsed doesn't mean
+// invisible.
+function CollapsibleCheckboxGroup({
+  label,
+  options,
+  selectedIds,
+  onToggle,
+}: {
+  label: string;
+  options: { id: string; name: string }[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const selectedNames = options
+    .filter((option) => selectedIds.includes(option.id))
+    .map((option) => option.name);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="text-ui-label text-text-muted mb-1 flex w-full items-center justify-between uppercase tracking-widest"
+      >
+        <span>
+          {label}
+          {selectedIds.length > 0 && ` (${selectedIds.length} selected)`}
+        </span>
+        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      </button>
+
+      {!expanded && selectedNames.length > 0 && (
+        <p className="text-body-sm text-text-secondary">{selectedNames.join(', ')}</p>
+      )}
+
+      {expanded && (
+        <div className="flex flex-wrap gap-3 pt-1">
+          {options.map((option) => (
+            <label
+              key={option.id}
+              className="text-body-sm text-text-secondary flex items-center gap-2"
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(option.id)}
+                onChange={() => onToggle(option.id)}
+              />
+              {option.name}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Mirrors the backend's BadRequestException messages from
@@ -298,68 +359,26 @@ export function ProductFormDialog({
               <Input value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
 
-            <div>
-              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
-                Collection
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {collections.map((collection) => (
-                  <label
-                    key={collection.id}
-                    className="text-body-sm text-text-secondary flex items-center gap-2"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={collectionIds.includes(collection.id)}
-                      onChange={() => toggleCollection(collection.id)}
-                    />
-                    {collection.name}
-                  </label>
-                ))}
-              </div>
-            </div>
+            <CollapsibleCheckboxGroup
+              label="Collection"
+              options={collections}
+              selectedIds={collectionIds}
+              onToggle={toggleCollection}
+            />
 
-            <div>
-              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
-                Category
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {categories.map((category) => (
-                  <label
-                    key={category.id}
-                    className="text-body-sm text-text-secondary flex items-center gap-2"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={categoryIds.includes(category.id)}
-                      onChange={() => toggleCategory(category.id)}
-                    />
-                    {category.name}
-                  </label>
-                ))}
-              </div>
-            </div>
+            <CollapsibleCheckboxGroup
+              label="Category"
+              options={categories}
+              selectedIds={categoryIds}
+              onToggle={toggleCategory}
+            />
 
-            <div>
-              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
-                Product Family
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {productFamilies.map((family) => (
-                  <label
-                    key={family.id}
-                    className="text-body-sm text-text-secondary flex items-center gap-2"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={productFamilyIds.includes(family.id)}
-                      onChange={() => toggleProductFamily(family.id)}
-                    />
-                    {family.name}
-                  </label>
-                ))}
-              </div>
-            </div>
+            <CollapsibleCheckboxGroup
+              label="Product Family"
+              options={productFamilies}
+              selectedIds={productFamilyIds}
+              onToggle={toggleProductFamily}
+            />
 
             <div>
               <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
@@ -586,7 +605,7 @@ export function ProductFormDialog({
                   </p>
                 </div>
                 <Button
-                  variant="ghost"
+                  variant="affirmative"
                   disabled={
                     activeProduct.variants.length === 0 || publishing || activeProduct.isActive
                   }
