@@ -35,6 +35,8 @@
     "activityTab": "Activité",
     "peopleTab": "Personnes",
     "messageTab": "Message",
+    "empty": "Suivez des personnes pour voir leur activité ici.",
+    "emptyCta": "Parcourir la boutique",
     "failedToLoad": "Échec du chargement du fil",
     "tryAgain": "Réessayer",
     "now": "maintenant",

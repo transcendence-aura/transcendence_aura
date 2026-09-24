@@ -35,6 +35,8 @@
     "activityTab": "النشاط",
     "peopleTab": "الأشخاص",
     "messageTab": "رسالة",
+    "empty": "تابع أشخاصًا لترى نشاطهم هنا.",
+    "emptyCta": "تصفّح المتجر",
     "failedToLoad": "تعذّر تحميل الخلاصة",
     "tryAgain": "أعد المحاولة",
     "now": "الآن",

@@ -35,6 +35,8 @@
     "activityTab": "Activity",
     "peopleTab": "People",
     "messageTab": "Message",
+    "empty": "Follow people to see their activity here.",
+    "emptyCta": "Browse the shop",
     "failedToLoad": "Failed to load the feed",
     "tryAgain": "Try again",
     "now": "now",

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useRealtime } from '@/lib/realtime/realtime-provider';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
@@ -127,6 +127,16 @@ export default function CommunityPage() {
           <Button onClick={() => refetch()} className="px-6 py-3">
             {t('tryAgain')}
           </Button>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-body-base text-text-muted mb-6">{t('empty')}</p>
+          <Link
+            href="/catalogue"
+            className="bg-brand-dark text-text-inverse hover:bg-brand-darker inline-block rounded px-6 py-3 text-xs font-medium uppercase transition-colors"
+          >
+            {t('emptyCta')}
+          </Link>
         </div>
       ) : (
         <div className="border-border-default border-t">
