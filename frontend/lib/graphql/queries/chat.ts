@@ -3,6 +3,7 @@ import { gql, type TypedDocumentNode } from '@apollo/client';
 export interface ConversationParticipant {
   id: string;
   name: string;
+  handle: string;
   bio?: string;
 }
 
@@ -29,11 +30,13 @@ const CONVERSATION_FIELDS = `
   userOne {
     id
     name
+    handle
     bio
   }
   userTwo {
     id
     name
+    handle
     bio
   }
   messages {

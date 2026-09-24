@@ -20,7 +20,7 @@ import {
 const QUERY_VARIABLES = { unreadOnly: true };
 
 function targetHref(notification: Notification): string {
-  if (notification.type === 'MESSAGE') return '/chat';
+  if (notification.type === 'MESSAGE') return '/community?tab=message';
   if (notification.type === 'FOLLOW' && notification.actor) {
     return `/profile/${notification.actor.handle}`;
   }

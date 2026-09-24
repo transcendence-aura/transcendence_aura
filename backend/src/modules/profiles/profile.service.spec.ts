@@ -113,3 +113,119 @@ describe('ProfileService.getProfile', () => {
     });
   });
 });
+
+describe('ProfileService.listProfiles', () => {
+  const prisma = {
+    user: { findMany: jest.fn(), count: jest.fn() },
+  };
+  const productsService = { findByIds: jest.fn() };
+
+  let service: ProfileService;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    prisma.user.findMany.mockResolvedValue([]);
+    prisma.user.count.mockResolvedValue(0);
+    service = new ProfileService(prisma as never, productsService as never);
+  });
+
+  it('excludes the signed-in viewer from the directory', async () => {
+    await service.listProfiles({ page: 1, limit: 20 }, 'viewer-1');
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: { not: 'viewer-1' } }),
+      }),
+    );
+  });
+
+  it('does not filter by id for an anonymous visitor', async () => {
+    await service.listProfiles({ page: 1, limit: 20 });
+
+    const where = prisma.user.findMany.mock.calls[0][0].where;
+    expect(where.id).toBeUndefined();
+  });
+
+  it('only lists active, non-deleted accounts', async () => {
+    await service.listProfiles({ page: 1, limit: 20 });
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: UserStatus.ACTIVE, deletedAt: null }),
+      }),
+    );
+  });
+
+  it('omits the search filter entirely when no search term is given', async () => {
+    await service.listProfiles({ page: 1, limit: 20 });
+
+    const where = prisma.user.findMany.mock.calls[0][0].where;
+    expect(where.OR).toBeUndefined();
+  });
+
+  it('searches case-insensitively across name and handle', async () => {
+    await service.listProfiles({ page: 1, limit: 20, search: 'Marie' });
+
+    const where = prisma.user.findMany.mock.calls[0][0].where;
+    expect(where.OR).toEqual([
+      { name: { contains: 'Marie', mode: 'insensitive' } },
+      { handle: { contains: 'Marie', mode: 'insensitive' } },
+    ]);
+  });
+
+  it('trims the search term before filtering', async () => {
+    await service.listProfiles({ page: 1, limit: 20, search: '  marie  ' });
+
+    const where = prisma.user.findMany.mock.calls[0][0].where;
+    expect(where.OR[0].name.contains).toBe('marie');
+  });
+
+  it('treats a blank/whitespace-only search the same as no search', async () => {
+    await service.listProfiles({ page: 1, limit: 20, search: '   ' });
+
+    const where = prisma.user.findMany.mock.calls[0][0].where;
+    expect(where.OR).toBeUndefined();
+  });
+
+  it('paginates with skip/take derived from page and limit', async () => {
+    await service.listProfiles({ page: 3, limit: 10 });
+
+    expect(prisma.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 20, take: 10 }),
+    );
+  });
+
+  it('reports hasNextPage when more results exist past this page', async () => {
+    prisma.user.count.mockResolvedValue(25);
+
+    const page = await service.listProfiles({ page: 1, limit: 20 });
+
+    expect(page.hasNextPage).toBe(true);
+  });
+
+  it('reports no next page once the last page is reached', async () => {
+    prisma.user.count.mockResolvedValue(25);
+
+    const page = await service.listProfiles({ page: 2, limit: 20 });
+
+    expect(page.hasNextPage).toBe(false);
+  });
+
+  it('defaults a null bio to undefined for each entry', async () => {
+    prisma.user.findMany.mockResolvedValue([
+      { id: 'u1', name: 'Marie', handle: 'marie', bio: null },
+    ]);
+
+    const page = await service.listProfiles({ page: 1, limit: 20 });
+
+    expect(page.items[0].bio).toBeUndefined();
+  });
+
+  it('returns an empty page without error when nothing matches', async () => {
+    const page = await service.listProfiles({ page: 1, limit: 20, search: 'nobody-like-this' });
+
+    expect(page.items).toEqual([]);
+    expect(page.total).toBe(0);
+    expect(page.hasNextPage).toBe(false);
+  });
+});

@@ -4,7 +4,6 @@
     "community": "Communauté",
     "about": "À propos",
     "search": "Rechercher",
-    "chat": "Messages",
     "wishlist": "Favoris",
     "cart": "Panier",
     "cartMobile": "Panier",
@@ -33,7 +32,9 @@
     "unreadCount": "{count, plural, one {# notification non lue} other {# notifications non lues}}"
   },
   "CircleFeed": {
-    "title": "Activité",
+    "activityTab": "Activité",
+    "peopleTab": "Personnes",
+    "messageTab": "Message",
     "empty": "Suivez des personnes pour voir leur activité ici.",
     "emptyCta": "Parcourir la boutique",
     "failedToLoad": "Échec du chargement du fil",
@@ -168,7 +169,10 @@
     "follow": "Suivre",
     "followingAction": "Abonné(e)",
     "followFailed": "Impossible de mettre à jour l'abonnement, veuillez réessayer",
-    "logInToFollow": "Se connecter pour suivre"
+    "logInToFollow": "Se connecter pour suivre",
+    "message": "Message",
+    "messageFailed": "Impossible de démarrer la conversation, réessaie",
+    "messageDeclined": "Tu ne peux pas contacter cette personne"
   },
   "PublicProfile": {
     "notFound": "Ce profil est introuvable",
@@ -176,6 +180,14 @@
     "recentlyFollowed": "A suivi récemment",
     "recentlyAdded": "Ajouté récemment aux favoris",
     "noActivity": "Aucune activité à afficher pour l'instant."
+  },
+  "PeopleDirectory": {
+    "searchPlaceholder": "Rechercher par nom ou identifiant...",
+    "empty": "Aucune personne trouvée.",
+    "failedToLoad": "Échec du chargement",
+    "tryAgain": "Réessayer",
+    "previous": "Précédent",
+    "next": "Suivant"
   },
   "AvatarUpload": {
     "changePhoto": "Changer de photo",

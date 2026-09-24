@@ -4,7 +4,6 @@
     "community": "Community",
     "about": "About",
     "search": "Search",
-    "chat": "Messages",
     "wishlist": "Wishlist",
     "cart": "Shopping cart",
     "cartMobile": "Cart",
@@ -33,7 +32,9 @@
     "unreadCount": "{count, plural, one {# unread notification} other {# unread notifications}}"
   },
   "CircleFeed": {
-    "title": "Activity",
+    "activityTab": "Activity",
+    "peopleTab": "People",
+    "messageTab": "Message",
     "empty": "Follow people to see their activity here.",
     "emptyCta": "Browse the shop",
     "failedToLoad": "Failed to load the feed",
@@ -168,7 +169,10 @@
     "follow": "Follow",
     "followingAction": "Following",
     "followFailed": "Could not update follow status, please retry",
-    "logInToFollow": "Log in to follow"
+    "logInToFollow": "Log in to follow",
+    "message": "Message",
+    "messageFailed": "Could not start a conversation, please retry",
+    "messageDeclined": "You can't message this person"
   },
   "PublicProfile": {
     "notFound": "This profile could not be found",
@@ -176,6 +180,14 @@
     "recentlyFollowed": "Recently followed",
     "recentlyAdded": "Recently added to wishlist",
     "noActivity": "No activity to show yet."
+  },
+  "PeopleDirectory": {
+    "searchPlaceholder": "Search by name or handle...",
+    "empty": "No one found.",
+    "failedToLoad": "Failed to load people",
+    "tryAgain": "Try again",
+    "previous": "Previous",
+    "next": "Next"
   },
   "AvatarUpload": {
     "changePhoto": "Change photo",

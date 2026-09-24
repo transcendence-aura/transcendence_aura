@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react';
 import { Plus, User } from 'lucide-react';
 import { Avatar } from '@/components/ui/display/avatar';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
+import { Dialog } from '@/components/ui/overlay/dialog';
+import { ProfileContent } from '@/components/profile/ProfileContent';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useRealtime } from '@/lib/realtime/realtime-provider';
 import { useToast } from '@/components/ui/feedback/toast';
@@ -27,9 +30,6 @@ import { ConversationItem } from '@/components/chat/ConversationItem';
 import { ConversationRequestItem } from '@/components/chat/ConversationRequestItem';
 import { NewConversationDialog } from '@/components/chat/NewConversationDialog';
 import { PendingConversationBar } from '@/components/chat/PendingConversationBar';
-import { ProfilePanel } from '@/components/chat/ProfilePanel';
-
-type SidePanel = 'profile' | null;
 
 function getOtherParticipant(conversation: Conversation, myId: string) {
   return conversation.userOne.id === myId ? conversation.userTwo : conversation.userOne;
@@ -42,10 +42,18 @@ function isConversationUnread(conversation: Conversation, myId: string): boolean
   return !lastSeen || new Date(lastMessage.createdAt) > new Date(lastSeen);
 }
 
-export default function ChatPage() {
+// The Community page's Message tab: same messaging UI that used to live at its own /chat route,
+// now bounded to a fixed height so it sits inside Community's normal scrolling page (Tabs above,
+// Footer below) instead of taking over the full viewport.
+export function MessageTab() {
   const isAuthenticated = useIsAuthenticated();
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [sidePanel, setSidePanel] = useState<SidePanel>(null);
+  const searchParams = useSearchParams();
+  // Set when the Message button on a profile just started/found a conversation - opens straight
+  // into it instead of defaulting to the first one in the list.
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(() =>
+    searchParams.get('conversationId'),
+  );
+  const [profileHandle, setProfileHandle] = useState<string | null>(null);
   const [newConversationOpen, setNewConversationOpen] = useState(false);
 
   const { data: meData } = useQuery(ME_QUERY, { skip: !isAuthenticated });
@@ -172,15 +180,15 @@ export default function ChatPage() {
 
   if (loading && conversations.length === 0) {
     return (
-      <div className="flex h-[calc(100vh_-_64px)] w-full items-center justify-center bg-card">
-        <Skeleton className="h-96 w-full max-w-4xl" />
+      <div className="border-border-default flex h-[70vh] min-h-[420px] w-full items-center justify-center border">
+        <Skeleton className="h-96 w-full max-w-md" />
       </div>
     );
   }
 
   if (error && conversations.length === 0) {
     return (
-      <div className="flex h-[calc(100vh_-_64px)] w-full flex-col items-center justify-center gap-4 bg-card">
+      <div className="border-border-default flex h-[70vh] min-h-[420px] w-full flex-col items-center justify-center gap-4 border">
         <p className="text-text-secondary text-xs">Failed to load conversations</p>
         <Button onClick={() => refetch()} className="px-6 py-3">
           Try again
@@ -191,10 +199,10 @@ export default function ChatPage() {
 
   return (
     <div
-      className="flex h-[calc(100vh_-_64px)] w-full bg-card"
+      className="border-border-default flex h-[70vh] min-h-[420px] w-full border"
       style={{ fontFamily: 'var(--font-family-jost)' }}
     >
-      <div className="flex w-80 shrink-0 flex-col border-r border-border-default">
+      <div className="border-border-default flex w-80 shrink-0 flex-col border-r">
         <div className="flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between">
             <h1
@@ -222,7 +230,7 @@ export default function ChatPage() {
           )}
 
           {myId && (
-            <div className="border-b border-border-default pb-2">
+            <div className="border-border-default border-b pb-2">
               <span className="block px-4 py-2 text-[9px] leading-[1.5] font-medium tracking-[0.06em] text-text-muted uppercase">
                 Requests
               </span>
@@ -239,7 +247,7 @@ export default function ChatPage() {
                     name={other.name}
                     onClick={() => {
                       setActiveConversationId(conversation.id);
-                      setSidePanel(null);
+                      setProfileHandle(null);
                     }}
                     onAccept={() => handleAccept(conversation.id)}
                     onDecline={() => handleDecline(conversation.id)}
@@ -268,7 +276,7 @@ export default function ChatPage() {
                   onClick={() => {
                     setActiveConversationId(conversation.id);
                     markConversationSeen(conversation.id);
-                    setSidePanel(null);
+                    setProfileHandle(null);
                   }}
                 />
               );
@@ -282,7 +290,7 @@ export default function ChatPage() {
             {(() => {
               const other = getOtherParticipant(activeConversation, myId);
               return (
-                <div className="flex items-center justify-between border-b border-border-default p-4">
+                <div className="border-border-default flex items-center justify-between border-b p-4">
                   <div className="flex items-center gap-3">
                     <Avatar name={other.name} size="sm" />
                     <span className="text-xs leading-[1.8] font-medium text-text-primary">
@@ -295,10 +303,12 @@ export default function ChatPage() {
                       type="button"
                       aria-label="View profile"
                       onClick={() =>
-                        setSidePanel((prev) => (prev === 'profile' ? null : 'profile'))
+                        setProfileHandle((prev) => (prev === other.handle ? null : other.handle))
                       }
                       className={
-                        sidePanel === 'profile' ? 'text-text-primary' : 'hover:text-text-primary'
+                        profileHandle === other.handle
+                          ? 'text-text-primary'
+                          : 'hover:text-text-primary'
                       }
                     >
                       <User className="h-5 w-5" />
@@ -339,15 +349,15 @@ export default function ChatPage() {
         )}
       </div>
 
-      {activeConversation &&
-        myId &&
-        sidePanel === 'profile' &&
-        (() => {
-          const other = getOtherParticipant(activeConversation, myId);
-          return (
-            <ProfilePanel name={other.name} bio={other.bio} onClose={() => setSidePanel(null)} />
-          );
-        })()}
+      <Dialog
+        isOpen={profileHandle !== null}
+        onClose={() => setProfileHandle(null)}
+        title={profileHandle ?? ''}
+        side="right"
+        hideHeader
+      >
+        {profileHandle && <ProfileContent handle={profileHandle} />}
+      </Dialog>
 
       <NewConversationDialog
         isOpen={newConversationOpen}

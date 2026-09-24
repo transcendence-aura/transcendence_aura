@@ -112,6 +112,45 @@ export const PUBLIC_PROFILE_QUERY: TypedDocumentNode<
   ${PRODUCT_CARD_FIELDS}
 `;
 
+export interface ProfileDirectoryEntry {
+  id: string;
+  name: string;
+  handle: string;
+  bio?: string;
+}
+
+export interface ProfileDirectoryPage {
+  items: ProfileDirectoryEntry[];
+  total: number;
+  hasNextPage: boolean;
+}
+
+export interface ProfileDirectoryQueryData {
+  profileDirectory: ProfileDirectoryPage;
+}
+
+export interface ProfileDirectoryQueryVariables {
+  input?: { page?: number; limit?: number; search?: string };
+}
+
+export const PROFILE_DIRECTORY_QUERY: TypedDocumentNode<
+  ProfileDirectoryQueryData,
+  ProfileDirectoryQueryVariables
+> = gql`
+  query ProfileDirectory($input: ProfileDirectoryInput) {
+    profileDirectory(input: $input) {
+      items {
+        id
+        name
+        handle
+        bio
+      }
+      total
+      hasNextPage
+    }
+  }
+`;
+
 export interface FollowUserData {
   followUser: boolean;
 }

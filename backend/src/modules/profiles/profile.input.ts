@@ -1,5 +1,15 @@
-import { Field, InputType } from '@nestjs/graphql';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { Field, InputType, Int } from '@nestjs/graphql';
+import {
+  IsEmail,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 @InputType()
 export class UpdateProfileInput {
@@ -24,4 +34,26 @@ export class UpdateProfileInput {
   @MaxLength(500)
   @Field({ nullable: true })
   bio?: string;
+}
+
+@InputType()
+export class ProfileDirectoryInput {
+  @IsOptional()
+  @Field(() => Int, { defaultValue: 1 })
+  @IsInt()
+  @Min(1)
+  page!: number;
+
+  @IsOptional()
+  @Field(() => Int, { defaultValue: 20 })
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit!: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Field({ nullable: true })
+  search?: string;
 }

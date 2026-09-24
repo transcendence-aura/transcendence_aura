@@ -147,13 +147,15 @@ export class ConversationService {
     return messages.map(mapMessage);
   }
 
-  async getParticipant(userId: string): Promise<{ id: string; name: string; bio?: string }> {
+  async getParticipant(
+    userId: string,
+  ): Promise<{ id: string; name: string; handle: string; bio?: string }> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { id: true, name: true, bio: true },
+      select: { id: true, name: true, handle: true, bio: true },
     });
 
-    return { id: user.id, name: user.name, bio: user.bio ?? undefined };
+    return { id: user.id, name: user.name, handle: user.handle, bio: user.bio ?? undefined };
   }
 
   async listConversations(userId: string): Promise<ConversationType[]> {

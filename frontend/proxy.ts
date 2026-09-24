@@ -7,8 +7,7 @@ const handleI18nRouting = createMiddleware(routing);
 
 const PROTECTED_SEGMENTS = [
   'account',
-  'chat',
-  'circle',
+  'community',
   'messages',
   'notifications',
   'wishlist',
@@ -50,8 +49,7 @@ export function proxy(request: NextRequest) {
 
   if (!accessToken) {
     const loginUrl = new URL(`/${locale}/login`, request.url);
-
-    loginUrl.searchParams.set('returnTo', `/${segments.join('/')}`);
+    loginUrl.searchParams.set('returnTo', `/${segments.join('/')}${request.nextUrl.search}`);
 
     return NextResponse.redirect(loginUrl);
   }
