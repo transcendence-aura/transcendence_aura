@@ -37,18 +37,6 @@ export function validateSecrets(value: unknown): RequiredSecrets {
     errors.push('JWT_ACCESS_SECRET must contain at least 32 characters');
   }
 
-  if (typeof value.JWT_REFRESH_SECRET === 'string' && value.JWT_REFRESH_SECRET.length < 32) {
-    errors.push('JWT_REFRESH_SECRET must contain at least 32 characters');
-  }
-
-  if (
-    typeof value.JWT_ACCESS_SECRET === 'string' &&
-    typeof value.JWT_REFRESH_SECRET === 'string' &&
-    value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET
-  ) {
-    errors.push('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different.');
-  }
-
   if (errors.length > 0) {
     throw new Error(`Vault secret validation failed: ${errors.join('; ')}`);
   }
