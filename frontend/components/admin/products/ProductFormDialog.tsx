@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { useMutation } from '@apollo/client/react';
+import { useApolloClient, useMutation } from '@apollo/client/react';
 import { Star, Trash2 } from 'lucide-react';
 import { Dialog } from '@/components/ui/overlay/dialog';
 import { Input } from '@/components/ui/form/input';
@@ -34,6 +34,15 @@ import {
   type AdminDeleteProductImageResponse,
 } from '@/lib/graphql/queries/admin-products';
 
+// Order doesn't carry meaning for any of the id lists compared below (checking two boxes in a
+// different order than they were saved in isn't a real change), so a plain array `!==` would flag
+// false positives - compare as sets instead.
+function sameIds(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((id) => set.has(id));
+}
+
 // Mirrors the backend's BadRequestException messages from
 // admin-product-image.controller.ts / image-validation.util.ts.
 const UPLOAD_ERROR_MESSAGES: Record<string, string> = {
@@ -60,6 +69,7 @@ export function ProductFormDialog({
   onClose,
 }: ProductFormDialogProps) {
   const { toast } = useToast();
+  const client = useApolloClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeProduct, setActiveProduct] = useState<AdminProduct | null>(product);
@@ -221,6 +231,18 @@ export function ProductFormDialog({
     }
   };
 
+  // Unlike the image (saved immediately on upload, see handleUpload), none of these fields persist
+  // until "Save Product" is clicked - easy to miss, since the two save behaviors sit right next to
+  // each other in the same dialog. Compares the form's current state against what's actually on
+  // activeProduct (the last-saved snapshot) to surface that instead of staying silent about it.
+  const hasUnsavedChanges =
+    name !== (activeProduct?.name ?? '') ||
+    description !== (activeProduct?.description ?? '') ||
+    !sameIds(categoryIds, activeProduct?.categories.map((c) => c.id) ?? []) ||
+    !sameIds(productFamilyIds, activeProduct?.productFamilies.map((f) => f.id) ?? []) ||
+    !sameIds(collectionIds, activeProduct?.collections.map((c) => c.id) ?? []) ||
+    !sameIds(badges, activeProduct?.badges ?? []);
+
   const handlePublish = () => {
     if (!activeProduct) return;
     publishProduct({ variables: { id: activeProduct.id, input: { isActive: true } } });
@@ -237,6 +259,11 @@ export function ProductFormDialog({
         onProgress: setUploadProgress,
       });
       setActiveProduct((prev) => (prev ? { ...prev, media: [...prev.media, media] } : prev));
+      // uploadProductImage is a raw XHR, not a GraphQL mutation - its result never reaches
+      // Apollo's cache on its own, so the admin list stays stale (missing image) until something
+      // else happens to refetch it. Explicit refetch here, same as every other mutation in this
+      // file already does via `refetchQueries`.
+      void client.refetchQueries({ include: [GET_ADMIN_PRODUCTS] });
       toast({ message: 'Image uploaded', variant: 'success' });
     } catch (error) {
       const code = error instanceof Error ? error.message : undefined;
@@ -269,6 +296,27 @@ export function ProductFormDialog({
                 Name *
               </label>
               <Input value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+
+            <div>
+              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
+                Collection
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {collections.map((collection) => (
+                  <label
+                    key={collection.id}
+                    className="text-body-sm text-text-secondary flex items-center gap-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={collectionIds.includes(collection.id)}
+                      onChange={() => toggleCollection(collection.id)}
+                    />
+                    {collection.name}
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -308,27 +356,6 @@ export function ProductFormDialog({
                       onChange={() => toggleProductFamily(family.id)}
                     />
                     {family.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
-                Collection
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {collections.map((collection) => (
-                  <label
-                    key={collection.id}
-                    className="text-body-sm text-text-secondary flex items-center gap-2"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={collectionIds.includes(collection.id)}
-                      onChange={() => toggleCollection(collection.id)}
-                    />
-                    {collection.name}
                   </label>
                 ))}
               </div>
@@ -387,7 +414,10 @@ export function ProductFormDialog({
               />
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-3">
+              {hasUnsavedChanges && !creating && !updating && (
+                <span className="text-status-error text-body-sm">Unsaved changes</span>
+              )}
               <Button
                 onClick={handleSaveBaseFields}
                 disabled={!name.trim() || creating || updating}
