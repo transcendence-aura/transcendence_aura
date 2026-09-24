@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/form/button';
-import { useRouter } from '@/i18n/navigation';
+import { getPathname } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useMutation } from '@apollo/client/react';
 import { LOGIN_MUTATION } from '@/lib/auth/login.mutation';
@@ -42,7 +42,7 @@ export function LoginForm() {
     VerifyMfaMutationData,
     VerifyMfaMutationVariables
   >(VERIFY_MFA_MUTATION);
-  const router = useRouter();
+  const locale = useLocale();
 
   const validateForm = (): boolean => {
     if (!email.trim()) {
@@ -93,8 +93,7 @@ export function LoginForm() {
       setAccessToken(result.accessToken);
 
       setPassword('');
-      router.replace(returnTo);
-      router.refresh();
+      window.location.replace(getPathname({ href: returnTo, locale }));
     } catch {
       setError(t('errors.invalidCredentials'));
     }
@@ -134,8 +133,7 @@ export function LoginForm() {
       setAccessToken(result.accessToken);
       setMfaCode('');
       setMfaPendingToken(null);
-      router.replace(returnTo);
-      router.refresh();
+      window.location.replace(getPathname({ href: returnTo, locale }));
     } catch {
       setError(t('errors.mfaFailed'));
     }
