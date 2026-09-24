@@ -276,19 +276,22 @@ export function ProductFormDialog({
     setBadges((prev) => prev.filter((b) => b !== badge));
   };
 
+  // Shared by both Save and Publish below - Publish needs it too so a pending edit never gets
+  // silently left behind (see hasUnsavedChanges).
+  const baseFieldsInput = {
+    name,
+    description,
+    categoryIds,
+    productFamilyIds,
+    collectionIds,
+    badges,
+  };
+
   const handleSaveBaseFields = () => {
-    const input = {
-      name,
-      description,
-      categoryIds,
-      productFamilyIds,
-      collectionIds,
-      badges,
-    };
     if (activeProduct) {
-      updateProduct({ variables: { id: activeProduct.id, input } });
+      updateProduct({ variables: { id: activeProduct.id, input: baseFieldsInput } });
     } else {
-      createProduct({ variables: { input } });
+      createProduct({ variables: { input: baseFieldsInput } });
     }
   };
 
@@ -304,9 +307,19 @@ export function ProductFormDialog({
     !sameIds(collectionIds, activeProduct?.collections.map((c) => c.id) ?? []) ||
     !sameIds(badges, activeProduct?.badges ?? []);
 
+  // "Publish" means "make the current state of this form live" - if there's a pending edit that
+  // was never explicitly saved, it goes out in this same call instead of being silently left behind
+  // (an admin who edits a field, clicks Publish, sees "Product published" and closes the dialog
+  // would otherwise lose that edit with nothing more than a small, easy-to-miss label near the
+  // unrelated Save button to warn them).
   const handlePublish = () => {
     if (!activeProduct) return;
-    publishProduct({ variables: { id: activeProduct.id, input: { isActive: true } } });
+    publishProduct({
+      variables: {
+        id: activeProduct.id,
+        input: hasUnsavedChanges ? { ...baseFieldsInput, isActive: true } : { isActive: true },
+      },
+    });
   };
 
   const handleUpload = async (file: File) => {
