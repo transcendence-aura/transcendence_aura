@@ -1,15 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
 import { useRealtime } from '@/lib/realtime/realtime-provider';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
 import { CIRCLE_FEED_QUERY, type CircleFeedItem } from '@/lib/graphql/queries/circle-feed';
-import { FeedItem } from '@/components/circle/FeedItem';
+import { FeedItem } from '@/components/community/FeedItem';
+import { PeopleTab } from '@/components/community/PeopleTab';
+import { MessageTab } from '@/components/community/MessageTab';
+import { Tabs } from '@/components/ui/display/tabs';
 
 // Caps how many live-pushed items can pile up before the next fetch/refetch
 // folds them into `data` - without this, a tab left open for a while would
@@ -17,9 +21,13 @@ import { FeedItem } from '@/components/circle/FeedItem';
 const MAX_LIVE_ITEMS = 50;
 const PAGE_SIZE = 20;
 
-export default function CirclePage() {
+type Tab = 'activity' | 'people' | 'message';
+
+export default function CommunityPage() {
   const isAuthenticated = useIsAuthenticated();
   const t = useTranslations('CircleFeed');
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { on } = useRealtime();
   const client = useApolloClient();
   const [liveItems, setLiveItems] = useState<CircleFeedItem[]>([]);
@@ -27,6 +35,14 @@ export default function CirclePage() {
   const [page, setPage] = useState(1);
   const [nextPageOverride, setNextPageOverride] = useState<boolean | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  // null = no manual choice yet: the effective tab below is then derived
+  // from whether there's activity to show, so it re-evaluates live as data
+  // arrives instead of getting locked in at the first render.
+  const [manualTab, setManualTab] = useState<Tab | null>(null);
+  // A `?tab=` param (e.g. a MESSAGE notification's link, or the People list's Message button)
+  // always wins over it - read straight from the URL every render (not just on mount) so
+  // navigating here while already on the page also switches the tab, not just the URL.
+  const requestedTab = searchParams.get('tab');
 
   const { data, loading, error, refetch } = useQuery(CIRCLE_FEED_QUERY, {
     skip: !isAuthenticated,
@@ -71,10 +87,17 @@ export default function CirclePage() {
   ];
   const hasNextPage = nextPageOverride ?? data?.circleFeed.hasNextPage ?? false;
 
-  if (loading && items.length === 0) {
+  // An explicit `?tab=` always wins. Otherwise, while the user hasn't clicked a tab, default to
+  // whichever one is actually useful: no activity yet means there's nothing to show on that
+  // tab, so land on People instead. A manual click always wins from then on.
+  const tab: Tab =
+    requestedTab === 'activity' || requestedTab === 'people' || requestedTab === 'message'
+      ? requestedTab
+      : (manualTab ?? (items.length === 0 ? 'people' : 'activity'));
+
+  if (loading && requestedTab === null && manualTab === null && items.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-12 md:px-8">
-        <h1 className="text-h2 font-bold mb-8">{t('title')}</h1>
+      <div className="mx-auto max-w-4xl px-6 py-12 md:px-8">
         <div className="flex flex-col gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-20 w-full" />
@@ -84,33 +107,32 @@ export default function CirclePage() {
     );
   }
 
-  if (error && items.length === 0) {
-    return (
-      <div className="mx-auto max-w-2xl px-6 py-12 md:px-8">
-        <h1 className="text-h2 font-bold mb-8">{t('title')}</h1>
+  return (
+    <div className="mx-auto max-w-4xl px-6 py-12 md:px-8">
+      <Tabs
+        className="mb-8"
+        items={[
+          { id: 'activity', label: t('activityTab') },
+          { id: 'people', label: t('peopleTab') },
+          { id: 'message', label: t('messageTab') },
+        ]}
+        activeId={tab}
+        onChange={(id) => {
+          setManualTab(id as Tab);
+          router.replace(`/community?tab=${id}`, { scroll: false });
+        }}
+      />
+
+      {tab === 'people' ? (
+        <PeopleTab />
+      ) : tab === 'message' ? (
+        <MessageTab />
+      ) : error && items.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-body-base text-text-muted mb-6">{t('failedToLoad')}</p>
           <Button onClick={() => refetch()} className="px-6 py-3">
             {t('tryAgain')}
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto max-w-2xl px-6 py-12 md:px-8">
-      <h1 className="text-h2 font-bold mb-8">{t('title')}</h1>
-
-      {items.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-body-base text-text-muted mb-6">{t('empty')}</p>
-          <Link
-            href="/catalogue"
-            className="inline-block px-6 py-3 bg-brand-dark text-text-inverse rounded uppercase text-xs font-medium hover:bg-brand-darker transition-colors"
-          >
-            {t('emptyCta')}
-          </Link>
         </div>
       ) : (
         <div className="border-border-default border-t">

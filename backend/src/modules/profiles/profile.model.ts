@@ -44,3 +44,30 @@ export class PublicProfileType {
   @Field(() => [ProductType])
   recentWishlistAdds!: ProductType[];
 }
+
+@ObjectType()
+export class ProfileDirectoryEntryType {
+  @Field()
+  id!: string;
+
+  @Field()
+  name!: string;
+
+  @Field()
+  handle!: string;
+
+  @Field({ nullable: true })
+  bio?: string;
+}
+
+@ObjectType()
+export class ProfileDirectoryPageType {
+  @Field(() => [ProfileDirectoryEntryType])
+  items!: ProfileDirectoryEntryType[];
+
+  @Field(() => Int)
+  total!: number;
+
+  @Field()
+  hasNextPage!: boolean;
+}

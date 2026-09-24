@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Heart, MessageCircle, ShoppingBag, Menu, X } from 'lucide-react';
+import { Search, Heart, ShoppingBag, Menu, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
@@ -41,7 +41,7 @@ export function Navbar() {
           {t('shop')}
         </Link>
         <Link
-          href="/circle"
+          href="/community"
           className="text-text-secondary hover:text-text-primary text-ui-nav transition-colors"
         >
           {t('community')}
@@ -67,15 +67,6 @@ export function Navbar() {
           <Search className="h-5 w-5" />
         </button>
         <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-
-        {/* Chat */}
-        <Link
-          href="/chat"
-          aria-label={t('chat')}
-          className="text-text-secondary hover:text-text-primary transition-colors"
-        >
-          <MessageCircle className="h-5 w-5" />
-        </Link>
 
         {/* Wishlist */}
         <div className="relative">
@@ -154,7 +145,7 @@ export function Navbar() {
             {t('shop')}
           </Link>
           <Link
-            href="/circle"
+            href="/community"
             onClick={() => setMenuOpen(false)}
             className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors"
           >
@@ -166,15 +157,6 @@ export function Navbar() {
             className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-ui-label transition-colors"
           >
             {t('about')}
-          </Link>
-
-          {/* Chat Mobile */}
-          <Link
-            href="/chat"
-            onClick={() => setMenuOpen(false)}
-            className="text-text-secondary hover:text-text-primary uppercase tracking-wider text-xs transition-colors flex items-center gap-2"
-          >
-            <MessageCircle className="h-4 w-4" /> {t('chat')}
           </Link>
 
           {/* Cart Mobile */}

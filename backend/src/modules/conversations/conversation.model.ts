@@ -26,6 +26,9 @@ export class ConversationParticipantType {
   @Field()
   name!: string;
 
+  @Field()
+  handle!: string;
+
   @Field({ nullable: true })
   bio?: string;
 }

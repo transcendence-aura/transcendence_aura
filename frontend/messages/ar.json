@@ -4,7 +4,6 @@
     "community": "المجتمع",
     "about": "من نحن",
     "search": "بحث",
-    "chat": "الرسائل",
     "wishlist": "المفضلة",
     "cart": "سلة التسوق",
     "cartMobile": "السلة",
@@ -33,9 +32,9 @@
     "unreadCount": "{count, plural, one {# إشعار غير مقروء} two {إشعاران غير مقروءين} few {# إشعارات غير مقروءة} many {# إشعارًا غير مقروء} other {# إشعار غير مقروء}}"
   },
   "CircleFeed": {
-    "title": "النشاط",
-    "empty": "تابع أشخاصًا لترى نشاطهم هنا.",
-    "emptyCta": "تصفّح المتجر",
+    "activityTab": "النشاط",
+    "peopleTab": "الأشخاص",
+    "messageTab": "رسالة",
     "failedToLoad": "تعذّر تحميل الخلاصة",
     "tryAgain": "أعد المحاولة",
     "now": "الآن",
@@ -168,7 +167,10 @@
     "follow": "متابعة",
     "followingAction": "متابَع",
     "followFailed": "تعذّر تحديث حالة المتابعة، يرجى المحاولة مرة أخرى",
-    "logInToFollow": "سجّل الدخول للمتابعة"
+    "logInToFollow": "سجّل الدخول للمتابعة",
+    "message": "رسالة",
+    "messageFailed": "تعذّر بدء المحادثة، أعد المحاولة",
+    "messageDeclined": "لا يمكنك مراسلة هذا الشخص"
   },
   "PublicProfile": {
     "notFound": "تعذّر العثور على هذا الملف الشخصي",
@@ -176,6 +178,14 @@
     "recentlyFollowed": "تابعهم مؤخرًا",
     "recentlyAdded": "أُضيف مؤخرًا إلى المفضلة",
     "noActivity": "لا يوجد نشاط لعرضه بعد."
+  },
+  "PeopleDirectory": {
+    "searchPlaceholder": "ابحث بالاسم أو اسم المستخدم...",
+    "empty": "لم يُعثر على أحد.",
+    "failedToLoad": "تعذّر تحميل القائمة",
+    "tryAgain": "أعد المحاولة",
+    "previous": "السابق",
+    "next": "التالي"
   },
   "AvatarUpload": {
     "changePhoto": "تغيير الصورة",

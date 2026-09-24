@@ -12,6 +12,11 @@ interface DialogProps {
   className?: string;
   // false: only the dialog's own buttons close it (no Escape, click outside or close button).
   dismissible?: boolean;
+  // 'right': a full-height panel anchored to the right edge instead of a centered modal.
+  side?: 'center' | 'right';
+  // Hides the title/description row visually (kept for aria-labelledby/aria-describedby) - for
+  // content that already renders its own heading, like a profile card.
+  hideHeader?: boolean;
 }
 
 export const Dialog = ({
@@ -22,6 +27,8 @@ export const Dialog = ({
   children,
   className = '',
   dismissible = true,
+  side = 'center',
+  hideHeader = false,
 }: DialogProps) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -95,8 +102,14 @@ export const Dialog = ({
 
   if (!isOpen) return null;
 
+  const isRight = side === 'right';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      className={
+        isRight ? 'fixed inset-0 z-50' : 'fixed inset-0 z-50 flex items-center justify-center p-4'
+      }
+    >
       <div
         className="fixed inset-0 bg-black/50"
         onClick={dismissible ? onClose : undefined}
@@ -110,9 +123,23 @@ export const Dialog = ({
         aria-labelledby="dialog-title"
         aria-describedby={description ? 'dialog-description' : undefined}
         tabIndex={-1}
-        className={`shadow-modal border-border-default relative z-10 w-full max-w-md rounded-none border bg-card p-6 outline-none ${className}`}
+        className={
+          isRight
+            ? `shadow-modal border-border-default relative z-10 ml-auto h-full w-full max-w-md overflow-y-auto border-l bg-card p-6 outline-none ${className}`
+            : `shadow-modal border-border-default relative z-10 w-full max-w-md rounded-none border bg-card p-6 outline-none ${className}`
+        }
       >
-        <div className="flex items-start justify-between gap-4">
+        {hideHeader && dismissible && (
+          <button
+            onClick={onClose}
+            className="text-text-muted hover:text-text-primary border-border-default focus-visible:outline-border-focus absolute right-4 top-4 z-10 flex h-8 w-8 cursor-pointer items-center justify-center border bg-card transition-colors focus-visible:outline-2"
+            aria-label="Close dialog"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+
+        <div className={`flex items-start justify-between gap-4 ${hideHeader ? 'sr-only' : ''}`}>
           <div>
             <h2
               id="dialog-title"
@@ -127,7 +154,7 @@ export const Dialog = ({
             )}
           </div>
 
-          {dismissible && (
+          {dismissible && !hideHeader && (
             <button
               onClick={onClose}
               className="text-text-muted hover:text-text-primary border-border-default focus-visible:outline-border-focus flex h-8 w-8 cursor-pointer items-center justify-center border transition-colors focus-visible:outline-2"
@@ -138,7 +165,7 @@ export const Dialog = ({
           )}
         </div>
 
-        {children && <div className="mt-6">{children}</div>}
+        {children && <div className={hideHeader ? '' : 'mt-6'}>{children}</div>}
       </div>
     </div>
   );

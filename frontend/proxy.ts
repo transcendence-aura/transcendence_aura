@@ -5,15 +5,10 @@ import { routing } from '@/i18n/routing';
 
 const handleI18nRouting = createMiddleware(routing);
 
-const PROTECTED_SEGMENTS = [
-  'account',
-  'chat',
-  'circle',
-  'messages',
-  'notifications',
-  'wishlist',
-  'admin',
-];
+// 'community' is deliberately not gated here: its People tab is a public directory (mirrors
+// /profile/<handle>), and an anonymous visitor already lands on it by default - the Activity and
+// Message tabs both skip their data fetching when signed out, so there's nothing private to leak.
+const PROTECTED_SEGMENTS = ['account', 'messages', 'notifications', 'wishlist', 'admin'];
 
 function decodeSegment(segment: string): string {
   try {

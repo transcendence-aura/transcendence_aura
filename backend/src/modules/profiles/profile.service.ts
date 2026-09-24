@@ -9,8 +9,12 @@ import { PrismaService } from '../../database/prisma.service';
 import { ProductsService } from '../products/product.service';
 import { ProductType } from '../products/product.model';
 import { UserType } from '../auth/auth.model';
-import { UpdateProfileInput } from './profile.input';
-import { PublicProfileSummaryType, PublicProfileType } from './profile.model';
+import { ProfileDirectoryInput, UpdateProfileInput } from './profile.input';
+import {
+  ProfileDirectoryPageType,
+  PublicProfileSummaryType,
+  PublicProfileType,
+} from './profile.model';
 
 const RECENT_ACTIVITY_LIMIT = 5;
 const PRISMA_UNIQUE_CONSTRAINT_ERROR = 'P2002';
@@ -52,6 +56,48 @@ export class ProfileService {
       isFollowing,
       recentFollows,
       recentWishlistAdds,
+    };
+  }
+
+  // Public: lets anyone browse/search active profiles, since there is otherwise
+  // no way to discover a user without already knowing their handle.
+  async listProfiles(
+    input: ProfileDirectoryInput,
+    viewerId?: string,
+  ): Promise<ProfileDirectoryPageType> {
+    const page = input.page ?? 1;
+    const limit = input.limit ?? 20;
+    const search = input.search?.trim();
+
+    const where: Prisma.UserWhereInput = {
+      status: UserStatus.ACTIVE,
+      deletedAt: null,
+      ...(viewerId ? { id: { not: viewerId } } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
+              { handle: { contains: search, mode: Prisma.QueryMode.insensitive } },
+            ],
+          }
+        : {}),
+    };
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: { id: true, name: true, handle: true, bio: true },
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      items: users.map((user) => ({ ...user, bio: user.bio ?? undefined })),
+      total,
+      hasNextPage: page * limit < total,
     };
   }
 
