@@ -245,6 +245,7 @@ export function MessageTab() {
                   <ConversationRequestItem
                     key={conversation.id}
                     name={other.name}
+                    avatarUrl={`/api/v1/users/${other.id}/avatar`}
                     onClick={() => {
                       setActiveConversationId(conversation.id);
                       setProfileHandle(null);
@@ -269,6 +270,7 @@ export function MessageTab() {
                 <ConversationItem
                   key={conversation.id}
                   name={other.name}
+                  avatarUrl={`/api/v1/users/${other.id}/avatar`}
                   lastMessage={lastMessage?.content ?? 'No messages yet'}
                   timeLabel={lastMessage ? formatRelativeTime(lastMessage.createdAt, 'now') : ''}
                   isUnread={isConversationUnread(conversation, myId)}
@@ -292,7 +294,7 @@ export function MessageTab() {
               return (
                 <div className="border-border-default flex items-center justify-between border-b p-4">
                   <div className="flex items-center gap-3">
-                    <Avatar name={other.name} size="sm" />
+                    <Avatar name={other.name} src={`/api/v1/users/${other.id}/avatar`} size="sm" />
                     <span className="text-xs leading-[1.8] font-medium text-text-primary">
                       {other.name}
                     </span>
@@ -330,6 +332,7 @@ export function MessageTab() {
                     isOwn={isOwn}
                     createdAt={new Date(message.createdAt)}
                     senderName={isOwn ? meData!.me.name : other.name}
+                    senderAvatarUrl={`/api/v1/users/${isOwn ? meData!.me.id : other.id}/avatar`}
                   />
                 );
               })}

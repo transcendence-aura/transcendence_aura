@@ -35,11 +35,13 @@ export const Avatar = ({
   showOnlineDot = false,
   className = '',
 }: AvatarProps) => {
-  const [hasError, setHasError] = useState(false);
+  // Tracks which src failed, not just whether one did - so a later src (e.g. after
+  // uploading a first avatar) is retried instead of being stuck on initials forever.
+  const [erroredSrc, setErroredSrc] = useState<string | undefined>(undefined);
   const sizeConfig = SIZES[size];
   const initials = getInitials(name);
 
-  const isImageValid = Boolean(src) && !hasError;
+  const isImageValid = Boolean(src) && src !== erroredSrc;
 
   return (
     <div className={`relative inline-flex shrink-0 ${sizeConfig.container} ${className}`}>
@@ -52,7 +54,7 @@ export const Avatar = ({
             alt={alt || name}
             fill
             unoptimized
-            onError={() => setHasError(true)}
+            onError={() => setErroredSrc(src)}
             className="object-cover"
           />
         ) : (
