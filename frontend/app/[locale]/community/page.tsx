@@ -35,9 +35,6 @@ export default function CommunityPage() {
   const [page, setPage] = useState(1);
   const [nextPageOverride, setNextPageOverride] = useState<boolean | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  // null = no manual choice yet: the effective tab below is then derived
-  // from whether there's activity to show, so it re-evaluates live as data
-  // arrives instead of getting locked in at the first render.
   const [manualTab, setManualTab] = useState<Tab | null>(null);
   // A `?tab=` param (e.g. a MESSAGE notification's link, or the People list's Message button)
   // always wins over it - read straight from the URL every render (not just on mount) so
@@ -87,13 +84,10 @@ export default function CommunityPage() {
   ];
   const hasNextPage = nextPageOverride ?? data?.circleFeed.hasNextPage ?? false;
 
-  // An explicit `?tab=` always wins. Otherwise, while the user hasn't clicked a tab, default to
-  // whichever one is actually useful: no activity yet means there's nothing to show on that
-  // tab, so land on People instead. A manual click always wins from then on.
   const tab: Tab =
     requestedTab === 'activity' || requestedTab === 'people' || requestedTab === 'message'
       ? requestedTab
-      : (manualTab ?? (items.length === 0 ? 'people' : 'activity'));
+      : (manualTab ?? (fetchedItems.length === 0 ? 'people' : 'activity'));
 
   if (loading && requestedTab === null && manualTab === null && items.length === 0) {
     return (
