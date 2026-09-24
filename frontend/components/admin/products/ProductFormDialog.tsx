@@ -24,6 +24,8 @@ import {
   ADMIN_DELETE_PRODUCT_IMAGE,
   type AdminProduct,
   type AdminCategory,
+  type AdminProductFamily,
+  type AdminCollection,
   type AdminCreateProductResponse,
   type AdminUpdateProductResponse,
   type AdminDeactivateProductResponse,
@@ -44,6 +46,8 @@ interface ProductFormDialogProps {
   isOpen: boolean;
   product: AdminProduct | null;
   categories: AdminCategory[];
+  productFamilies: AdminProductFamily[];
+  collections: AdminCollection[];
   onClose: () => void;
 }
 
@@ -51,6 +55,8 @@ export function ProductFormDialog({
   isOpen,
   product,
   categories,
+  productFamilies,
+  collections,
   onClose,
 }: ProductFormDialogProps) {
   const { toast } = useToast();
@@ -61,6 +67,12 @@ export function ProductFormDialog({
   const [description, setDescription] = useState(product?.description ?? '');
   const [categoryIds, setCategoryIds] = useState<string[]>(
     product?.categories.map((c) => c.id) ?? [],
+  );
+  const [productFamilyIds, setProductFamilyIds] = useState<string[]>(
+    product?.productFamilies.map((f) => f.id) ?? [],
+  );
+  const [collectionIds, setCollectionIds] = useState<string[]>(
+    product?.collections.map((c) => c.id) ?? [],
   );
   const [badges, setBadges] = useState<string[]>(product?.badges ?? []);
   const [newBadge, setNewBadge] = useState('');
@@ -172,6 +184,16 @@ export function ProductFormDialog({
     setCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   };
 
+  const toggleProductFamily = (id: string) => {
+    setProductFamilyIds((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id],
+    );
+  };
+
+  const toggleCollection = (id: string) => {
+    setCollectionIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  };
+
   const addBadge = () => {
     const trimmed = newBadge.trim();
     if (!trimmed || badges.includes(trimmed)) return;
@@ -184,12 +206,18 @@ export function ProductFormDialog({
   };
 
   const handleSaveBaseFields = () => {
+    const input = {
+      name,
+      description,
+      categoryIds,
+      productFamilyIds,
+      collectionIds,
+      badges,
+    };
     if (activeProduct) {
-      updateProduct({
-        variables: { id: activeProduct.id, input: { name, description, categoryIds, badges } },
-      });
+      updateProduct({ variables: { id: activeProduct.id, input } });
     } else {
-      createProduct({ variables: { input: { name, description, categoryIds, badges } } });
+      createProduct({ variables: { input } });
     }
   };
 
@@ -259,6 +287,48 @@ export function ProductFormDialog({
                       onChange={() => toggleCategory(category.id)}
                     />
                     {category.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
+                Product Family
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {productFamilies.map((family) => (
+                  <label
+                    key={family.id}
+                    className="text-body-sm text-text-secondary flex items-center gap-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={productFamilyIds.includes(family.id)}
+                      onChange={() => toggleProductFamily(family.id)}
+                    />
+                    {family.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
+                Collection
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {collections.map((collection) => (
+                  <label
+                    key={collection.id}
+                    className="text-body-sm text-text-secondary flex items-center gap-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={collectionIds.includes(collection.id)}
+                      onChange={() => toggleCollection(collection.id)}
+                    />
+                    {collection.name}
                   </label>
                 ))}
               </div>

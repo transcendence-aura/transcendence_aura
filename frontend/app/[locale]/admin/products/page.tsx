@@ -15,10 +15,14 @@ import { ProductFormDialog } from '@/components/admin/products/ProductFormDialog
 import {
   GET_ADMIN_PRODUCTS,
   GET_ADMIN_CATEGORIES,
+  GET_ADMIN_PRODUCT_FAMILIES,
+  GET_ADMIN_COLLECTIONS,
   GET_PUBLISHED_PRODUCTS_COUNT,
   type AdminProduct,
   type AdminProductsQueryResponse,
   type AdminCategoriesQueryResponse,
+  type AdminProductFamiliesQueryResponse,
+  type AdminCollectionsQueryResponse,
   type PublishedProductsCountResponse,
 } from '@/lib/graphql/queries/admin-products';
 
@@ -43,6 +47,17 @@ export default function AdminProductsPage() {
 
   const { data: categoriesData } = useQuery<AdminCategoriesQueryResponse>(GET_ADMIN_CATEGORIES);
   const categories = useMemo(() => categoriesData?.adminCategories ?? [], [categoriesData]);
+
+  const { data: productFamiliesData } = useQuery<AdminProductFamiliesQueryResponse>(
+    GET_ADMIN_PRODUCT_FAMILIES,
+  );
+  const productFamilies = useMemo(
+    () => productFamiliesData?.adminProductFamilies ?? [],
+    [productFamiliesData],
+  );
+
+  const { data: collectionsData } = useQuery<AdminCollectionsQueryResponse>(GET_ADMIN_COLLECTIONS);
+  const collections = useMemo(() => collectionsData?.adminCollections ?? [], [collectionsData]);
 
   // Pill counts: one lightweight products() call for "All" plus one per
   // category. These are separate imperative client.query() calls (not
@@ -240,6 +255,8 @@ export default function AdminProductsPage() {
         isOpen={formState.open}
         product={formState.product}
         categories={categories}
+        productFamilies={productFamilies}
+        collections={collections}
         onClose={() => setFormState({ open: false, product: null })}
       />
     </div>
