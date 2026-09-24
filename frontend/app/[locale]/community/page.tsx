@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useApolloClient, useQuery } from '@apollo/client/react';
 import { useTranslations } from 'next-intl';
@@ -88,6 +88,14 @@ export default function CommunityPage() {
     requestedTab === 'activity' || requestedTab === 'people' || requestedTab === 'message'
       ? requestedTab
       : (manualTab ?? (fetchedItems.length === 0 ? 'people' : 'activity'));
+
+  const previousTabRef = useRef<Tab | null>(null);
+  useEffect(() => {
+    if (tab === 'activity' && previousTabRef.current !== null && previousTabRef.current !== tab) {
+      refetch();
+    }
+    previousTabRef.current = tab;
+  }, [tab, refetch]);
 
   if (loading && requestedTab === null && manualTab === null && items.length === 0) {
     return (
