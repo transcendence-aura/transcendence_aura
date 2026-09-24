@@ -1,6 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
-type Variant = 'dark' | 'ghost' | 'link';
+type Variant = 'dark' | 'ghost' | 'link' | 'affirmative';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -11,6 +11,10 @@ const VARIANTS: Record<Variant, string> = {
   ghost:
     'border border-border-default text-text-primary rounded-none px-6 py-3 hover:bg-page transition-colors',
   link: 'text-text-primary underline underline-offset-4 hover:opacity-70',
+  // For a deliberate, positive-consequence action (e.g. publishing) - distinct from both the
+  // default `dark` (routine "commit this form") and `ghost` (minor/secondary actions), so it
+  // doesn't read as just another button of the same weight as everything else around it.
+  affirmative: 'bg-status-online text-text-inverse rounded-none px-6 py-3',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

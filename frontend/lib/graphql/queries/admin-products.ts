@@ -23,6 +23,18 @@ export interface ProductCategory {
   name: string;
 }
 
+export interface ProductFamily {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+export interface ProductCollection {
+  id: string;
+  slug: string;
+  name: string;
+}
+
 export interface AdminProduct {
   id: string;
   slug: string;
@@ -35,6 +47,8 @@ export interface AdminProduct {
   media: ProductMedia[];
   variants: ProductVariant[];
   categories: ProductCategory[];
+  productFamilies: ProductFamily[];
+  collections: ProductCollection[];
 }
 
 export interface AdminProductsPage {
@@ -52,6 +66,18 @@ export interface PublishedProductsCountResponse {
 }
 
 export interface AdminCategory {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+export interface AdminProductFamily {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+export interface AdminCollection {
   id: string;
   slug: string;
   name: string;
@@ -83,6 +109,14 @@ export interface AdminDeleteProductImageResponse {
 
 export interface AdminCategoriesQueryResponse {
   adminCategories: AdminCategory[];
+}
+
+export interface AdminProductFamiliesQueryResponse {
+  adminProductFamilies: AdminProductFamily[];
+}
+
+export interface AdminCollectionsQueryResponse {
+  adminCollections: AdminCollection[];
 }
 
 const PRODUCT_FIELDS = `
@@ -120,6 +154,16 @@ const PRODUCT_FIELDS = `
     slug
     name
   }
+  productFamilies {
+    id
+    slug
+    name
+  }
+  collections {
+    id
+    slug
+    name
+  }
 `;
 
 export const GET_ADMIN_PRODUCTS = gql`
@@ -149,6 +193,26 @@ export const GET_PUBLISHED_PRODUCTS_COUNT = gql`
 export const GET_ADMIN_CATEGORIES = gql`
   query AdminCategoriesList {
     adminCategories {
+      id
+      slug
+      name
+    }
+  }
+`;
+
+export const GET_ADMIN_PRODUCT_FAMILIES = gql`
+  query AdminProductFamiliesList {
+    adminProductFamilies {
+      id
+      slug
+      name
+    }
+  }
+`;
+
+export const GET_ADMIN_COLLECTIONS = gql`
+  query AdminCollectionsList {
+    adminCollections {
       id
       slug
       name

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useMutation } from '@apollo/client/react';
 import { Input } from '@/components/ui/form/input';
 import { Switch } from '@/components/ui/form/switch';
@@ -25,6 +25,10 @@ export function VariantRow({
   onRequestDelete: (confirmDelete: () => void) => void;
 }) {
   const { toast } = useToast();
+  // Collapsed by default - a saved variant rarely needs another look once it's already set up, and
+  // with Collection/Category/Product Family now also in this dialog, a list of already-created
+  // variants each showing their full edit row at once made the form long to scan.
+  const [expanded, setExpanded] = useState(false);
   const [label, setLabel] = useState(variant.label);
   const [price, setPrice] = useState(String(variant.price));
   const [isAvailable, setIsAvailable] = useState(variant.isAvailable);
@@ -62,8 +66,60 @@ export function VariantRow({
       setDirty(true);
     };
 
+  const requestDelete = () =>
+    onRequestDelete(() => deleteVariant({ variables: { variantId: variant.id } }));
+
+  if (!expanded) {
+    // Reads local state, not the `variant` prop: a successful Save only updates state here (see
+    // updateVariant's onCompleted below) - it doesn't flow back up to activeProduct in
+    // ProductFormDialog, so `variant` itself stays stale after an edit. Collapsing right after a
+    // save would otherwise show the pre-edit values despite the save having worked.
+    const displayPrice = parsePriceInput(price) ?? variant.price;
+
+    return (
+      <div className="border-border-default flex items-center gap-3 border-b py-1 last:border-b-0">
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="hover:bg-page flex flex-1 items-center gap-3 py-2 text-start transition-colors"
+        >
+          <ChevronRight className="text-text-muted h-4 w-4 shrink-0" />
+          <span className="text-body-sm text-text-primary font-medium">{label}</span>
+          <span className="text-body-sm text-text-muted">€{displayPrice.toFixed(2)}</span>
+          <span
+            className={`text-ui-caption uppercase ${
+              isAvailable ? 'text-status-online' : 'text-status-error'
+            }`}
+          >
+            {isAvailable ? 'Available' : 'Unavailable'}
+          </span>
+          {dirty && (
+            <span className="text-status-error text-ui-caption uppercase">Unsaved changes</span>
+          )}
+        </button>
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={requestDelete}
+          aria-label="Remove variant"
+          className="text-status-error hover:bg-page flex h-9 w-9 shrink-0 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="border-border-default flex flex-wrap items-center gap-3 border-b py-3 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => setExpanded(false)}
+        aria-label="Collapse variant"
+        className="text-text-muted hover:text-text-primary flex h-9 w-9 shrink-0 items-center justify-center"
+      >
+        <ChevronDown className="h-4 w-4" />
+      </button>
       <Input
         value={label}
         onChange={(e) => markDirty(setLabel)(e.target.value)}
@@ -86,7 +142,8 @@ export function VariantRow({
         Available
       </label>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-3">
+        {dirty && <span className="text-status-error text-body-sm">Unsaved changes</span>}
         <button
           type="button"
           disabled={!dirty || saving}
@@ -110,9 +167,7 @@ export function VariantRow({
         <button
           type="button"
           disabled={deleting}
-          onClick={() =>
-            onRequestDelete(() => deleteVariant({ variables: { variantId: variant.id } }))
-          }
+          onClick={requestDelete}
           aria-label="Remove variant"
           className="text-status-error hover:bg-page flex h-9 w-9 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40"
         >

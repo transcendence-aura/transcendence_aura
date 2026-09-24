@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { useMutation } from '@apollo/client/react';
-import { Star, Trash2 } from 'lucide-react';
+import { useApolloClient, useMutation } from '@apollo/client/react';
+import { ChevronDown, ChevronRight, Star, Trash2 } from 'lucide-react';
 import { Dialog } from '@/components/ui/overlay/dialog';
 import { Input } from '@/components/ui/form/input';
 import { Textarea } from '@/components/ui/form/textarea';
@@ -24,6 +24,8 @@ import {
   ADMIN_DELETE_PRODUCT_IMAGE,
   type AdminProduct,
   type AdminCategory,
+  type AdminProductFamily,
+  type AdminCollection,
   type AdminCreateProductResponse,
   type AdminUpdateProductResponse,
   type AdminDeactivateProductResponse,
@@ -31,6 +33,76 @@ import {
   type AdminSetPrimaryProductImageResponse,
   type AdminDeleteProductImageResponse,
 } from '@/lib/graphql/queries/admin-products';
+
+// Order doesn't carry meaning for any of the id lists compared below (checking two boxes in a
+// different order than they were saved in isn't a real change), so a plain array `!==` would flag
+// false positives - compare as sets instead.
+function sameIds(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((id) => set.has(id));
+}
+
+// Collection/Category/Product Family all render the exact same "checkbox list behind a
+// collapsible header" shape, just with a different label/option set/selection - factored out
+// instead of repeating it 3x. Closed by default (same reasoning as VariantRow: with all three of
+// these plus everything else in the form, showing every checkbox at once made the dialog long to
+// scan) but still shows what's currently selected as a one-line summary, so collapsed doesn't mean
+// invisible.
+function CollapsibleCheckboxGroup({
+  label,
+  options,
+  selectedIds,
+  onToggle,
+}: {
+  label: string;
+  options: { id: string; name: string }[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const selectedNames = options
+    .filter((option) => selectedIds.includes(option.id))
+    .map((option) => option.name);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="text-ui-label text-text-muted mb-1 flex w-full items-center justify-between uppercase tracking-widest"
+      >
+        <span>
+          {label}
+          {selectedIds.length > 0 && ` (${selectedIds.length} selected)`}
+        </span>
+        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+      </button>
+
+      {!expanded && selectedNames.length > 0 && (
+        <p className="text-body-sm text-text-secondary">{selectedNames.join(', ')}</p>
+      )}
+
+      {expanded && (
+        <div className="flex flex-wrap gap-3 pt-1">
+          {options.map((option) => (
+            <label
+              key={option.id}
+              className="text-body-sm text-text-secondary flex items-center gap-2"
+            >
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(option.id)}
+                onChange={() => onToggle(option.id)}
+              />
+              {option.name}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Mirrors the backend's BadRequestException messages from
 // admin-product-image.controller.ts / image-validation.util.ts.
@@ -44,6 +116,8 @@ interface ProductFormDialogProps {
   isOpen: boolean;
   product: AdminProduct | null;
   categories: AdminCategory[];
+  productFamilies: AdminProductFamily[];
+  collections: AdminCollection[];
   onClose: () => void;
 }
 
@@ -51,9 +125,12 @@ export function ProductFormDialog({
   isOpen,
   product,
   categories,
+  productFamilies,
+  collections,
   onClose,
 }: ProductFormDialogProps) {
   const { toast } = useToast();
+  const client = useApolloClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeProduct, setActiveProduct] = useState<AdminProduct | null>(product);
@@ -61,6 +138,12 @@ export function ProductFormDialog({
   const [description, setDescription] = useState(product?.description ?? '');
   const [categoryIds, setCategoryIds] = useState<string[]>(
     product?.categories.map((c) => c.id) ?? [],
+  );
+  const [productFamilyIds, setProductFamilyIds] = useState<string[]>(
+    product?.productFamilies.map((f) => f.id) ?? [],
+  );
+  const [collectionIds, setCollectionIds] = useState<string[]>(
+    product?.collections.map((c) => c.id) ?? [],
   );
   const [badges, setBadges] = useState<string[]>(product?.badges ?? []);
   const [newBadge, setNewBadge] = useState('');
@@ -172,6 +255,16 @@ export function ProductFormDialog({
     setCategoryIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
   };
 
+  const toggleProductFamily = (id: string) => {
+    setProductFamilyIds((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id],
+    );
+  };
+
+  const toggleCollection = (id: string) => {
+    setCollectionIds((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  };
+
   const addBadge = () => {
     const trimmed = newBadge.trim();
     if (!trimmed || badges.includes(trimmed)) return;
@@ -183,19 +276,50 @@ export function ProductFormDialog({
     setBadges((prev) => prev.filter((b) => b !== badge));
   };
 
+  // Shared by both Save and Publish below - Publish needs it too so a pending edit never gets
+  // silently left behind (see hasUnsavedChanges).
+  const baseFieldsInput = {
+    name,
+    description,
+    categoryIds,
+    productFamilyIds,
+    collectionIds,
+    badges,
+  };
+
   const handleSaveBaseFields = () => {
     if (activeProduct) {
-      updateProduct({
-        variables: { id: activeProduct.id, input: { name, description, categoryIds, badges } },
-      });
+      updateProduct({ variables: { id: activeProduct.id, input: baseFieldsInput } });
     } else {
-      createProduct({ variables: { input: { name, description, categoryIds, badges } } });
+      createProduct({ variables: { input: baseFieldsInput } });
     }
   };
 
+  // Unlike the image (saved immediately on upload, see handleUpload), none of these fields persist
+  // until "Save Product" is clicked - easy to miss, since the two save behaviors sit right next to
+  // each other in the same dialog. Compares the form's current state against what's actually on
+  // activeProduct (the last-saved snapshot) to surface that instead of staying silent about it.
+  const hasUnsavedChanges =
+    name !== (activeProduct?.name ?? '') ||
+    description !== (activeProduct?.description ?? '') ||
+    !sameIds(categoryIds, activeProduct?.categories.map((c) => c.id) ?? []) ||
+    !sameIds(productFamilyIds, activeProduct?.productFamilies.map((f) => f.id) ?? []) ||
+    !sameIds(collectionIds, activeProduct?.collections.map((c) => c.id) ?? []) ||
+    !sameIds(badges, activeProduct?.badges ?? []);
+
+  // "Publish" means "make the current state of this form live" - if there's a pending edit that
+  // was never explicitly saved, it goes out in this same call instead of being silently left behind
+  // (an admin who edits a field, clicks Publish, sees "Product published" and closes the dialog
+  // would otherwise lose that edit with nothing more than a small, easy-to-miss label near the
+  // unrelated Save button to warn them).
   const handlePublish = () => {
     if (!activeProduct) return;
-    publishProduct({ variables: { id: activeProduct.id, input: { isActive: true } } });
+    publishProduct({
+      variables: {
+        id: activeProduct.id,
+        input: hasUnsavedChanges ? { ...baseFieldsInput, isActive: true } : { isActive: true },
+      },
+    });
   };
 
   const handleUpload = async (file: File) => {
@@ -209,6 +333,11 @@ export function ProductFormDialog({
         onProgress: setUploadProgress,
       });
       setActiveProduct((prev) => (prev ? { ...prev, media: [...prev.media, media] } : prev));
+      // uploadProductImage is a raw XHR, not a GraphQL mutation - its result never reaches
+      // Apollo's cache on its own, so the admin list stays stale (missing image) until something
+      // else happens to refetch it. Explicit refetch here, same as every other mutation in this
+      // file already does via `refetchQueries`.
+      void client.refetchQueries({ include: [GET_ADMIN_PRODUCTS] });
       toast({ message: 'Image uploaded', variant: 'success' });
     } catch (error) {
       const code = error instanceof Error ? error.message : undefined;
@@ -243,26 +372,26 @@ export function ProductFormDialog({
               <Input value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
 
-            <div>
-              <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
-                Category
-              </label>
-              <div className="flex flex-wrap gap-3">
-                {categories.map((category) => (
-                  <label
-                    key={category.id}
-                    className="text-body-sm text-text-secondary flex items-center gap-2"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={categoryIds.includes(category.id)}
-                      onChange={() => toggleCategory(category.id)}
-                    />
-                    {category.name}
-                  </label>
-                ))}
-              </div>
-            </div>
+            <CollapsibleCheckboxGroup
+              label="Collection"
+              options={collections}
+              selectedIds={collectionIds}
+              onToggle={toggleCollection}
+            />
+
+            <CollapsibleCheckboxGroup
+              label="Category"
+              options={categories}
+              selectedIds={categoryIds}
+              onToggle={toggleCategory}
+            />
+
+            <CollapsibleCheckboxGroup
+              label="Product Family"
+              options={productFamilies}
+              selectedIds={productFamilyIds}
+              onToggle={toggleProductFamily}
+            />
 
             <div>
               <label className="text-ui-label text-text-muted mb-1 block uppercase tracking-widest">
@@ -317,7 +446,10 @@ export function ProductFormDialog({
               />
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-3">
+              {hasUnsavedChanges && !creating && !updating && (
+                <span className="text-status-error text-body-sm">Unsaved changes</span>
+              )}
               <Button
                 onClick={handleSaveBaseFields}
                 disabled={!name.trim() || creating || updating}
@@ -486,7 +618,7 @@ export function ProductFormDialog({
                   </p>
                 </div>
                 <Button
-                  variant="ghost"
+                  variant="affirmative"
                   disabled={
                     activeProduct.variants.length === 0 || publishing || activeProduct.isActive
                   }
