@@ -2,15 +2,20 @@ services:
   nginx:
     image: owasp/modsecurity-crs:nginx
     ports:
-      - '${HTTP_PORT:-80}:80'
-      - '${HTTPS_PORT:-443}:443'
+      - '${HTTP_PORT:-80}:8080'
+      - '${HTTPS_PORT:-443}:8443'
     environment:
-      MODSEC_RULE_ENGINE: DetectionOnly
+      MODSEC_RULE_ENGINE: On
       PARANOIA: 2
       BLOCKING_PARANOIA: 2
+
+      MODSEC_AUDIT_ENGINE: RelevantOnly
+      MODSEC_AUDIT_LOG: /dev/stdout
+      MODSEC_AUDIT_LOG_FORMAT: JSON
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/templates/nginx.conf.template:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/modsecurity/exclusions.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:ro
     depends_on:
       - frontend
       - backend

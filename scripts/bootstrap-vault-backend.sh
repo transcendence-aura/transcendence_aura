@@ -41,9 +41,26 @@ write_env_value() {
 [[ -s "$VAULT_ROOT_TOKEN_FILE" ]] ||
   fail "Vault root token is missing."
 
-POSTGRES_URL="$(read_value "$ENV_FILE" POSTGRES_URL)"
+POSTGRES_USER="$(read_value "$ENV_FILE" POSTGRES_USER)"
+POSTGRES_PASSWORD="$(read_value "$ENV_FILE" POSTGRES_PASSWORD)"
+POSTGRES_DB="$(read_value "$ENV_FILE" POSTGRES_DB)"
+POSTGRES_PORT="$(read_value "$ENV_FILE" POSTGRES_PORT)"
+POSTGRES_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}"
 REDIS_URL="$(read_value "$ENV_FILE" REDIS_URL)"
-JWT_ACCESS_SECRET="$(read_value "$ENV_FILE" JWT_ACCESS_SECRET)"
+
+existing_jwt_access_secret="$(
+  vault_exec_with_token kv get \
+    -mount=secret \
+    -field=JWT_ACCESS_SECRET \
+    "$SECRET_PATH" \
+    2>/dev/null || true
+)"
+
+if [[ -n "$existing_jwt_access_secret" ]]; then
+  JWT_ACCESS_SECRET="$existing_jwt_access_secret"
+else
+  JWT_ACCESS_SECRET="$(openssl rand -hex 32)"
+fi
 
 : "${POSTGRES_URL:?POSTGRES_URL is required}"
 : "${REDIS_URL:?REDIS_URL is required}"
