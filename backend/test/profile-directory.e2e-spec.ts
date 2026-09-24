@@ -9,6 +9,7 @@ import path from 'node:path';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/database/prisma.service';
 import { RequiredSecrets } from '../src/config/required-secrets';
+import { TokenService } from '../src/modules/auth/token.service';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -51,9 +52,13 @@ const DIRECTORY_QUERY = `
 describe('GraphQL profileDirectory input validation', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let accessToken: string;
 
   const query = (variables?: Record<string, unknown>) =>
-    request(app.getHttpServer()).post('/graphql').send({ query: DIRECTORY_QUERY, variables });
+    request(app.getHttpServer())
+      .post('/graphql')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ query: DIRECTORY_QUERY, variables });
 
   beforeAll(async () => {
     stubVaultEnvironment();
@@ -75,7 +80,7 @@ describe('GraphQL profileDirectory input validation', () => {
     await app.init();
     prisma = moduleRef.get(PrismaService);
 
-    await prisma.user.create({
+    const viewer = await prisma.user.create({
       data: {
         name: `${RUN} User`,
         email: `${RUN}@example.com`,
@@ -83,6 +88,8 @@ describe('GraphQL profileDirectory input validation', () => {
         passwordHash: `hash-${RUN}`,
       },
     });
+
+    accessToken = await moduleRef.get(TokenService).issueAccessToken(viewer.id, []);
   });
 
   afterAll(async () => {
@@ -99,10 +106,14 @@ describe('GraphQL profileDirectory input validation', () => {
     expect(res.body.data.profileDirectory.total).toBeGreaterThan(0);
   });
 
-  it('is reachable without authentication, by design', async () => {
-    const res = await query({ input: { page: 1, limit: 5 } }).expect(200);
+  it('rejects a request without a valid access token', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/graphql')
+      .send({ query: DIRECTORY_QUERY, variables: { input: { page: 1, limit: 5 } } })
+      .expect(200);
 
-    expect(res.body.errors).toBeUndefined();
+    expect(res.body.data).toBeNull();
+    expect(res.body.errors[0].extensions.code).toBe('UNAUTHENTICATED');
   });
 
   it('rejects page: 0 as a clean validation error, never an internal crash', async () => {

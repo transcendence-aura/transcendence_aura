@@ -26,7 +26,7 @@ export class ProfileService {
     private readonly productsService: ProductsService,
   ) {}
 
-  async getProfile(handle: string, viewerId?: string): Promise<PublicProfileType> {
+  async getProfile(handle: string, viewerId: string): Promise<PublicProfileType> {
     const user = await this.prisma.user.findUnique({
       where: { handle },
       select: { id: true, name: true, handle: true, bio: true, status: true, deletedAt: true },
@@ -59,11 +59,9 @@ export class ProfileService {
     };
   }
 
-  // Public: lets anyone browse/search active profiles, since there is otherwise
-  // no way to discover a user without already knowing their handle.
   async listProfiles(
     input: ProfileDirectoryInput,
-    viewerId?: string,
+    viewerId: string,
   ): Promise<ProfileDirectoryPageType> {
     const page = input.page ?? 1;
     const limit = input.limit ?? 20;
@@ -72,7 +70,7 @@ export class ProfileService {
     const where: Prisma.UserWhereInput = {
       status: UserStatus.ACTIVE,
       deletedAt: null,
-      ...(viewerId ? { id: { not: viewerId } } : {}),
+      id: { not: viewerId },
       ...(search
         ? {
             OR: [
@@ -101,11 +99,11 @@ export class ProfileService {
     };
   }
 
-  // Anonymous visitors and the profile owner never "follow" the profile: skip the query.
+  // The profile owner never "follows" their own profile: skip the query.
   // Same visibility rule as followersCount: a suspended or deleted viewer does not count
   // as a follower, so a token that is still valid for a few minutes must not show them as one.
-  private async isFollowedBy(viewerId: string | undefined, profileId: string): Promise<boolean> {
-    if (!viewerId || viewerId === profileId) {
+  private async isFollowedBy(viewerId: string, profileId: string): Promise<boolean> {
+    if (viewerId === profileId) {
       return false;
     }
 
