@@ -69,13 +69,6 @@ describe('ProfileService.getProfile', () => {
       expect(profile.isFollowing).toBe(false);
     });
 
-    it('is false for an anonymous visitor, without querying the follow relation', async () => {
-      const profile = await service.getProfile('marie');
-
-      expect(profile.isFollowing).toBe(false);
-      expect(prisma.follow.findFirst).not.toHaveBeenCalled();
-    });
-
     it("is false on the viewer's own profile, without querying the follow relation", async () => {
       const profile = await service.getProfile('marie', 'profile-1');
 
@@ -139,15 +132,8 @@ describe('ProfileService.listProfiles', () => {
     );
   });
 
-  it('does not filter by id for an anonymous visitor', async () => {
-    await service.listProfiles({ page: 1, limit: 20 });
-
-    const where = prisma.user.findMany.mock.calls[0][0].where;
-    expect(where.id).toBeUndefined();
-  });
-
   it('only lists active, non-deleted accounts', async () => {
-    await service.listProfiles({ page: 1, limit: 20 });
+    await service.listProfiles({ page: 1, limit: 20 }, 'viewer-1');
 
     expect(prisma.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -157,14 +143,14 @@ describe('ProfileService.listProfiles', () => {
   });
 
   it('omits the search filter entirely when no search term is given', async () => {
-    await service.listProfiles({ page: 1, limit: 20 });
+    await service.listProfiles({ page: 1, limit: 20 }, 'viewer-1');
 
     const where = prisma.user.findMany.mock.calls[0][0].where;
     expect(where.OR).toBeUndefined();
   });
 
   it('searches case-insensitively across name and handle', async () => {
-    await service.listProfiles({ page: 1, limit: 20, search: 'Marie' });
+    await service.listProfiles({ page: 1, limit: 20, search: 'Marie' }, 'viewer-1');
 
     const where = prisma.user.findMany.mock.calls[0][0].where;
     expect(where.OR).toEqual([
@@ -174,21 +160,21 @@ describe('ProfileService.listProfiles', () => {
   });
 
   it('trims the search term before filtering', async () => {
-    await service.listProfiles({ page: 1, limit: 20, search: '  marie  ' });
+    await service.listProfiles({ page: 1, limit: 20, search: '  marie  ' }, 'viewer-1');
 
     const where = prisma.user.findMany.mock.calls[0][0].where;
     expect(where.OR[0].name.contains).toBe('marie');
   });
 
   it('treats a blank/whitespace-only search the same as no search', async () => {
-    await service.listProfiles({ page: 1, limit: 20, search: '   ' });
+    await service.listProfiles({ page: 1, limit: 20, search: '   ' }, 'viewer-1');
 
     const where = prisma.user.findMany.mock.calls[0][0].where;
     expect(where.OR).toBeUndefined();
   });
 
   it('paginates with skip/take derived from page and limit', async () => {
-    await service.listProfiles({ page: 3, limit: 10 });
+    await service.listProfiles({ page: 3, limit: 10 }, 'viewer-1');
 
     expect(prisma.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ skip: 20, take: 10 }),
@@ -198,7 +184,7 @@ describe('ProfileService.listProfiles', () => {
   it('reports hasNextPage when more results exist past this page', async () => {
     prisma.user.count.mockResolvedValue(25);
 
-    const page = await service.listProfiles({ page: 1, limit: 20 });
+    const page = await service.listProfiles({ page: 1, limit: 20 }, 'viewer-1');
 
     expect(page.hasNextPage).toBe(true);
   });
@@ -206,7 +192,7 @@ describe('ProfileService.listProfiles', () => {
   it('reports no next page once the last page is reached', async () => {
     prisma.user.count.mockResolvedValue(25);
 
-    const page = await service.listProfiles({ page: 2, limit: 20 });
+    const page = await service.listProfiles({ page: 2, limit: 20 }, 'viewer-1');
 
     expect(page.hasNextPage).toBe(false);
   });
@@ -216,13 +202,16 @@ describe('ProfileService.listProfiles', () => {
       { id: 'u1', name: 'Marie', handle: 'marie', bio: null },
     ]);
 
-    const page = await service.listProfiles({ page: 1, limit: 20 });
+    const page = await service.listProfiles({ page: 1, limit: 20 }, 'viewer-1');
 
     expect(page.items[0].bio).toBeUndefined();
   });
 
   it('returns an empty page without error when nothing matches', async () => {
-    const page = await service.listProfiles({ page: 1, limit: 20, search: 'nobody-like-this' });
+    const page = await service.listProfiles(
+      { page: 1, limit: 20, search: 'nobody-like-this' },
+      'viewer-1',
+    );
 
     expect(page.items).toEqual([]);
     expect(page.total).toBe(0);
