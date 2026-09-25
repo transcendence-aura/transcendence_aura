@@ -81,9 +81,12 @@ services:
       POSTGRES_URL: ${POSTGRES_URL}
       SEED_GRAPHQL_URL: http://backend:3001/graphql
       SEED_MODE: ${SEED_MODE:-empty}
-      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
-      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      SEED_ADMIN_EMAIL_FILE: /run/secrets/seed_admin_email
+      SEED_ADMIN_PASSWORD_FILE: /run/secrets/seed_admin_password
       SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
+    secrets:
+      - seed_admin_email
+      - seed_admin_password
     depends_on:
       postgres:
         condition: service_started
@@ -162,3 +165,7 @@ networks:
 secrets:
   vault_secret_id:
     file: ./local-secrets/vault-secret-id
+  seed_admin_email:
+    file: ./local-secrets/seed-admin-email
+  seed_admin_password:
+    file: ./local-secrets/seed-admin-password
