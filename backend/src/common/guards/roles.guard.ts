@@ -25,11 +25,9 @@ export class RolesGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = this.getRequest(context);
 
-    // An upstream authentication guard may already have resolved and
-    // attached the caller's id (GqlAuthGuard sets req.userId on GraphQL
-    // resolvers). That's trusted because it can only be set by server-side
-    // guard code, never by the client - so the token itself doesn't need
-    // re-verifying here, only the role still does.
+    // An upstream authentication guard may already have resolved and attached the caller's id.
+    // That's trusted because it can only be set by server-side guard code, never by the client -
+    // so the token itself doesn't need re-verifying here, only the role still does.
     const userId = request.userId ?? (await this.authenticate(request));
 
     // The role is always re-read from the database rather than trusted from

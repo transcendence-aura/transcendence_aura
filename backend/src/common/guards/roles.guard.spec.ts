@@ -141,7 +141,7 @@ describe('RolesGuard', () => {
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(ForbiddenException);
   });
 
-  it('trusts a userId already attached by an upstream auth guard (e.g. GqlAuthGuard) and skips token verification', async () => {
+  it('trusts a userId already attached by an upstream auth guard and skips token verification', async () => {
     prisma.user.findUnique.mockResolvedValue({
       id: 'user-1',
       role: UserRole.ADMIN,
