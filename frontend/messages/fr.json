@@ -80,7 +80,13 @@
     "title": "Rejoignez le cercle Aura",
     "subtitle": "Nos nouveautés, nos conseils beauté et -10 % sur votre première commande.",
     "placeholder": "votre@email.com",
-    "subscribe": "Je m'inscris"
+    "subscribe": "Je m'inscris",
+    "modalTitle": "Bienvenue dans le cercle Aura",
+    "modalCode": "AURA10",
+    "modalCta": "Découvrir la boutique",
+    "closeModal": "Fermer",
+    "modalIntro": "Votre rituel commence aujourd'hui.",
+    "modalPromo": "Profitez de votre cadeau de bienvenue avec 10 % de réduction sur votre première commande :"
   },
   "CollectionCard": {
     "itemCount": "{count, plural, one {# produit} other {# produits}}",
@@ -511,5 +517,12 @@
       "postalCodeRequired": "Le code postal est requis",
       "billingAddressRequired": "L’adresse de facturation est requise"
     }
+  },
+  "Search": {
+    "placeholder": "Rechercher un produit...",
+    "ariaLabel": "Rechercher un produit",
+    "recentSearches": "Recherches récentes",
+    "clear": "Effacer",
+    "close": "Fermer la recherche"
   }
 }

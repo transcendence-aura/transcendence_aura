@@ -80,7 +80,13 @@
     "title": "انضم إلى طقوس أورا",
     "subtitle": "إصدارات جديدة، أدلة للعناية بالبشرة، وخصم 10٪ على طلبك الأول.",
     "placeholder": "your@email.com",
-    "subscribe": "اشترك"
+    "subscribe": "اشترك",
+    "modalTitle": "مرحبًا بك في مجتمع أورا",
+    "modalCode": "AURA10",
+    "modalCta": "استكشف المتجر",
+    "closeModal": "إغلاق",
+    "modalIntro": "يبدأ طقسك الواعي اليوم.",
+    "modalPromo": "استمتع بهدية الترحيب مع خصم 10% على طلبك الأول:"
   },
   "CollectionCard": {
     "itemCount": "{count, plural, zero {لا منتجات} one {منتج واحد} two {منتجان} few {# منتجات} many {# منتجًا} other {# منتج}}",
@@ -511,5 +517,12 @@
       "postalCodeRequired": "الرمز البريدي مطلوب",
       "billingAddressRequired": "عنوان الفوترة مطلوب"
     }
+  },
+  "Search": {
+    "placeholder": "البحث عن المنتجات...",
+    "ariaLabel": "البحث عن المنتجات",
+    "recentSearches": "عمليات البحث الأخيرة",
+    "clear": "مسح",
+    "close": "إغلاق البحث"
   }
 }

@@ -80,7 +80,13 @@
     "title": "Join the Aura ritual",
     "subtitle": "New drops, skin guides, and 10% off your first order.",
     "placeholder": "your@email.com",
-    "subscribe": "Subscribe"
+    "subscribe": "Subscribe",
+    "modalTitle": "Welcome to the Aura Circle",
+    "modalCode": "AURA10",
+    "modalCta": "Explore the Shop",
+    "closeModal": "Close",
+    "modalIntro": "Your mindful ritual begins today.",
+    "modalPromo": "Enjoy your welcome gift with 10% off your first order:"
   },
   "CollectionCard": {
     "itemCount": "{count, plural, one {# item} other {# items}}",
@@ -511,5 +517,12 @@
       "postalCodeRequired": "Postal code is required",
       "billingAddressRequired": "Billing address is required"
     }
+  },
+  "Search": {
+    "placeholder": "Search products...",
+    "ariaLabel": "Search products",
+    "recentSearches": "Recent searches",
+    "clear": "Clear",
+    "close": "Close search"
   }
 }
