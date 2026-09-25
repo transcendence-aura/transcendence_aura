@@ -20,7 +20,7 @@ import {
 import { AppConfiguration } from '../../config/configuration';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, UseInterceptors } from '@nestjs/common';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { TwoFactorService } from './two-factor.service';
@@ -30,6 +30,7 @@ import { VerifyMfaInput } from './dto/verify-mfa.input';
 import { VerifyMfaResponse } from './dto/verify-mfa-response.model';
 import { Throttle } from '@nestjs/throttler';
 import { AuthThrottlerGuard } from './auth-throttler.guard';
+import { ResetLoginRateLimitInterceptor } from './reset-login-rate-limit.interceptor';
 import { AUTH_RATE_LIMITS } from './auth-rate-limit';
 
 @Resolver(() => UserType)
@@ -61,6 +62,7 @@ export class AuthResolver {
 
   @UseGuards(AuthThrottlerGuard)
   @Throttle(AUTH_RATE_LIMITS.login)
+  @UseInterceptors(ResetLoginRateLimitInterceptor)
   @Mutation(() => LoginResponse)
   async login(
     @Args('input') input: LoginInput,

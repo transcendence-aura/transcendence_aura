@@ -1,22 +1,27 @@
-import { createHash } from 'node:crypto';
-import { ExecutionContext, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
-import { ThrottlerGuard, throttlerMessage } from '@nestjs/throttler';
+import { ExecutionContext, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { InjectThrottlerOptions, ThrottlerGuard, throttlerMessage } from '@nestjs/throttler';
+import type { ThrottlerModuleOptions } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import { authRateLimitKey, getAuthRequestResponse } from './auth-rate-limit';
+import { AuthThrottlerStorage } from './auth-throttler.storage';
 
 // Limits and trackers are set per route with @Throttle(AUTH_RATE_LIMITS.x).
 @Injectable()
 export class AuthThrottlerGuard extends ThrottlerGuard {
+  // The parent class declares its storage with @InjectThrottlerStorage(), and
+  // that declaration is inherited: without an explicit @Inject here, Nest
+  // would still hand this guard the global storage instead of ours.
+  constructor(
+    @InjectThrottlerOptions() options: ThrottlerModuleOptions,
+    @Inject(AuthThrottlerStorage) storage: AuthThrottlerStorage,
+    reflector: Reflector,
+  ) {
+    super(options, storage, reflector);
+  }
+
   protected getRequestResponse(context: ExecutionContext): { req: Request; res: Response } {
-    if (context.getType<GqlContextType>() === 'graphql') {
-      const { req, res } = GqlExecutionContext.create(context).getContext<{
-        req: Request;
-        res: Response;
-      }>();
-      return { req, res };
-    }
-    const http = context.switchToHttp();
-    return { req: http.getRequest<Request>(), res: http.getResponse<Response>() };
+    return getAuthRequestResponse(context);
   }
 
   // ThrottlerException's response is a bare string, which the Apollo driver
@@ -34,11 +39,7 @@ export class AuthThrottlerGuard extends ThrottlerGuard {
     );
   }
 
-  // The default key includes the class name, which would give the GraphQL and
-  // REST login routes separate counters. Trackers hold emails and pending MFA
-  // tokens, so they are hashed rather than kept as-is in the storage.
   protected generateKey(context: ExecutionContext, tracker: string, name: string): string {
-    const hashedTracker = createHash('sha256').update(tracker).digest('hex');
-    return `auth-rate-limit-${context.getHandler().name}-${name}-${hashedTracker}`;
+    return authRateLimitKey(context, tracker, name);
   }
 }

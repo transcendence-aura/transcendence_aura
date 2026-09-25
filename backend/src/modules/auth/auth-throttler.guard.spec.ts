@@ -1,5 +1,8 @@
 import { ExecutionContext, HttpException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthThrottlerGuard } from './auth-throttler.guard';
+import { AuthThrottlerStorage } from './auth-throttler.storage';
 import { AUTH_RATE_LIMITS } from './auth-rate-limit';
 
 function httpContext(handlerName: string, req: unknown = {}, res: unknown = {}): ExecutionContext {
@@ -93,5 +96,19 @@ describe('AUTH_RATE_LIMITS trackers', () => {
   it('tracks MFA verification by pending token', () => {
     const context = graphqlContext('verifyMfa', { mfaPendingToken: 'pending-1', code: '123456' });
     expect(verifyMfa.default.getTracker({ ip: '1.2.3.4' }, context)).toBe('pending-1');
+  });
+});
+
+describe('AuthThrottlerGuard dependency injection', () => {
+  it('counts in AuthThrottlerStorage, not in the global throttler storage', async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [ThrottlerModule.forRoot([{ limit: 100, ttl: 60_000 }])],
+      providers: [AuthThrottlerStorage, AuthThrottlerGuard],
+    }).compile();
+
+    const guard = moduleRef.get(AuthThrottlerGuard) as unknown as { storageService: unknown };
+
+    expect(guard.storageService).toBe(moduleRef.get(AuthThrottlerStorage));
+    await moduleRef.close();
   });
 });
