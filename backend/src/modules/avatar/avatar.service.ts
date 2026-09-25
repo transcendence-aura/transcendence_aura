@@ -1,7 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserStatus } from '@prisma/client';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
 import { MediaStorageService } from '../../common/media/media-storage.service';
 import { assertValidJpegSquareImage } from '../../common/media/image-validation.util';
@@ -11,17 +9,6 @@ export interface AvatarFile {
   buffer: Buffer;
   mimeType: string;
 }
-
-// Shipped as a build asset (see nest-cli.json's "assets" entry) rather than
-// through MediaStorageService - it's a static project file, not user content.
-const DEFAULT_AVATAR_PATH = resolve(
-  process.cwd(),
-  'dist',
-  'modules',
-  'avatar',
-  'assets',
-  'default-avatar.jpeg',
-);
 
 @Injectable()
 export class AvatarService {
@@ -83,7 +70,7 @@ export class AvatarService {
       throw new NotFoundException('USER_NOT_FOUND');
     }
     if (!user.avatar) {
-      return this.getDefaultAvatar();
+      throw new NotFoundException('AVATAR_NOT_FOUND');
     }
 
     try {
@@ -91,15 +78,6 @@ export class AvatarService {
       return { buffer, mimeType: user.avatar.mimeType ?? ALLOWED_IMAGE_MIME_TYPE };
     } catch {
       // File missing/unreadable on disk despite a DB row referencing it.
-      throw new NotFoundException('AVATAR_NOT_FOUND');
-    }
-  }
-
-  private async getDefaultAvatar(): Promise<AvatarFile> {
-    try {
-      const buffer = await readFile(DEFAULT_AVATAR_PATH);
-      return { buffer, mimeType: ALLOWED_IMAGE_MIME_TYPE };
-    } catch {
       throw new NotFoundException('AVATAR_NOT_FOUND');
     }
   }

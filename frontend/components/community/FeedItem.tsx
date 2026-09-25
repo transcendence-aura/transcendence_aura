@@ -22,7 +22,7 @@ export function FeedItem({ item }: FeedItemProps) {
   return (
     <div className="border-border-default flex gap-3 border-b px-4 py-4 last:border-b-0">
       <Link href={`/profile/${item.actor.handle}`} className="shrink-0">
-        <Avatar name={item.actor.name} size="md" />
+        <Avatar name={item.actor.name} src={`/api/v1/users/${item.actor.id}/avatar`} size="md" />
       </Link>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">

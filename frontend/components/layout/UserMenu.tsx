@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { LogOut, Settings, Shield, User } from 'lucide-react';
 import { Avatar } from '@/components/ui/display/avatar';
+import { useAvatarVersion } from '@/lib/avatar/avatar-version';
 import { useToast } from '@/components/ui/feedback/toast';
 import { useIsAdmin } from '@/lib/auth/use-is-admin';
 import { useIsAuthenticated } from '@/lib/auth/use-is-authenticated';
@@ -58,6 +59,7 @@ export function UserMenu() {
     skip: !isAuthenticated,
     fetchPolicy: 'cache-and-network',
   });
+  const avatarVersion = useAvatarVersion();
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +101,15 @@ export function UserMenu() {
         aria-label={t('accountMenu')}
         className="focus-visible:outline-border-focus flex cursor-pointer items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
       >
-        <Avatar name={data?.me.name.charAt(0) ?? ''} size="sm" />
+        <Avatar
+          name={data?.me.name.charAt(0) ?? ''}
+          src={
+            data?.me.id
+              ? `/api/v1/users/${data.me.id}/avatar${avatarVersion ? `?v=${avatarVersion}` : ''}`
+              : undefined
+          }
+          size="sm"
+        />
       </button>
 
       {open && (

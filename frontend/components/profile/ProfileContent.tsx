@@ -88,7 +88,11 @@ export function ProfileContent({ handle }: ProfileContentProps) {
                   href={`/profile/${followed.handle}`}
                   className="hover:bg-page flex items-center gap-3 rounded p-2 transition-colors"
                 >
-                  <Avatar name={followed.name} size="sm" />
+                  <Avatar
+                    name={followed.name}
+                    src={`/api/v1/users/${followed.id}/avatar`}
+                    size="sm"
+                  />
                   <div className="flex flex-col">
                     <span className="text-body-sm text-text-primary">{followed.name}</span>
                     <span className="text-[11px] text-text-muted">@{followed.handle}</span>

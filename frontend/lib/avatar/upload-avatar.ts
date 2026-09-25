@@ -1,5 +1,6 @@
 import { getAccessToken } from '@/lib/auth/token-store';
 import { refreshAccessToken } from '@/lib/auth/refresh-access-token';
+import { setAvatarVersion } from '@/lib/avatar/avatar-version';
 
 export interface AvatarUploadResult {
   id: string;
@@ -71,13 +72,18 @@ export async function uploadAvatar(
   image: Blob,
   onProgress?: (percent: number) => void,
 ): Promise<AvatarUploadResult> {
+  let result: AvatarUploadResult;
   try {
-    return await send(image, getAccessToken(), onProgress);
+    result = await send(image, getAccessToken(), onProgress);
   } catch (error) {
     if (error instanceof AvatarUploadError && error.status === 401) {
       const refreshedToken = await refreshAccessToken();
-      if (refreshedToken) return send(image, refreshedToken, onProgress);
+      if (!refreshedToken) throw error;
+      result = await send(image, refreshedToken, onProgress);
+    } else {
+      throw error;
     }
-    throw error;
   }
+  setAvatarVersion(result.updatedAt);
+  return result;
 }
