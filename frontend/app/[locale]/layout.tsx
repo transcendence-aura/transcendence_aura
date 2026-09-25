@@ -10,6 +10,10 @@ import '../globals.css';
 export const metadata: Metadata = {
   title: 'AURA',
   description: 'Premium beauty, redefined.',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export function generateStaticParams() {
