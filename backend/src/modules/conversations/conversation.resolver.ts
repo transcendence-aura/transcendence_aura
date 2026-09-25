@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
-import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { ConversationService } from './conversation.service';
 import { ConversationParticipantType, ConversationType, MessageType } from './conversation.model';
@@ -11,7 +11,7 @@ import {
 } from './conversation.input';
 
 @Resolver(() => ConversationType)
-@UseGuards(GqlAuthGuard)
+@UseGuards(RolesGuard)
 export class ConversationResolver {
   constructor(private readonly conversationService: ConversationService) {}
 
