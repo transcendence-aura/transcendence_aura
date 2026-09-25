@@ -38,11 +38,8 @@ const trackLogin: ThrottlerGetTrackerFunction = (req, context) => {
 const trackMfa: ThrottlerGetTrackerFunction = (req, context) =>
   readInputField(req, context, 'mfaPendingToken');
 
-const trackRegister: ThrottlerGetTrackerFunction = (req) => clientIp(req);
-
 // Passed to @Throttle on each route guarded by AuthThrottlerGuard.
 export const AUTH_RATE_LIMITS = {
   login: { default: { limit: 5, ttl: 15 * MINUTE_MS, getTracker: trackLogin } },
   verifyMfa: { default: { limit: 5, ttl: 5 * MINUTE_MS, getTracker: trackMfa } },
-  register: { default: { limit: 3, ttl: 60 * MINUTE_MS, getTracker: trackRegister } },
 };

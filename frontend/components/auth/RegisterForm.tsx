@@ -6,7 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { useMutation } from '@apollo/client/react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/form/button';
-import { getValidationErrorMessage, isRateLimitedError } from '@/lib/graphql-error';
+import { getValidationErrorMessage } from '@/lib/graphql-error';
 import { LOGIN_MUTATION } from '@/lib/auth/login.mutation';
 import { REGISTER_MUTATION } from '@/lib/auth/register.mutation';
 import type {
@@ -26,10 +26,8 @@ const MAX_PASSWORD_LENGTH = 128;
 
 function getRegisterErrorMessage(
   error: unknown,
-  messages: { emailTaken: string; tooManyAttempts: string; generic: string },
+  messages: { emailTaken: string; generic: string },
 ): string {
-  if (isRateLimitedError(error)) return messages.tooManyAttempts;
-
   const message = getValidationErrorMessage(error);
 
   if (message === 'EMAIL_ALREADY_EXISTS') return messages.emailTaken;
@@ -112,7 +110,6 @@ export function RegisterForm() {
       setError(
         getRegisterErrorMessage(registerError, {
           emailTaken: t('errors.emailTaken'),
-          tooManyAttempts: t('errors.tooManyAttempts'),
           generic: t('errors.generic'),
         }),
       );

@@ -58,7 +58,7 @@ describe('AuthThrottlerGuard', () => {
 
   it('keeps separate counters per handler and per tracker', () => {
     const key = guard.generateKey(httpContext('login'), 'ip:mail', 'default');
-    expect(guard.generateKey(httpContext('register'), 'ip:mail', 'default')).not.toBe(key);
+    expect(guard.generateKey(httpContext('verifyMfa'), 'ip:mail', 'default')).not.toBe(key);
     expect(guard.generateKey(httpContext('login'), 'ip:other', 'default')).not.toBe(key);
   });
 
@@ -69,7 +69,7 @@ describe('AuthThrottlerGuard', () => {
 });
 
 describe('AUTH_RATE_LIMITS trackers', () => {
-  const { login, verifyMfa, register } = AUTH_RATE_LIMITS;
+  const { login, verifyMfa } = AUTH_RATE_LIMITS;
 
   it('tracks login by IP and normalized email, over GraphQL and REST', () => {
     const req = { ip: '1.2.3.4', body: { email: ' Jane@Aura.dev ' } };
@@ -93,10 +93,5 @@ describe('AUTH_RATE_LIMITS trackers', () => {
   it('tracks MFA verification by pending token', () => {
     const context = graphqlContext('verifyMfa', { mfaPendingToken: 'pending-1', code: '123456' });
     expect(verifyMfa.default.getTracker({ ip: '1.2.3.4' }, context)).toBe('pending-1');
-  });
-
-  it('tracks registration by IP only', () => {
-    const req = { ip: '1.2.3.4', body: { email: 'jane@aura.dev' } };
-    expect(register.default.getTracker(req, httpContext('register', req))).toBe('1.2.3.4');
   });
 });

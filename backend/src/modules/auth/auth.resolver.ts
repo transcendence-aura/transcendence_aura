@@ -54,8 +54,6 @@ export class AuthResolver {
     return this.authService.findById(context.req.userId!);
   }
 
-  @UseGuards(AuthThrottlerGuard)
-  @Throttle(AUTH_RATE_LIMITS.register)
   @Mutation(() => UserType)
   register(@Args('input') dto: RegisterDto): Promise<UserType> {
     return this.authService.register(dto);

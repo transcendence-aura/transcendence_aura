@@ -53,8 +53,6 @@ export class AuthController {
     res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieClearOptions());
   }
 
-  @UseGuards(AuthThrottlerGuard)
-  @Throttle(AUTH_RATE_LIMITS.register)
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);

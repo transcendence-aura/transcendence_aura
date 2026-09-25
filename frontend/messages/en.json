@@ -328,8 +328,7 @@
       "passwordTooLong": "Password must not exceed {max} characters.",
       "termsRequired": "You must accept the Terms of Service and Privacy Policy.",
       "emailTaken": "An account with this email already exists.",
-      "generic": "Unable to create your account. Please try again.",
-      "tooManyAttempts": "Too many sign-up attempts. Please try again later."
+      "generic": "Unable to create your account. Please try again."
     }
   },
   "TwoFactorEnrollment": {

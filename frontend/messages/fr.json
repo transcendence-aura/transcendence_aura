@@ -328,8 +328,7 @@
       "passwordTooLong": "Le mot de passe ne doit pas dépasser {max} caractères.",
       "termsRequired": "Vous devez accepter les conditions d’utilisation et la politique de confidentialité.",
       "emailTaken": "Un compte existe déjà avec cette adresse e-mail.",
-      "generic": "Impossible de créer votre compte. Veuillez réessayer.",
-      "tooManyAttempts": "Trop de tentatives d’inscription. Veuillez réessayer plus tard."
+      "generic": "Impossible de créer votre compte. Veuillez réessayer."
     }
   },
   "TwoFactorEnrollment": {
