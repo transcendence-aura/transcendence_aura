@@ -28,6 +28,9 @@ import { ConfirmTwoFactorInput } from './dto/confirm-two-factor.input';
 import { TwoFactorSetupResponse, TwoFactorConfirmResponse } from './dto/two-factor-response.model';
 import { VerifyMfaInput } from './dto/verify-mfa.input';
 import { VerifyMfaResponse } from './dto/verify-mfa-response.model';
+import { Throttle } from '@nestjs/throttler';
+import { AuthThrottlerGuard } from './auth-throttler.guard';
+import { AUTH_RATE_LIMITS } from './auth-rate-limit';
 
 @Resolver(() => UserType)
 export class AuthResolver {
@@ -51,11 +54,15 @@ export class AuthResolver {
     return this.authService.findById(context.req.userId!);
   }
 
+  @UseGuards(AuthThrottlerGuard)
+  @Throttle(AUTH_RATE_LIMITS.register)
   @Mutation(() => UserType)
   register(@Args('input') dto: RegisterDto): Promise<UserType> {
     return this.authService.register(dto);
   }
 
+  @UseGuards(AuthThrottlerGuard)
+  @Throttle(AUTH_RATE_LIMITS.login)
   @Mutation(() => LoginResponse)
   async login(
     @Args('input') input: LoginInput,
@@ -197,6 +204,8 @@ export class AuthResolver {
     return true;
   }
 
+  @UseGuards(AuthThrottlerGuard)
+  @Throttle(AUTH_RATE_LIMITS.verifyMfa)
   @Mutation(() => VerifyMfaResponse)
   async verifyMfa(
     @Args('input')

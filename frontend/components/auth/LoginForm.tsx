@@ -17,6 +17,7 @@ import {
 import { getSafeReturnTo } from '@/lib/auth/return-to';
 import { setAccessToken } from '@/lib/auth/token-store';
 import { VERIFY_MFA_MUTATION } from '@/lib/auth/two-factor.mutations';
+import { isRateLimitedError } from '@/lib/graphql-error';
 
 type LoginStep = 'credentials' | 'mfa';
 
@@ -94,8 +95,12 @@ export function LoginForm() {
 
       setPassword('');
       window.location.replace(getPathname({ href: returnTo, locale }));
-    } catch {
-      setError(t('errors.invalidCredentials'));
+    } catch (loginError) {
+      setError(
+        isRateLimitedError(loginError)
+          ? t('errors.tooManyAttempts')
+          : t('errors.invalidCredentials'),
+      );
     }
   };
 
@@ -134,8 +139,8 @@ export function LoginForm() {
       setMfaCode('');
       setMfaPendingToken(null);
       window.location.replace(getPathname({ href: returnTo, locale }));
-    } catch {
-      setError(t('errors.mfaFailed'));
+    } catch (mfaError) {
+      setError(isRateLimitedError(mfaError) ? t('errors.tooManyAttempts') : t('errors.mfaFailed'));
     }
   };
 

@@ -294,7 +294,8 @@
       "invalidCredentials": "Connexion impossible. Vérifiez vos identifiants et réessayez.",
       "mfaCodeFormat": "Veuillez saisir le code à 6 chiffres.",
       "mfaExpired": "Votre session d’authentification a expiré. Veuillez vous reconnecter.",
-      "mfaFailed": "Impossible de vérifier le code d’authentification."
+      "mfaFailed": "Impossible de vérifier le code d’authentification.",
+      "tooManyAttempts": "Trop de tentatives de connexion. Veuillez patienter quelques minutes avant de réessayer."
     }
   },
   "RegisterForm": {
@@ -327,7 +328,8 @@
       "passwordTooLong": "Le mot de passe ne doit pas dépasser {max} caractères.",
       "termsRequired": "Vous devez accepter les conditions d’utilisation et la politique de confidentialité.",
       "emailTaken": "Un compte existe déjà avec cette adresse e-mail.",
-      "generic": "Impossible de créer votre compte. Veuillez réessayer."
+      "generic": "Impossible de créer votre compte. Veuillez réessayer.",
+      "tooManyAttempts": "Trop de tentatives d’inscription. Veuillez réessayer plus tard."
     }
   },
   "TwoFactorEnrollment": {

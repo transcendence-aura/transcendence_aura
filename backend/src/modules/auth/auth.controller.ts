@@ -7,7 +7,9 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -26,6 +28,8 @@ import {
   getAccessCookieOptions,
   getAccessCookieClearOptions,
 } from './auth.constants';
+import { AuthThrottlerGuard } from './auth-throttler.guard';
+import { AUTH_RATE_LIMITS } from './auth-rate-limit';
 
 @Controller('auth')
 export class AuthController {
@@ -49,11 +53,15 @@ export class AuthController {
     res.clearCookie(REFRESH_COOKIE_NAME, getRefreshCookieClearOptions());
   }
 
+  @UseGuards(AuthThrottlerGuard)
+  @Throttle(AUTH_RATE_LIMITS.register)
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
+  @UseGuards(AuthThrottlerGuard)
+  @Throttle(AUTH_RATE_LIMITS.login)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {

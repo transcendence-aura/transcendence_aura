@@ -32,6 +32,10 @@ async function bootstrap(): Promise<void> {
       bufferLogs: true,
     });
 
+    // nginx is the only hop in front of the backend: trust its
+    // X-Forwarded-For so req.ip is the client's address, not nginx's.
+    app.set('trust proxy', 1);
+
     const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
     app.enableCors({

@@ -294,7 +294,8 @@
       "invalidCredentials": "Unable to sign in. Please check your credentials and try again.",
       "mfaCodeFormat": "Please enter the 6-digit authentication code.",
       "mfaExpired": "Your authentication session has expired. Please sign in again.",
-      "mfaFailed": "Unable to verify the authentication code."
+      "mfaFailed": "Unable to verify the authentication code.",
+      "tooManyAttempts": "Too many sign-in attempts. Please wait a few minutes and try again."
     }
   },
   "RegisterForm": {
@@ -327,7 +328,8 @@
       "passwordTooLong": "Password must not exceed {max} characters.",
       "termsRequired": "You must accept the Terms of Service and Privacy Policy.",
       "emailTaken": "An account with this email already exists.",
-      "generic": "Unable to create your account. Please try again."
+      "generic": "Unable to create your account. Please try again.",
+      "tooManyAttempts": "Too many sign-up attempts. Please try again later."
     }
   },
   "TwoFactorEnrollment": {
