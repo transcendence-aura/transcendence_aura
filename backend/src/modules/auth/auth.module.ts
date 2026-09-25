@@ -10,6 +10,7 @@ import { AnalyticsModule } from '../analytics/analytics.module';
 import { VaultModule } from '../../infrastructure/vault/vault.module';
 import { TotpService } from './totp.service';
 import { TwoFactorService } from './two-factor.service';
+import { AuthThrottlerStorage } from './auth-throttler.storage';
 
 @Module({
   imports: [PrismaModule, JwtModule.register({}), AnalyticsModule, VaultModule],
@@ -21,6 +22,7 @@ import { TwoFactorService } from './two-factor.service';
     RefreshTokenService,
     TotpService,
     TwoFactorService,
+    AuthThrottlerStorage,
   ],
   exports: [AuthService, TokenService, RefreshTokenService],
 })

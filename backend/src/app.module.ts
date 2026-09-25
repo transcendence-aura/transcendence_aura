@@ -1,10 +1,12 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ApiModule } from './api/api.module';
+import { API_RATE_LIMIT } from './api/api-rate-limit';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './database/prisma.module';
 import { ProductsModule } from './modules/products/product.module';
@@ -55,6 +57,9 @@ export class AppModule {
           // read the Authorization header (RolesGuard relies on this).
           context: ({ req, res }: { req: unknown; res: unknown }) => ({ req, res }),
         }),
+        // Global: shared by the public API and the auth routes. Its default
+        // limit is the public API's; auth routes override it with @Throttle.
+        ThrottlerModule.forRoot([{ limit: API_RATE_LIMIT.limit, ttl: API_RATE_LIMIT.ttlMs }]),
         ApiModule,
         HealthModule,
         PrismaModule,

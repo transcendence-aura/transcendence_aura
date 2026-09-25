@@ -294,7 +294,8 @@
       "invalidCredentials": "Connexion impossible. Vérifiez vos identifiants et réessayez.",
       "mfaCodeFormat": "Veuillez saisir le code à 6 chiffres.",
       "mfaExpired": "Votre session d’authentification a expiré. Veuillez vous reconnecter.",
-      "mfaFailed": "Impossible de vérifier le code d’authentification."
+      "mfaFailed": "Impossible de vérifier le code d’authentification.",
+      "tooManyAttempts": "Trop de tentatives de connexion. Veuillez patienter quelques minutes avant de réessayer."
     }
   },
   "RegisterForm": {

@@ -17,3 +17,15 @@ export function getValidationErrorMessage(error: unknown): string | undefined {
 
   return undefined;
 }
+
+// The backend throttles sign-in, MFA and sign-up attempts; a blocked request
+// comes back with a 429 status in extensions.originalError.
+export function isRateLimitedError(error: unknown): boolean {
+  if (!CombinedGraphQLErrors.is(error)) return false;
+
+  return error.errors.some((graphQLError) => {
+    const originalError = graphQLError.extensions?.originalError as
+      { statusCode?: number } | undefined;
+    return originalError?.statusCode === 429;
+  });
+}
