@@ -7,8 +7,6 @@ import { gql, uploadFile } from './graphql';
 interface DemoVariant {
   label: string;
   price: number;
-  isOnSale?: boolean;
-  discountPercentage?: number;
 }
 
 interface DemoProduct {
@@ -120,7 +118,7 @@ const products: readonly DemoProduct[] = [
   {
     name: 'Deep Hydration Mask',
     description:
-      'Intensive hydrating mask for weekly treatment. Restores moisture balance and plumps the skin. Suits dry and sensitive skin.',
+      'Intensive hydrating mask for weekly treatment. Restores moisture balance and plumps the skin. Suits dry and sensitive skin. Also perfect if you are a little tense or worn out after a whole afternoon of make down, make up, make seed.',
     badges: [],
     categoryIds: [referenceIds.categories.faceCare],
     productFamilyIds: [referenceIds.productFamilies.mask],
@@ -283,8 +281,6 @@ async function createProduct(product: DemoProduct, adminToken: string): Promise<
         input: {
           label: variant.label,
           price: variant.price,
-          isOnSale: variant.isOnSale ?? false,
-          discountPercentage: variant.discountPercentage ?? 0,
         },
       },
       adminToken,
