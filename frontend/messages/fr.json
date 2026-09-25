@@ -51,15 +51,14 @@
     "shopSerums": "Sérums & huiles",
     "shopFaceCare": "Soin du visage",
     "shopRitualSets": "Coffrets rituels",
-    "support": "Aide",
-    "supportFaq": "FAQ",
-    "supportShipping": "Livraison & retours",
-    "supportContact": "Contact",
     "about": "À propos",
     "aboutStory": "Notre histoire",
-    "aboutSustainability": "Durabilité",
-    "aboutJournal": "Journal",
-    "copyright": "© 2026 Aura. Tous droits réservés."
+    "copyright": "© 2026 Aura. Tous droits réservés.",
+    "legal": "Mentions légales",
+    "termsOfService": "Conditions d'utilisation",
+    "termsOfSale": "Conditions de vente",
+    "privacyPolicy": "Politique de confidentialité",
+    "community": "Communauté"
   },
   "Hero": {
     "titleLine1": "Votre peau,",

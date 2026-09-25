@@ -51,15 +51,14 @@
     "shopSerums": "Serums & Oils",
     "shopFaceCare": "Face Care",
     "shopRitualSets": "Ritual Sets",
-    "support": "Support",
-    "supportFaq": "FAQ",
-    "supportShipping": "Shipping & Returns",
-    "supportContact": "Contact",
     "about": "About",
     "aboutStory": "Our Story",
-    "aboutSustainability": "Sustainability",
-    "aboutJournal": "Journal",
-    "copyright": "© 2026 Aura. All rights reserved."
+    "copyright": "© 2026 Aura. All rights reserved.",
+    "legal": "Legal",
+    "termsOfService": "Terms of Service",
+    "termsOfSale": "Terms of Sale",
+    "privacyPolicy": "Privacy Policy",
+    "community": "Community"
   },
   "Hero": {
     "titleLine1": "Your skin,",
