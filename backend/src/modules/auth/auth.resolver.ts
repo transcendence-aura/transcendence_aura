@@ -24,8 +24,12 @@ import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 import { TwoFactorService } from './two-factor.service';
-import { ConfirmTwoFactorInput } from './dto/confirm-two-factor.input';
-import { TwoFactorSetupResponse, TwoFactorConfirmResponse } from './dto/two-factor-response.model';
+import { ConfirmTwoFactorInput, DisableTwoFactorInput } from './dto/confirm-two-factor.input';
+import {
+  TwoFactorSetupResponse,
+  TwoFactorConfirmResponse,
+  TwoFactorStatusResponse,
+} from './dto/two-factor-response.model';
 import { VerifyMfaInput } from './dto/verify-mfa.input';
 import { VerifyMfaResponse } from './dto/verify-mfa-response.model';
 
@@ -230,5 +234,25 @@ export class AuthResolver {
       accessToken: result.accessToken,
       expiresIn: result.expiresIn,
     };
+  }
+
+  @UseGuards(RolesGuard)
+  @Query(() => TwoFactorStatusResponse)
+  async twoFactorStatus(
+    @Context()
+    context: {
+      req: AuthenticatedRequest;
+    },
+  ): Promise<TwoFactorStatusResponse> {
+    return this.twoFactorService.getStatus(context.req.userId!);
+  }
+
+  @UseGuards(RolesGuard)
+  @Mutation(() => TwoFactorStatusResponse)
+  async disableTwoFactor(
+    @Args('input') input: DisableTwoFactorInput,
+    @Context() context: { req: AuthenticatedRequest },
+  ): Promise<TwoFactorStatusResponse> {
+    return this.twoFactorService.disableTwoFactor(context.req.userId!, input.code);
   }
 }

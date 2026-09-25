@@ -40,7 +40,7 @@ export class VaultRuntimeClient {
 
   async readKvV2Secret(path: string): Promise<Record<string, unknown> | null> {
     try {
-      return this.withToken(async (token) => {
+      return await this.withToken(async (token) => {
         const response = await this.requestJson<VaultKvV2Response>({
           operation: 'Vault KV secret read',
           url:
@@ -59,6 +59,20 @@ export class VaultRuntimeClient {
       }
       throw error;
     }
+  }
+
+  async deleteKvV2Secret(path: string): Promise<void> {
+    await this.withToken(async (token) => {
+      await this.requestJson<void>({
+        operation: 'Vault KV secret delete',
+        url:
+          `${this.config.address}/v1/` +
+          `${encodePath(this.config.kvMount)}/data/` +
+          encodePath(path),
+        method: 'DELETE',
+        headers: this.authHeaders(token),
+      });
+    });
   }
 
   private async withToken<T>(operation: (token: string) => Promise<T>): Promise<T> {
