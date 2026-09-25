@@ -5,7 +5,6 @@ import { AuthController } from './auth.controller';
 import { PrismaModule } from '../../database/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { TokenService } from './token.service';
-import { GqlAuthGuard } from './gql-auth.guard';
 import { RefreshTokenService } from './refresh/refresh-token.service';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { VaultModule } from '../../infrastructure/vault/vault.module';
@@ -19,11 +18,10 @@ import { TwoFactorService } from './two-factor.service';
     AuthResolver,
     AuthService,
     TokenService,
-    GqlAuthGuard,
     RefreshTokenService,
     TotpService,
     TwoFactorService,
   ],
-  exports: [AuthService, TokenService, GqlAuthGuard, RefreshTokenService],
+  exports: [AuthService, TokenService, RefreshTokenService],
 })
 export class AuthModule {}

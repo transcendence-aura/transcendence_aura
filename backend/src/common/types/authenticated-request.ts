@@ -7,8 +7,7 @@ export interface AuthenticatedUser {
 }
 
 export interface AuthenticatedRequest extends Request {
-  // Set by GqlAuthGuard (id only) or by RolesGuard (id + role). RolesGuard
-  // trusts a pre-existing userId instead of re-verifying the token.
+  // Set by RolesGuard (id + role) once it authenticates the request.
   userId?: string;
   user?: AuthenticatedUser;
   apiKey?: { id: string; ownerId: string };
