@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 export const HeroSection = () => {
   const t = useTranslations('Hero');
@@ -21,20 +22,20 @@ export const HeroSection = () => {
             </h1>
             <p className="text-body-base text-text-secondary max-w-md">{t('tagline')}</p>
             <div className="flex items-center gap-8 pt-4">
-              <a
-                href="#"
+              <Link
+                href="/catalogue"
                 className="text-ui-button text-text-primary uppercase tracking-wide hover:text-text-primary/70 transition-opacity"
               >
                 {t('discover')}
-              </a>
+              </Link>
               <span className="text-text-muted">|</span>
 
-              <a
-                href="#"
+              <Link
+                href="/about"
                 className="text-ui-button text-text-muted uppercase tracking-wide hover:text-text-primary transition-colors"
               >
                 {t('story')}
-              </a>
+              </Link>
             </div>
           </div>
 
