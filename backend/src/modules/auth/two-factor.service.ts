@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as QRCode from 'qrcode';
 
 import { PrismaService } from '../../database/prisma.service';
@@ -34,9 +34,13 @@ export class TwoFactorService {
       throw new BadRequestException('Two-factor authentication is already enabled.');
     }
 
-    const secret = this.totpService.generateSecret();
+    const existingSecret = await this.vaultService.readTotpSecret(user.id);
 
-    await this.vaultService.writeTotpSecret(user.id, secret);
+    const secret = existingSecret ?? this.totpService.generateSecret();
+
+    if (!existingSecret) {
+      await this.vaultService.writeTotpSecret(user.id, secret);
+    }
 
     const provisioningUri = this.totpService.generateProvisioningUri({
       email: user.email,
@@ -93,5 +97,73 @@ export class TwoFactorService {
     });
 
     return { enabled: true };
+  }
+
+  async getStatus(userId: string): Promise<{ enabled: boolean }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        twoFactorEnabled: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found.');
+    }
+
+    return {
+      enabled: user.twoFactorEnabled,
+    };
+  }
+
+  async disableTwoFactor(
+    userId: string,
+    code: string,
+  ): Promise<{
+    enabled: false;
+  }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        twoFactorEnabled: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found.');
+    }
+
+    if (!user.twoFactorEnabled) {
+      throw new BadRequestException('Two-factor authentication is not enabled.');
+    }
+
+    const secret = await this.vaultService.readTotpSecret(user.id);
+
+    if (!secret) {
+      throw new UnauthorizedException('Unable to verify authentication code.');
+    }
+
+    const valid = await this.totpService.verifyCode(secret, code);
+
+    if (!valid) {
+      throw new UnauthorizedException('Unable to verify authentication code.');
+    }
+
+    await this.vaultService.deleteTotpSecret(user.id);
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        twoFactorEnabled: false,
+        twoFactorEnabledAt: null,
+      },
+    });
+
+    return {
+      enabled: false,
+    };
   }
 }

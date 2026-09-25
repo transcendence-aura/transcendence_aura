@@ -14,3 +14,9 @@ export class TwoFactorConfirmResponse {
   @Field()
   enabled!: boolean;
 }
+
+@ObjectType()
+export class TwoFactorStatusResponse {
+  @Field()
+  enabled!: boolean;
+}

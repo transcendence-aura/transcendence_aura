@@ -330,6 +330,12 @@
       "generic": "Impossible de créer votre compte. Veuillez réessayer."
     }
   },
+  "SecurityPage": {
+    "title": "Sécurité",
+    "subtitle": "Gérez les paramètres de sécurité de votre compte.",
+    "loading": "Chargement des paramètres de sécurité…",
+    "loadError": "Impossible de charger les paramètres de sécurité."
+  },
   "TwoFactorEnrollment": {
     "enabledTitle": "Double authentification activée",
     "enabledSubtitle": "Votre compte est désormais protégé par une application d’authentification.",
@@ -348,11 +354,17 @@
     "confirm": "Confirmer et activer la 2FA",
     "confirming": "Vérification…",
     "confirmNotice": "La double authentification ne sera activée qu’une fois le code de votre application vérifié.",
+    "disable": "Désactiver la double authentification",
+    "disableCodeLabel": "Code d’authentification",
+    "confirmDisable": "Confirmer et désactiver la 2FA",
+    "disabling": "Désactivation…",
+    "cancelDisable": "Annuler",
     "errors": {
       "setupFailed": "Impossible de lancer la configuration de la double authentification.",
       "codeFormat": "Veuillez saisir le code à 6 chiffres.",
       "enableFailed": "Impossible d’activer la double authentification.",
-      "codeInvalid": "Le code d’authentification est invalide ou a expiré."
+      "codeInvalid": "Le code d’authentification est invalide ou a expiré.",
+      "disableFailed": "Impossible de désactiver la double authentification."
     }
   },
   "CatalogueFilters": {

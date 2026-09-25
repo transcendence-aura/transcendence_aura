@@ -19,6 +19,10 @@ export class VaultService {
     return typeof secret === 'string' ? secret : null;
   }
 
+  async deleteTotpSecret(userId: string): Promise<void> {
+    await this.client.deleteKvV2Secret(this.getTotpPath(userId));
+  }
+
   private getTotpPath(userId: string): string {
     return `aura-backend/development/totp/users/${userId}`;
   }

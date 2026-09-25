@@ -330,6 +330,12 @@
       "generic": "Unable to create your account. Please try again."
     }
   },
+  "SecurityPage": {
+    "title": "Security",
+    "subtitle": "Manage the security settings for your account.",
+    "loading": "Loading security settings...",
+    "loadError": "Unable to load security settings."
+  },
   "TwoFactorEnrollment": {
     "enabledTitle": "Two-factor authentication enabled",
     "enabledSubtitle": "Your account is now protected with an authenticator app.",
@@ -348,11 +354,17 @@
     "confirm": "Confirm and enable 2FA",
     "confirming": "Verifying…",
     "confirmNotice": "Two-factor authentication will only be enabled after the code from your authenticator app has been verified.",
+    "disable": "Disable two-factor authentication",
+    "disableCodeLabel": "Authentication code",
+    "confirmDisable": "Confirm and disable 2FA",
+    "disabling": "Disabling...",
+    "cancelDisable": "Cancel",
     "errors": {
       "setupFailed": "Unable to start two-factor authentication setup.",
       "codeFormat": "Please enter the 6-digit authentication code.",
       "enableFailed": "Unable to enable two-factor authentication.",
-      "codeInvalid": "The authentication code is invalid or has expired."
+      "codeInvalid": "The authentication code is invalid or has expired.",
+      "disableFailed": "Unable to disable two-factor authentication."
     }
   },
   "CatalogueFilters": {

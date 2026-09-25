@@ -10,3 +10,10 @@ export class ConfirmTwoFactorInput {
   })
   code!: string;
 }
+
+@InputType()
+export class DisableTwoFactorInput {
+  @Field()
+  @Matches(/^\d{6}$/)
+  code!: string;
+}
