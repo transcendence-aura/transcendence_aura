@@ -14,6 +14,8 @@ export class ConfirmTwoFactorInput {
 @InputType()
 export class DisableTwoFactorInput {
   @Field()
-  @Matches(/^\d{6}$/)
+  @Matches(/^\d{6}$/, {
+    message: 'Authentication code must be exactly 6 digits.',
+  })
   code!: string;
 }
