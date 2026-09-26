@@ -1,11 +1,15 @@
 services:
   nginx:
-    image: owasp/modsecurity-crs:nginx
+    image: docker.io/owasp/modsecurity-crs:nginx
     ports:
       - '${HTTP_PORT:-80}:8080'
       - '${HTTPS_PORT:-443}:8443'
     environment:
-      MODSEC_RULE_ENGINE: On
+      # Substituted into nginx.conf by the image's envsubst step.
+      NGINX_ENTRYPOINT_LOCAL_RESOLVERS: 'true'
+      HTTPS_PORT: ${HTTPS_PORT:-443}
+
+      MODSEC_RULE_ENGINE: 'On'
       PARANOIA: 2
       BLOCKING_PARANOIA: 2
 
@@ -37,7 +41,7 @@ services:
   backend:
     build: ./backend
     group_add:
-      - '${HOST_GID:-1000}'
+      - '${SECRETS_GID:-1000}'
     volumes:
       - ./backend/prisma:/app/prisma
       - product_uploads:/app/uploads
@@ -89,7 +93,7 @@ services:
       - aura
 
   postgres:
-    image: postgres:17-alpine
+    image: docker.io/library/postgres:17-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -103,7 +107,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:8-alpine
+    image: docker.io/library/redis:8-alpine
     ports:
       - '${REDIS_PORT}:6379'
     networks:
@@ -111,9 +115,7 @@ services:
     restart: unless-stopped
 
   vault:
-    image: hashicorp/vault:1.19
-    cap_add:
-      - IPC_LOCK
+    image: docker.io/hashicorp/vault:1.19
     command:
       - server
       - -config=/vault/aura/config/vault.hcl
@@ -127,7 +129,7 @@ services:
 
       - type: volume
         source: vault_data
-        target: /vault/data
+        target: /vault/file
     healthcheck:
       test:
         - CMD-SHELL

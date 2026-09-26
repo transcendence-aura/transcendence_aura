@@ -16,7 +16,8 @@ HOST_GID="${HOST_GID:-$(id -g)}"
 
 if [[ -n "${COMPOSE_CMD:-}" ]]; then
   read -r -a compose_command <<< "$COMPOSE_CMD"
-elif command -v docker >/dev/null 2>&1; then
+elif command -v docker >/dev/null 2>&1 &&
+  ! docker --version 2>/dev/null | grep -qi podman; then
   compose_command=(docker compose)
 elif command -v podman >/dev/null 2>&1; then
   compose_command=(podman compose)
