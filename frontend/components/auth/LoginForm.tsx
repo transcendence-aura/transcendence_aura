@@ -124,7 +124,7 @@ export function LoginForm() {
       const result = data?.verifyMfa;
 
       if (!result) {
-        setError(t('errors.mfaInvalid'));
+        setError(t('errors.mfaFailed'));
         return;
       }
 
@@ -134,7 +134,7 @@ export function LoginForm() {
       window.location.replace(getPathname({ href: returnTo, locale }));
     } catch (verifyError) {
       setError(
-        isRateLimitedError(verifyError) ? t('errors.tooManyAttempts') : t('errors.mfaInvalid'),
+        isRateLimitedError(verifyError) ? t('errors.tooManyAttempts') : t('errors.mfaFailed'),
       );
     }
   };
@@ -155,7 +155,7 @@ export function LoginForm() {
           className="space-y-4"
         >
           <div>
-            <label className="mb-1.5 block text-ui-nav text-text-muted">{t('mfaCode')}</label>
+            <label className="mb-1.5 block text-ui-nav text-text-muted">{t('mfaCodeLabel')}</label>
             <input
               type="text"
               dir="ltr"
@@ -175,7 +175,7 @@ export function LoginForm() {
             disabled={mfaLoading || mfaCode.length !== 6}
             className="bg-brand-dark hover:bg-brand-dark/90 w-full py-3 text-ui-label font-medium uppercase tracking-wider text-white"
           >
-            {mfaLoading ? t('submitting') : t('mfaSubmit')}
+            {mfaLoading ? t('mfaSubmitting') : t('mfaSubmit')}
           </Button>
 
           <button
@@ -188,7 +188,7 @@ export function LoginForm() {
             }}
             className="w-full text-center text-ui-label text-text-muted hover:text-text-primary transition-colors cursor-pointer"
           >
-            {t('backToLogin')}
+            {t('mfaBack')}
           </button>
         </form>
       </div>

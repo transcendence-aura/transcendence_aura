@@ -175,23 +175,35 @@ nginx-logs:
 
 # [Database Operations]
 
-.PHONY: seed
-seed: check-env check-engine
+POSTGRES_VOLUME := $(shell basename "$(CURDIR)" | tr '[:upper:]' '[:lower:]')_postgres_data
+
+.PHONY: seed-run
+seed-run: check-env check-engine
 	@$(COMPOSE_RUN) ps --status running --services | grep -qx "backend" || { \
 		printf "$(RED)Error: the backend service is not running.$(END)\n"; \
 		printf "$(YELLOW)Start the stack with: make up$(END)\n"; \
 		exit 1; \
 	}
-	@printf "$(YELLOW)Purging database volume for clean seed state...$(END)\n"
-	@$(COMPOSE_RUN) down -v postgres
-	@$(COMPOSE_RUN) up -d postgres
-	@printf "$(YELLOW)Waiting for PostgreSQL readiness...$(END)\n"
-	@until $(COMPOSE_RUN) exec -T postgres pg_isready -U postgres > /dev/null 2>&1; do sleep 1; done
 	@printf "$(YELLOW)Running database migrations...$(END)\n"
 	@$(COMPOSE_RUN) exec -T backend npx prisma migrate deploy
 	@printf "$(YELLOW)Executing database seed script...$(END)\n"
 	@$(COMPOSE_RUN) run --rm -T seed
 	@printf "$(GREEN)Database seeded successfully.$(END)\n"
+
+.PHONY: seed
+seed: check-env check-engine
+	@printf "$(RED)This will erase all database data (users, orders, products).$(END)\n"
+	@printf "$(YELLOW)Stopping backend and PostgreSQL...$(END)\n"
+	@$(COMPOSE_RUN) stop backend postgres
+	@$(COMPOSE_RUN) rm -f postgres
+	@printf "$(YELLOW)Removing volume $(POSTGRES_VOLUME)...$(END)\n"
+	@docker volume rm $(POSTGRES_VOLUME)
+	@$(COMPOSE_RUN) up -d postgres
+	@printf "$(YELLOW)Waiting for PostgreSQL readiness...$(END)\n"
+	@until $(COMPOSE_RUN) exec -T postgres pg_isready -h localhost -U postgres > /dev/null 2>&1; do sleep 1; done
+	@$(COMPOSE_RUN) up -d backend
+	@sleep 3
+	@$(MAKE) --no-print-directory seed-run
 
 # [Cleanup & Infrastructure Reset]
 

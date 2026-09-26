@@ -41,7 +41,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('popstate', onClose);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('popstate', onClose);
     };
   }, [onClose]);
