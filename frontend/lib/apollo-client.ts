@@ -6,7 +6,8 @@ import { refreshAccessToken } from './auth/refresh-access-token';
 import { CombinedGraphQLErrors } from '@apollo/client';
 
 const httpLink = new HttpLink({
-  uri: 'https://localhost/graphql',
+  // Same origin as the page (nginx), whatever host port it is published on.
+  uri: '/graphql',
   credentials: 'include',
 });
 
