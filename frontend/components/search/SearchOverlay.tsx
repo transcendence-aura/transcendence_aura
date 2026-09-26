@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 import { SearchInput } from '@/components/ui/form/search-input';
 import {
@@ -16,13 +17,13 @@ interface SearchOverlayProps {
 }
 
 export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
-  // The panel only mounts once opened, so localStorage is never read during SSR.
   if (!isOpen) return null;
   return <SearchPanel onClose={onClose} />;
 }
 
 function SearchPanel({ onClose }: { onClose: () => void }) {
   const router = useRouter();
+  const t = useTranslations('Search');
   const inputRef = useRef<HTMLInputElement>(null);
   const [term, setTerm] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>(getRecentSearches);
@@ -37,11 +38,10 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', handleKeyDown);
-    // Browser Back/Forward changes the page under the panel: close it instead of leaving it stuck.
+    window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('popstate', onClose);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('popstate', onClose);
     };
   }, [onClose]);
@@ -54,7 +54,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     router.push(`/catalogue?q=${encodeURIComponent(trimmed)}`);
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = (event: React.SubmitEvent) => {
     event.preventDefault();
     search(term);
   };
@@ -65,7 +65,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-label="Search">
+    <div className="fixed inset-0 z-50" role="dialog" aria-label={t('ariaLabel')}>
       <div className="bg-brand-dark/40 absolute inset-0" onClick={onClose} aria-hidden="true" />
 
       <div className="bg-card border-border-default relative border-b px-6 py-6 md:px-8">
@@ -76,15 +76,15 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
                 ref={inputRef}
                 value={term}
                 onChange={(event) => setTerm(event.target.value)}
-                placeholder="Search products..."
-                aria-label="Search products"
+                placeholder={t('placeholder')}
+                aria-label={t('ariaLabel')}
               />
             </div>
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close search"
-              className="text-text-secondary hover:text-text-primary transition-colors"
+              aria-label={t('close')}
+              className="text-text-secondary hover:text-text-primary transition-colors cursor-pointer shrink-0"
             >
               <X className="h-5 w-5" />
             </button>
@@ -94,14 +94,14 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <p className="text-ui-label text-text-muted uppercase tracking-widest">
-                  Recent searches
+                  {t('recentSearches')}
                 </p>
                 <button
                   type="button"
                   onClick={handleClearRecent}
-                  className="text-ui-label text-text-muted hover:text-text-primary underline underline-offset-4 transition-colors"
+                  className="text-ui-label text-text-muted hover:text-text-primary underline underline-offset-4 transition-colors cursor-pointer"
                 >
-                  Clear
+                  {t('clear')}
                 </button>
               </div>
               <ul className="flex flex-wrap gap-2">
@@ -110,7 +110,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
                     <button
                       type="button"
                       onClick={() => search(recent)}
-                      className="border-border-default text-text-secondary hover:text-text-primary text-body-sm rounded-pill border px-4 py-2 transition-colors"
+                      className="border-border-default text-text-secondary hover:text-text-primary text-body-sm rounded-pill border px-4 py-2 transition-colors cursor-pointer"
                     >
                       {recent}
                     </button>

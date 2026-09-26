@@ -51,15 +51,14 @@
     "shopSerums": "Sérums & huiles",
     "shopFaceCare": "Soin du visage",
     "shopRitualSets": "Coffrets rituels",
-    "support": "Aide",
-    "supportFaq": "FAQ",
-    "supportShipping": "Livraison & retours",
-    "supportContact": "Contact",
     "about": "À propos",
     "aboutStory": "Notre histoire",
-    "aboutSustainability": "Durabilité",
-    "aboutJournal": "Journal",
-    "copyright": "© 2026 Aura. Tous droits réservés."
+    "copyright": "© 2026 Aura. Tous droits réservés.",
+    "legal": "Mentions légales",
+    "termsOfService": "Conditions d'utilisation",
+    "termsOfSale": "Conditions de vente",
+    "privacyPolicy": "Politique de confidentialité",
+    "community": "Communauté"
   },
   "Hero": {
     "titleLine1": "Votre peau,",
@@ -81,7 +80,13 @@
     "title": "Rejoignez le cercle Aura",
     "subtitle": "Nos nouveautés, nos conseils beauté et -10 % sur votre première commande.",
     "placeholder": "votre@email.com",
-    "subscribe": "Je m'inscris"
+    "subscribe": "Je m'inscris",
+    "modalTitle": "Bienvenue dans le cercle Aura",
+    "modalCode": "AURA10",
+    "modalCta": "Découvrir la boutique",
+    "closeModal": "Fermer",
+    "modalIntro": "Votre rituel commence aujourd'hui.",
+    "modalPromo": "Profitez de votre cadeau de bienvenue avec 10 % de réduction sur votre première commande :"
   },
   "CollectionCard": {
     "itemCount": "{count, plural, one {# produit} other {# produits}}",
@@ -512,5 +517,38 @@
       "postalCodeRequired": "Le code postal est requis",
       "billingAddressRequired": "L’adresse de facturation est requise"
     }
+  },
+  "Search": {
+    "placeholder": "Rechercher un produit...",
+    "ariaLabel": "Rechercher un produit",
+    "recentSearches": "Recherches récentes",
+    "clear": "Effacer",
+    "close": "Fermer la recherche"
+  },
+  "AboutPage": {
+    "heroTag": "Notre philosophie",
+    "heroTitle": "La beauté de l'essentiel",
+    "heroSubtitle": "Aura est née d'une conviction : la science des plantes et le plaisir du geste peuvent se rencontrer dans chaque soin.",
+    "quote": "« Nous formulons sans compromis. Le vrai luxe, c'est une formule simple et transparente, qui respecte la peau jour après jour. »",
+    "originTitle": "Nos origines",
+    "originP1": "Prendre soin de soi mérite qu'on s'y attarde. Aura imagine des formules épurées, nées du végétal, où chaque ingrédient est choisi pour sa parfaite affinité avec la peau. Rien de superflu, aucune concession aux tendances.",
+    "originP2": "Nos soins sont fabriqués en petites séries, avec l'exigence d'un savoir-faire artisanal. Une façon de préserver la fraîcheur et la puissance des actifs, et d'en garantir la traçabilité, de la récolte à votre salle de bain.",
+    "craftTitle": "L'art de la formulation",
+    "craftP1": "Le luxe ne se mesure pas à l'abondance, mais à la justesse de chaque ingrédient. Nous renonçons aux parfums de synthèse, aux silicones et aux conservateurs agressifs, et leur préférons des huiles vierges pressées à froid, des extraits végétaux purs et des actifs parfaitement tolérés.",
+    "craftP2": "Chaque formule respecte l'équilibre naturel de la peau et la nourrit en profondeur, à travers des textures fondantes et sensorielles.",
+    "pillarsTitle": "Nos engagements",
+    "pillar1Num": "01",
+    "pillar1Title": "Le meilleur du végétal",
+    "pillar1Desc": "Des plantes issues de cultures responsables, récoltées à pleine maturité pour préserver toute leur richesse.",
+    "pillar2Num": "02",
+    "pillar2Title": "Des formules justes",
+    "pillar2Desc": "Chaque ingrédient a sa raison d'être. Rien de plus, rien de moins.",
+    "pillar3Num": "03",
+    "pillar3Title": "Une beauté responsable",
+    "pillar3Desc": "Des flacons en verre ambré, recyclables à l'infini, qui protègent les actifs de la lumière et limitent notre empreinte.",
+    "ctaTag": "Aura Botanical Care",
+    "ctaTitle": "Découvrir la collection",
+    "ctaSubtitle": "Des soins pensés pour sublimer vos rituels quotidiens.",
+    "ctaButton": "Découvrir la boutique"
   }
 }

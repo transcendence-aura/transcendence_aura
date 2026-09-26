@@ -98,6 +98,7 @@ export function CheckoutForm() {
             <input
               type="text"
               name="fullName"
+              dir="auto"
               value={formData.fullName}
               onChange={handleInputChange}
               className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -115,6 +116,7 @@ export function CheckoutForm() {
             <input
               type="email"
               name="email"
+              dir="ltr"
               value={formData.email}
               onChange={handleInputChange}
               className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -136,6 +138,7 @@ export function CheckoutForm() {
             <input
               type="text"
               name="streetAddress"
+              dir="auto"
               value={formData.streetAddress}
               onChange={handleInputChange}
               className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -154,6 +157,7 @@ export function CheckoutForm() {
               <input
                 type="text"
                 name="city"
+                dir="auto"
                 value={formData.city}
                 onChange={handleInputChange}
                 className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -169,6 +173,7 @@ export function CheckoutForm() {
               <input
                 type="text"
                 name="postalCode"
+                dir="ltr"
                 value={formData.postalCode}
                 onChange={handleInputChange}
                 className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -223,6 +228,7 @@ export function CheckoutForm() {
               <input
                 type="text"
                 name="billingStreetAddress"
+                dir="auto"
                 value={formData.billingStreetAddress || ''}
                 onChange={handleInputChange}
                 className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -240,6 +246,7 @@ export function CheckoutForm() {
                 <input
                   type="text"
                   name="billingCity"
+                  dir="auto"
                   value={formData.billingCity || ''}
                   onChange={handleInputChange}
                   className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"
@@ -256,6 +263,7 @@ export function CheckoutForm() {
                 <input
                   type="text"
                   name="billingPostalCode"
+                  dir="ltr"
                   value={formData.billingPostalCode || ''}
                   onChange={handleInputChange}
                   className="w-full border border-border-default rounded px-3 py-2 text-body-base bg-bg-page focus:outline-none focus:ring-2 focus:ring-brand-accent"

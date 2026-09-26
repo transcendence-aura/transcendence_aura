@@ -127,16 +127,16 @@ export function NotificationBell() {
   const visibleNotifications = open ? (displayedNotifications ?? notifications) : notifications;
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative flex h-5 w-5 items-center justify-center">
       <button
         type="button"
         onClick={handleToggle}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t('label')}
-        className="text-text-secondary hover:text-text-primary relative transition-colors"
+        className="text-text-secondary hover:text-text-primary cursor-pointer relative flex h-5 w-5 items-center justify-center transition-colors"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-5 w-5 translate-y-px" />
         <NotificationBadge count={open ? 0 : unreadCount} />
       </button>
 
@@ -158,7 +158,7 @@ export function NotificationBell() {
                 <span className="text-ui-label leading-[1.8] text-text-primary">
                   {notificationText(notification)}
                 </span>
-                <span className="text-ui-caption leading-[1.5] tracking-[0.06em] text-text-muted">
+                <span className="text-ui-caption leading-normal tracking-[0.06em] text-text-muted">
                   {formatRelativeTime(notification.createdAt, t('now'))}
                 </span>
               </Link>

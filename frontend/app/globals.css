@@ -9,74 +9,74 @@
   --font-jost: 'Jost', sans-serif;
   --font-noto-arabic: 'Noto Sans Arabic', sans-serif;
 
-  /* Display Typography */
-  --text-display-hero: 48px;
-  --text-display-hero--line-height: 1.08;
+  /* Display typography */
+  --text-display-hero: 3.75rem;
+  --text-display-hero--line-height: 1.1;
   --text-display-hero--font-weight: 300;
 
-  --text-display-title: 30px;
-  --text-display-title--line-height: 1.2;
+  --text-display-title: 2.25rem;
+  --text-display-title--line-height: 1.25;
   --text-display-title--font-weight: 400;
 
-  --text-display-subtitle: 22px;
-  --text-display-subtitle--line-height: 1.3;
+  --text-display-subtitle: 1.75rem;
+  --text-display-subtitle--line-height: 1.35;
   --text-display-subtitle--font-weight: 400;
 
-  --text-display-product: 18px;
+  --text-display-product: 1.375rem;
   --text-display-product--line-height: 1.4;
   --text-display-product--font-weight: 400;
 
-  --text-display-stat: 24px;
+  --text-display-stat: 2rem;
   --text-display-stat--line-height: 1;
   --text-display-stat--font-weight: 300;
 
-  /* Body Typography */
-  --text-body-lg: 13px;
-  --text-body-lg--line-height: 1.85;
+  /* Body typography */
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.7;
   --text-body-lg--font-weight: 300;
 
-  --text-body-base: 12px;
-  --text-body-base--line-height: 1.8;
+  --text-body-base: 1rem;
+  --text-body-base--line-height: 1.65;
   --text-body-base--font-weight: 300;
 
-  --text-body-sm: 11px;
-  --text-body-sm--line-height: 1.7;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.6;
   --text-body-sm--font-weight: 300;
 
-  /* UI Typography */
-  --text-ui-nav: 10px;
+  /* UI typography */
+  --text-ui-nav: 0.8125rem;
   --text-ui-nav--line-height: 1;
   --text-ui-nav--font-weight: 400;
-  --text-ui-nav--letter-spacing: 0.12em;
+  --text-ui-nav--letter-spacing: 0.08em;
 
-  --text-ui-button: 10px;
+  --text-ui-button: 0.8125rem;
   --text-ui-button--line-height: 1;
   --text-ui-button--font-weight: 500;
   --text-ui-button--letter-spacing: 0.1em;
 
-  --text-ui-label: 9px;
+  --text-ui-label: 0.75rem;
   --text-ui-label--line-height: 1;
   --text-ui-label--font-weight: 500;
-  --text-ui-label--letter-spacing: 0.18em;
+  --text-ui-label--letter-spacing: 0.12em;
 
-  --text-ui-caption: 9px;
+  --text-ui-caption: 0.75rem;
   --text-ui-caption--line-height: 1.5;
   --text-ui-caption--font-weight: 300;
-  --text-ui-caption--letter-spacing: 0.06em;
+  --text-ui-caption--letter-spacing: 0.04em;
 
-  --text-ui-price: 12px;
+  --text-ui-price: 0.9375rem;
   --text-ui-price--line-height: 1;
   --text-ui-price--font-weight: 400;
 
-  --text-ui-badge: 8px;
+  --text-ui-badge: 0.6875rem;
   --text-ui-badge--line-height: 1;
   --text-ui-badge--font-weight: 500;
-  --text-ui-badge--letter-spacing: 0.08em;
+  --text-ui-badge--letter-spacing: 0.06em;
 
-  --text-ui-lang: 9px;
+  --text-ui-lang: 0.75rem;
   --text-ui-lang--line-height: 1;
   --text-ui-lang--font-weight: 500;
-  --text-ui-lang--letter-spacing: 0.1em;
+  --text-ui-lang--letter-spacing: 0.08em;
 
   /* Colors - Backgrounds */
   --color-page: #fafaf8;
@@ -121,7 +121,7 @@
   --spacing-12: 48px;
   --spacing-16: 64px;
 
-  /* Border Radius */
+  /* Border radius */
   --radius-none: 0px;
   --radius-sm: 4px;
   --radius-pill: 20px;

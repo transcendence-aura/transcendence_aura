@@ -51,15 +51,14 @@
     "shopSerums": "Serums & Oils",
     "shopFaceCare": "Face Care",
     "shopRitualSets": "Ritual Sets",
-    "support": "Support",
-    "supportFaq": "FAQ",
-    "supportShipping": "Shipping & Returns",
-    "supportContact": "Contact",
     "about": "About",
     "aboutStory": "Our Story",
-    "aboutSustainability": "Sustainability",
-    "aboutJournal": "Journal",
-    "copyright": "© 2026 Aura. All rights reserved."
+    "copyright": "© 2026 Aura. All rights reserved.",
+    "legal": "Legal",
+    "termsOfService": "Terms of Service",
+    "termsOfSale": "Terms of Sale",
+    "privacyPolicy": "Privacy Policy",
+    "community": "Community"
   },
   "Hero": {
     "titleLine1": "Your skin,",
@@ -81,7 +80,13 @@
     "title": "Join the Aura ritual",
     "subtitle": "New drops, skin guides, and 10% off your first order.",
     "placeholder": "your@email.com",
-    "subscribe": "Subscribe"
+    "subscribe": "Subscribe",
+    "modalTitle": "Welcome to the Aura Circle",
+    "modalCode": "AURA10",
+    "modalCta": "Explore the Shop",
+    "closeModal": "Close",
+    "modalIntro": "Your mindful ritual begins today.",
+    "modalPromo": "Enjoy your welcome gift with 10% off your first order:"
   },
   "CollectionCard": {
     "itemCount": "{count, plural, one {# item} other {# items}}",
@@ -512,5 +517,38 @@
       "postalCodeRequired": "Postal code is required",
       "billingAddressRequired": "Billing address is required"
     }
+  },
+  "Search": {
+    "placeholder": "Search products...",
+    "ariaLabel": "Search products",
+    "recentSearches": "Recent searches",
+    "clear": "Clear",
+    "close": "Close search"
+  },
+  "AboutPage": {
+    "heroTag": "Our Philosophy",
+    "heroTitle": "The Art of Mindful Care",
+    "heroSubtitle": "Aura was born from a desire for clarity: reconciling rigorous botanical science with the quiet elegance of slow rituals.",
+    "quote": "“We formulate without compromise, believing that true luxury lies in simplicity, transparency, and enduring respect for the skin.”",
+    "originTitle": "Origin & Vision",
+    "originP1": "Founded on the belief that everyday care should be a moment of intentional stillness, Aura develops minimalist formulations rooted in botanical intelligence. Every ingredient is chosen for its biological affinity with the skin, free from unnecessary fillers or ephemeral trends.",
+    "originP2": "Our lab operates with artisanal restraint. We produce in intentional, limited batches to safeguard freshness, active potency, and traceability from the source harvest to your shelf.",
+    "craftTitle": "Formulation & Restraint",
+    "craftP1": "Luxury is not excess. It is the precision of what remains once everything superfluous is removed. We leave out artificial fragrances, silicones and harsh preservatives in favour of cold-pressed oils, pure extracts and skin-friendly actives.",
+    "craftP2": "Each bottle is designed to work in harmony with your skin's natural lipid barrier, delivering deep nourishment through subtle, sensorially rich textures.",
+    "pillarsTitle": "Guiding Principles",
+    "pillar1Num": "01",
+    "pillar1Title": "Botanical Integrity",
+    "pillar1Desc": "Sustainably sourced botanicals harvested at peak potency, preserving their essential micronutrients and cold-pressed purity.",
+    "pillar2Num": "02",
+    "pillar2Title": "Conscious Simplicity",
+    "pillar2Desc": "Minimalist ingredient profiles where each component serves a distinct biological function. No redundant fillers.",
+    "pillar3Num": "03",
+    "pillar3Title": "Enduring Stewardship",
+    "pillar3Desc": "Housed in infinitely recyclable amber glass to shield delicate actives from light while minimizing our ecological footprint.",
+    "ctaTitle": "Experience the Collection",
+    "ctaSubtitle": "Explore formulations crafted for mindful, daily rituals.",
+    "ctaButton": "View Catalogue",
+    "ctaTag": "Aura Botanical Care"
   }
 }

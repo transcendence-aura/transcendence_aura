@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { ChevronRight, X } from 'lucide-react';
 import { SearchInput } from '@/components/ui/form/search-input';
 import { CATALOGUE_CATEGORIES } from '@/lib/catalogue/categories';
 import { CATALOGUE_COLLECTIONS } from '@/lib/catalogue/collections';
@@ -10,7 +11,6 @@ import { CATALOGUE_PRODUCT_FAMILIES } from '@/lib/catalogue/product-families';
 interface CatalogueSidebarProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
-  // null: no filter ("All").
   selectedCollection: string | null;
   onCollectionChange: (collectionSlug: string | null) => void;
   selectedCategory: string | null;
@@ -19,13 +19,9 @@ interface CatalogueSidebarProps {
   onFamilyChange: (familySlug: string | null) => void;
   onPriceChange: (range: [number, number]) => void;
   priceRange: [number, number];
+  onCloseMobile?: () => void;
 }
 
-// A price bound (min or max) as its own text field, decoupled from `value` while being edited.
-// Deriving the input's text straight from `value` on every keystroke (the previous approach)
-// fights the user: clearing the field to type a new number resolves to `Number('') || 0`, which
-// for the min bound (default 0) redraws the exact same "0" the user just deleted, making it look
-// stuck. Free typing is allowed here; a bad or empty value only reverts on blur.
 function PriceBoundInput({
   value,
   onCommit,
@@ -35,36 +31,33 @@ function PriceBoundInput({
   value: number;
   onCommit: (value: number) => void;
   ariaLabel: string;
-  // Returns an error message when `parsed` conflicts with the other bound (e.g. min above max) -
-  // the value is then rejected (not committed) and the message shown below the field, rather than
-  // silently dragging the other bound along to make it valid.
   validate: (parsed: number) => string | null;
 }) {
+  const [prevValue, setPrevValue] = useState(value);
   const [text, setText] = useState(String(value));
   const [error, setError] = useState<string | null>(null);
 
-  // Stays in sync when the bound changes from elsewhere (Clear all, removing the filter chip).
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+  // Sync state during render when prop changes (avoids cascading render effect)
+  if (value !== prevValue) {
+    setPrevValue(value);
     setText(String(value));
     setError(null);
-  }, [value]);
+  }
 
   return (
     <div>
       <div className="relative">
-        <span className="text-body-sm text-text-muted pointer-events-none absolute top-1/2 inset-s-2 -translate-y-1/2">
+        <span className="text-body-sm text-text-muted pointer-events-none absolute top-1/2 start-2.5 -translate-y-1/2">
           €
         </span>
         <input
           type="text"
+          dir="ltr"
           inputMode="numeric"
           aria-label={ariaLabel}
           aria-invalid={error !== null}
           value={text}
           onChange={(e) => {
-            // Digits and a decimal point only - strips "-" (and anything else, e.g. a pasted
-            // letter) before it ever reaches state, rather than accepting it and reverting later.
             const raw = e.target.value.replace(/[^0-9.]/g, '');
             setText(raw);
             if (raw === '') {
@@ -85,7 +78,7 @@ function PriceBoundInput({
               setError(null);
             }
           }}
-          className={`w-16 border bg-page py-1.5 pe-1 ps-5 text-body-sm text-text-primary font-jost outline-none ${
+          className={`w-20 border bg-page py-1.5 pe-2 ps-7 text-body-sm text-text-primary font-jost outline-none ${
             error ? 'border-status-error' : 'border-border-default'
           }`}
         />
@@ -110,13 +103,14 @@ export const CatalogueSidebar = ({
   onFamilyChange,
   onPriceChange,
   priceRange,
+  onCloseMobile,
 }: CatalogueSidebarProps) => {
   const t = useTranslations('CatalogueFilters');
   const [expandedSections, setExpandedSections] = useState({
-    collection: false,
-    category: false,
-    family: false,
-    price: false,
+    collection: true,
+    category: true,
+    family: Boolean(selectedFamily),
+    price: true,
   });
 
   const toggleSection = (section: 'collection' | 'category' | 'family' | 'price') => {
@@ -127,8 +121,25 @@ export const CatalogueSidebar = ({
   };
 
   return (
-    <aside className="border-e border-border-default p-5">
-      {/* Search - combines with every filter below (sent together as one query). */}
+    <aside className="p-5 md:border-e md:border-border-default h-full overflow-y-auto">
+      {/* Mobile Header with Close Button */}
+      {onCloseMobile && (
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-border-default md:hidden">
+          <span className="font-cormorant text-display-title text-text-primary uppercase">
+            {t('all')}
+          </span>
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="p-1 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+            aria-label="Close filters"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Search */}
       <div className="mb-6">
         <SearchInput
           value={searchValue}
@@ -138,152 +149,194 @@ export const CatalogueSidebar = ({
         />
       </div>
 
-      {/* Collection Filter - single-select, combines with Category and Product Family. */}
+      {/* Collection Filter */}
       <div className="mb-6 pb-6 border-b border-subtle">
         <button
           type="button"
           onClick={() => toggleSection('collection')}
-          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
+          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full cursor-pointer"
         >
           {t('collection')}
-          <span
-            className={`text-brand-dark transition-transform ${expandedSections.collection ? 'rotate-90' : ''}`}
-          >
-            ›
-          </span>
+          <ChevronRight
+            className={`h-4 w-4 text-brand-dark transition-transform duration-200 rtl:-scale-x-100 ${
+              expandedSections.collection ? 'rotate-90 rtl:-rotate-90' : ''
+            }`}
+          />
         </button>
 
         {expandedSections.collection && (
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer group select-none">
-              <input
-                type="radio"
-                name="catalogue-collection"
-                checked={selectedCollection === null}
-                onChange={() => onCollectionChange(null)}
-                className="w-4 h-4 accent-text-primary cursor-pointer"
+          <div className="space-y-1" role="radiogroup" aria-label={t('collection')}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selectedCollection === null}
+              onClick={() => onCollectionChange(null)}
+              className={`flex items-center gap-2 w-full text-start py-1 px-1.5 transition-colors cursor-pointer focus:outline-none outline-none ${
+                selectedCollection === null
+                  ? 'border-s-2 border-brand-accent bg-[#2A2421]/4 text-text-primary font-medium text-body-sm'
+                  : 'text-text-secondary hover:text-text-primary text-body-sm font-normal'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full shrink-0 transition-all ${
+                  selectedCollection === null ? 'bg-brand-accent' : 'bg-transparent'
+                }`}
               />
-              <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                {t('all')}
-              </span>
-            </label>
-            {CATALOGUE_COLLECTIONS.map((collection) => (
-              <label
-                key={collection.slug}
-                className="flex items-center gap-2 cursor-pointer group select-none"
-              >
-                <input
-                  type="radio"
-                  name="catalogue-collection"
-                  checked={selectedCollection === collection.slug}
-                  onChange={() => onCollectionChange(collection.slug)}
-                  className="w-4 h-4 accent-text-primary cursor-pointer"
-                />
-                <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                  {t(`collections.${collection.slug}`)}
-                </span>
-              </label>
-            ))}
+              <span className="truncate">{t('all')}</span>
+            </button>
+
+            {CATALOGUE_COLLECTIONS.map((collection) => {
+              const isSelected = selectedCollection === collection.slug;
+              return (
+                <button
+                  key={collection.slug}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => onCollectionChange(collection.slug)}
+                  className={`flex items-center gap-2 w-full text-start py-1 px-1.5 transition-colors cursor-pointer focus:outline-none outline-none ${
+                    isSelected
+                      ? 'border-s-2 border-brand-accent bg-[#2A2421]/4 text-text-primary font-medium text-body-sm'
+                      : 'text-text-secondary hover:text-text-primary text-body-sm font-normal'
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full shrink-0 transition-all ${
+                      isSelected ? 'bg-brand-accent' : 'bg-transparent'
+                    }`}
+                  />
+                  <span className="truncate">{t(`collections.${collection.slug}`)}</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Category Filter - single-select: the backend filters by one categorySlug at a time. */}
+      {/* Category Filter */}
       <div className="mb-6 pb-6 border-b border-subtle">
         <button
           type="button"
           onClick={() => toggleSection('category')}
-          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
+          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full cursor-pointer"
         >
           {t('category')}
-          <span
-            className={`text-brand-dark transition-transform ${expandedSections.category ? 'rotate-90' : ''}`}
-          >
-            ›
-          </span>
+          <ChevronRight
+            className={`h-4 w-4 text-brand-dark transition-transform duration-200 rtl:-scale-x-100 ${
+              expandedSections.category ? 'rotate-90 rtl:-rotate-90' : ''
+            }`}
+          />
         </button>
 
         {expandedSections.category && (
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer group select-none">
-              <input
-                type="radio"
-                name="catalogue-category"
-                checked={selectedCategory === null}
-                onChange={() => onCategoryChange(null)}
-                className="w-4 h-4 accent-text-primary cursor-pointer"
+          <div className="space-y-1" role="radiogroup" aria-label={t('category')}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selectedCategory === null}
+              onClick={() => onCategoryChange(null)}
+              className={`flex items-center gap-2 w-full text-start py-1 px-1.5 transition-colors cursor-pointer focus:outline-none outline-none ${
+                selectedCategory === null
+                  ? 'border-s-2 border-brand-accent bg-[#2A2421]/4 text-text-primary font-medium text-body-sm'
+                  : 'text-text-secondary hover:text-text-primary text-body-sm font-normal'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full shrink-0 transition-all ${
+                  selectedCategory === null ? 'bg-brand-accent' : 'bg-transparent'
+                }`}
               />
-              <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                {t('all')}
-              </span>
-            </label>
-            {CATALOGUE_CATEGORIES.map((category) => (
-              <label
-                key={category.slug}
-                className="flex items-center gap-2 cursor-pointer group select-none"
-              >
-                <input
-                  type="radio"
-                  name="catalogue-category"
-                  checked={selectedCategory === category.slug}
-                  onChange={() => onCategoryChange(category.slug)}
-                  className="w-4 h-4 accent-text-primary cursor-pointer"
-                />
-                <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                  {t(`categories.${category.slug}`)}
-                </span>
-              </label>
-            ))}
+              <span className="truncate">{t('all')}</span>
+            </button>
+
+            {CATALOGUE_CATEGORIES.map((category) => {
+              const isSelected = selectedCategory === category.slug;
+              return (
+                <button
+                  key={category.slug}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => onCategoryChange(category.slug)}
+                  className={`flex items-center gap-2 w-full text-start py-1 px-1.5 transition-colors cursor-pointer focus:outline-none outline-none ${
+                    isSelected
+                      ? 'border-s-2 border-brand-accent bg-[#2A2421]/4 text-text-primary font-medium text-body-sm'
+                      : 'text-text-secondary hover:text-text-primary text-body-sm font-normal'
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full shrink-0 transition-all ${
+                      isSelected ? 'bg-brand-accent' : 'bg-transparent'
+                    }`}
+                  />
+                  <span className="truncate">{t(`categories.${category.slug}`)}</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Product Family Filter - single-select, combines with Category (both sent together). */}
+      {/* Product Family Filter */}
       <div className="mb-6 pb-6 border-b border-subtle">
         <button
           type="button"
           onClick={() => toggleSection('family')}
-          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
+          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full cursor-pointer"
         >
           {t('family')}
-          <span
-            className={`text-brand-dark transition-transform ${expandedSections.family ? 'rotate-90' : ''}`}
-          >
-            ›
-          </span>
+          <ChevronRight
+            className={`h-4 w-4 text-brand-dark transition-transform duration-200 rtl:-scale-x-100 ${
+              expandedSections.family ? 'rotate-90 rtl:-rotate-90' : ''
+            }`}
+          />
         </button>
 
         {expandedSections.family && (
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer group select-none">
-              <input
-                type="radio"
-                name="catalogue-family"
-                checked={selectedFamily === null}
-                onChange={() => onFamilyChange(null)}
-                className="w-4 h-4 accent-text-primary cursor-pointer"
+          <div className="space-y-1" role="radiogroup" aria-label={t('family')}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selectedFamily === null}
+              onClick={() => onFamilyChange(null)}
+              className={`flex items-center gap-2 w-full text-start py-1 px-1.5 transition-colors cursor-pointer focus:outline-none outline-none ${
+                selectedFamily === null
+                  ? 'border-s-2 border-brand-accent bg-[#2A2421]/4 text-text-primary font-medium text-body-sm'
+                  : 'text-text-secondary hover:text-text-primary text-body-sm font-normal'
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full shrink-0 transition-all ${
+                  selectedFamily === null ? 'bg-brand-accent' : 'bg-transparent'
+                }`}
               />
-              <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                {t('all')}
-              </span>
-            </label>
-            {CATALOGUE_PRODUCT_FAMILIES.map((family) => (
-              <label
-                key={family.slug}
-                className="flex items-center gap-2 cursor-pointer group select-none"
-              >
-                <input
-                  type="radio"
-                  name="catalogue-family"
-                  checked={selectedFamily === family.slug}
-                  onChange={() => onFamilyChange(family.slug)}
-                  className="w-4 h-4 accent-text-primary cursor-pointer"
-                />
-                <span className="text-body-sm text-text-primary group-hover:text-text-primary">
-                  {t(`families.${family.slug}`)}
-                </span>
-              </label>
-            ))}
+              <span className="truncate">{t('all')}</span>
+            </button>
+
+            {CATALOGUE_PRODUCT_FAMILIES.map((family) => {
+              const isSelected = selectedFamily === family.slug;
+              return (
+                <button
+                  key={family.slug}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => onFamilyChange(family.slug)}
+                  className={`flex items-center gap-2 w-full text-start py-1 px-1.5 transition-colors cursor-pointer focus:outline-none outline-none ${
+                    isSelected
+                      ? 'border-s-2 border-brand-accent bg-[#2A2421]/4 text-text-primary font-medium text-body-sm'
+                      : 'text-text-secondary hover:text-text-primary text-body-sm font-normal'
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full shrink-0 transition-all ${
+                      isSelected ? 'bg-brand-accent' : 'bg-transparent'
+                    }`}
+                  />
+                  <span className="truncate">{t(`families.${family.slug}`)}</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -293,18 +346,18 @@ export const CatalogueSidebar = ({
         <button
           type="button"
           onClick={() => toggleSection('price')}
-          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full"
+          className="text-ui-label text-text-primary font-jost font-medium mb-3 flex justify-between items-center w-full cursor-pointer"
         >
           {t('price')}
-          <span
-            className={`text-brand-dark transition-transform ${expandedSections.price ? 'rotate-90' : ''}`}
-          >
-            ›
-          </span>
+          <ChevronRight
+            className={`h-4 w-4 text-brand-dark transition-transform duration-200 rtl:-scale-x-100 ${
+              expandedSections.price ? 'rotate-90 rtl:-rotate-90' : ''
+            }`}
+          />
         </button>
 
         {expandedSections.price && (
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 pt-1">
             <PriceBoundInput
               value={priceRange[0]}
               onCommit={(min) => onPriceChange([min, priceRange[1]])}
