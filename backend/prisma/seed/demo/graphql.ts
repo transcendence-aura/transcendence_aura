@@ -73,7 +73,7 @@ export async function waitForBackend(): Promise<void> {
 
   while (Date.now() < deadline) {
     try {
-      await gql('{ health { status } }');
+      await gql('{ __typename }');
       return;
     } catch {
       await new Promise((resolve) => setTimeout(resolve, READY_POLL_MS));
