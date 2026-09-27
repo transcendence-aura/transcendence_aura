@@ -5,7 +5,7 @@ import { seedDemo } from './demo';
 import { seedReference } from './reference';
 
 async function main(): Promise<void> {
-  const config = readSeedConfig();
+  const config = await readSeedConfig();
 
   await seedReference();
   await seedAdmin(config);

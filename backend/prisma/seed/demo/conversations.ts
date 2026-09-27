@@ -1,5 +1,7 @@
-import { gql } from './graphql';
+import { gql, GraphQLRequestError } from './graphql';
 import type { DemoSessions } from './users';
+
+const CONVERSATION_DECLINED_ERROR = 'CONVERSATION_DECLINED';
 
 type Side = 'initiator' | 'recipient';
 
@@ -157,11 +159,25 @@ export async function seedDemoConversations(sessions: DemoSessions): Promise<voi
       throw new Error(`Unknown demo user in ${script.initiator} / ${script.recipient}`);
     }
 
-    const { startConversation } = await gql<{ startConversation: StartedConversation }>(
-      START_CONVERSATION,
-      { input: { otherUserId: recipient.id } },
-      initiator.accessToken,
-    );
+    let startConversation: StartedConversation;
+
+    try {
+      ({ startConversation } = await gql<{ startConversation: StartedConversation }>(
+        START_CONVERSATION,
+        { input: { otherUserId: recipient.id } },
+        initiator.accessToken,
+      ));
+    } catch (error) {
+      // A previous seed run already declined this pair - that's a terminal
+      // state the script cannot replay, so treat it as already done.
+      if (
+        error instanceof GraphQLRequestError &&
+        error.message.includes(CONVERSATION_DECLINED_ERROR)
+      ) {
+        continue;
+      }
+      throw error;
+    }
 
     if (startConversation.messages.length > 0) {
       continue;

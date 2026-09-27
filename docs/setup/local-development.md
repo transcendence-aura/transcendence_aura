@@ -47,3 +47,5 @@ curl -i http://localhost:3001/health
 The stack must be running before executing `make seed`.
 Start the stack by executing `make up` and then `make seed`
 to run the Prisma seed script inside the running `backend` service.
+`make seed` prompts interactively for the admin email and password; they are
+never stored in `.env` or passed as container environment variables.

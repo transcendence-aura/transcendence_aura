@@ -116,7 +116,7 @@ up: check-env check-certs check-engine
 down:
 	@printf "$(YELLOW)Stopping the stack...$(END)\n"
 	@$(COMPOSE_RUN) down
-	@rm -f local-secrets/vault-secret-id
+	@rm -f local-secrets/vault-secret-id local-secrets/seed-admin-email local-secrets/seed-admin-password
 	@printf "$(GREEN)Stack is down.$(END)\n"
 
 .PHONY: build
@@ -181,13 +181,15 @@ seed: check-env check-engine
 		printf "$(YELLOW)Start the stack with: make up$(END)\n"; \
 		exit 1; \
 	}
+	@HOST_GID='$(HOST_GID)' bash scripts/prompt-seed-admin.sh
 	@printf "$(RED)This will erase all database data (users, orders, products).$(END)\n"
-	@printf "$(YELLOW)Resetting database and applying migrations...$(END)\n"
-	@$(COMPOSE_RUN) exec -T backend npx prisma migrate reset --force
-	@printf "$(YELLOW)Restarting backend on the fresh database...$(END)\n"
-	@$(COMPOSE_RUN) restart backend
-	@printf "$(YELLOW)Executing database seed script...$(END)\n"
-	@$(COMPOSE_RUN) --profile seed run --rm -T seed
+	@trap 'rm -f local-secrets/seed-admin-email local-secrets/seed-admin-password' EXIT; \
+		printf "$(YELLOW)Resetting database and applying migrations...$(END)\n" && \
+		$(COMPOSE_RUN) exec -T backend npx prisma migrate reset --force && \
+		printf "$(YELLOW)Restarting backend on the fresh database...$(END)\n" && \
+		$(COMPOSE_RUN) restart backend && \
+		printf "$(YELLOW)Executing database seed script...$(END)\n" && \
+		$(COMPOSE_RUN) --profile seed run --rm -T seed
 	@printf "$(GREEN)Database seeded successfully.$(END)\n"
 
 # [Cleanup & Infrastructure Reset]

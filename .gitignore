@@ -155,3 +155,5 @@ backend/uploads/
 local-secrets/vault-secret-id
 local-secrets/vault-root-token
 local-secrets/vault-unseal-key
+local-secrets/seed-admin-email
+local-secrets/seed-admin-password
