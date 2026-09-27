@@ -48,9 +48,6 @@
   "Footer": {
     "tagline": "تركيبات نباتية نقية لطقوس عناية واعية بالبشرة.",
     "shop": "المتجر",
-    "shopSerums": "السيرومات والزيوت",
-    "shopFaceCare": "العناية بالوجه",
-    "shopRitualSets": "أطقم الطقوس",
     "about": "من نحن",
     "aboutStory": "قصتنا",
     "copyright": "© 2026 أورا. جميع الحقوق محفوظة.",
@@ -78,15 +75,14 @@
   "Newsletter": {
     "eyebrow": "انضم إلى الدائرة",
     "title": "انضم إلى طقوس أورا",
-    "subtitle": "إصدارات جديدة، أدلة للعناية بالبشرة، وخصم 10٪ على طلبك الأول.",
+    "subtitle": "منتجات جديدة ونصائح للعناية وطقوس، مباشرة إلى بريدك.",
     "placeholder": "your@email.com",
     "subscribe": "اشترك",
-    "modalTitle": "مرحبًا بك في مجتمع أورا",
-    "modalCode": "AURA10",
-    "modalCta": "استكشف المتجر",
+    "modalTitle": "النشرة الإخبارية قريبًا",
+    "modalCta": "اكتشف المتجر",
     "closeModal": "إغلاق",
-    "modalIntro": "يبدأ طقسك الواعي اليوم.",
-    "modalPromo": "استمتع بهدية الترحيب مع خصم 10% على طلبك الأول:"
+    "modalIntro": "شكرًا لاهتمامك.",
+    "modalBody": "نشرتنا الإخبارية غير متاحة بعد، لذلك لم يتم حفظ بريدك الإلكتروني. عد قريبًا للانضمام إلى دائرة أورا."
   },
   "CollectionCard": {
     "itemCount": "{count, plural, zero {لا منتجات} one {منتج واحد} two {منتجان} few {# منتجات} many {# منتجًا} other {# منتج}}",
@@ -379,7 +375,7 @@
     "category": "الفئة",
     "family": "عائلة المنتجات",
     "price": "السعر",
-    "searchPlaceholder": "ابحث عن منتج…",
+    "searchPlaceholder": "ابحث عن المنتجات…",
     "searchLabel": "ابحث عن منتج",
     "minPrice": "السعر الأدنى",
     "maxPrice": "السعر الأقصى",
@@ -550,5 +546,50 @@
     "ctaTitle": "اكتشف المجموعة",
     "ctaSubtitle": "منتجات عناية مصممة لطقوسك اليومية.",
     "ctaButton": "زيارة المتجر"
+  },
+  "HealthPage": {
+    "eyebrow": "النظام",
+    "title": "حالة الخدمة",
+    "subtitle": "الحالة المباشرة للخدمات التي تشغّل أورا.",
+    "allUp": "جميع الأنظمة تعمل",
+    "someDown": "بعض الخدمات غير متاحة",
+    "up": "يعمل",
+    "down": "غير متاح",
+    "latency": "{ms} مللي ثانية",
+    "checkedAt": "آخر فحص في {time}",
+    "refresh": "تحديث",
+    "services": {
+      "nginx": {
+        "name": "خادم الويب",
+        "description": "HTTPS وجدار الحماية ModSecurity"
+      },
+      "frontend": {
+        "name": "الموقع",
+        "description": "الصفحات وواجهة المستخدم"
+      },
+      "backend": {
+        "name": "الخادم",
+        "description": "الواجهة البرمجية والحسابات والميزات الفورية"
+      },
+      "database": {
+        "name": "قاعدة البيانات",
+        "description": "المنتجات وقوائم الأمنيات والرسائل والملفات الشخصية"
+      },
+      "vault": {
+        "name": "خزنة الأسرار",
+        "description": "تخزين مشفّر للمفاتيح وبيانات الاعتماد"
+      }
+    }
+  },
+  "AdminSidebar": {
+    "overview": "نظرة عامة",
+    "management": "الإدارة",
+    "system": "النظام",
+    "dashboard": "لوحة التحكم",
+    "analytics": "الإحصاءات",
+    "users": "المستخدمون والأدوار",
+    "products": "المنتجات",
+    "serviceStatus": "حالة الخدمة",
+    "notifications": "الإشعارات"
   }
 }

@@ -45,7 +45,7 @@ function PriceBoundInput({
   }
 
   return (
-    <div>
+    <div className="min-w-0 flex-1">
       <div className="relative">
         <span className="text-body-sm text-text-muted pointer-events-none absolute top-1/2 start-2.5 -translate-y-1/2">
           €
@@ -78,7 +78,7 @@ function PriceBoundInput({
               setError(null);
             }
           }}
-          className={`w-20 border bg-page py-1.5 pe-2 ps-7 text-body-sm text-text-primary font-jost outline-none ${
+          className={`w-full border bg-page py-1.5 pe-2 ps-7 text-body-sm text-text-primary font-jost outline-none ${
             error ? 'border-status-error' : 'border-border-default'
           }`}
         />
@@ -146,6 +146,7 @@ export const CatalogueSidebar = ({
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t('searchPlaceholder')}
           aria-label={t('searchLabel')}
+          className="ps-9 pe-2 placeholder:text-ui-label"
         />
       </div>
 
@@ -366,7 +367,7 @@ export const CatalogueSidebar = ({
               }
               ariaLabel={t('minPrice')}
             />
-            <span className="text-body-sm text-text-muted pt-1.5">—</span>
+            <span className="shrink-0 text-body-sm text-text-muted pt-1.5">—</span>
             <PriceBoundInput
               value={priceRange[1]}
               onCommit={(max) => onPriceChange([priceRange[0], max])}

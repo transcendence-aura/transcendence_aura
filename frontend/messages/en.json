@@ -48,9 +48,6 @@
   "Footer": {
     "tagline": "Pure botanical formulations for mindful skin rituals.",
     "shop": "Shop",
-    "shopSerums": "Serums & Oils",
-    "shopFaceCare": "Face Care",
-    "shopRitualSets": "Ritual Sets",
     "about": "About",
     "aboutStory": "Our Story",
     "copyright": "© 2026 Aura. All rights reserved.",
@@ -78,15 +75,14 @@
   "Newsletter": {
     "eyebrow": "Enter the circle",
     "title": "Join the Aura ritual",
-    "subtitle": "New drops, skin guides, and 10% off your first order.",
+    "subtitle": "New drops, skin guides and rituals, straight to your inbox.",
     "placeholder": "your@email.com",
     "subscribe": "Subscribe",
-    "modalTitle": "Welcome to the Aura Circle",
-    "modalCode": "AURA10",
-    "modalCta": "Explore the Shop",
+    "modalTitle": "Newsletter coming soon",
+    "modalCta": "Explore the shop",
     "closeModal": "Close",
-    "modalIntro": "Your mindful ritual begins today.",
-    "modalPromo": "Enjoy your welcome gift with 10% off your first order:"
+    "modalIntro": "Thank you for your interest.",
+    "modalBody": "Our newsletter is not available yet, so your email address has not been saved. Come back soon to join the Aura circle."
   },
   "CollectionCard": {
     "itemCount": "{count, plural, one {# item} other {# items}}",
@@ -550,5 +546,50 @@
     "ctaSubtitle": "Explore formulations crafted for mindful, daily rituals.",
     "ctaButton": "View Catalogue",
     "ctaTag": "Aura Botanical Care"
+  },
+  "HealthPage": {
+    "eyebrow": "System",
+    "title": "Service status",
+    "subtitle": "Live state of the services that keep Aura running.",
+    "allUp": "All systems operational",
+    "someDown": "Some services are unavailable",
+    "up": "Operational",
+    "down": "Unavailable",
+    "latency": "{ms} ms",
+    "checkedAt": "Last checked at {time}",
+    "refresh": "Refresh",
+    "services": {
+      "nginx": {
+        "name": "Web server",
+        "description": "HTTPS and ModSecurity firewall"
+      },
+      "frontend": {
+        "name": "Website",
+        "description": "Pages and user interface"
+      },
+      "backend": {
+        "name": "Backend",
+        "description": "API, accounts and real time features"
+      },
+      "database": {
+        "name": "Database",
+        "description": "Products, wishlists, messages and profiles"
+      },
+      "vault": {
+        "name": "Secrets vault",
+        "description": "Encrypted storage for keys and credentials"
+      }
+    }
+  },
+  "AdminSidebar": {
+    "overview": "Overview",
+    "management": "Management",
+    "system": "System",
+    "dashboard": "Dashboard",
+    "analytics": "Analytics",
+    "users": "Users & Roles",
+    "products": "Products",
+    "serviceStatus": "Service status",
+    "notifications": "Notifications"
   }
 }

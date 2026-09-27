@@ -110,7 +110,6 @@ describe('Public API /v1 (AUR-153 acceptance criteria)', () => {
       POSTGRES_URL: process.env.POSTGRES_URL!,
       JWT_ACCESS_SECRET: 'public-api-e2e-secret',
       JWT_REFRESH_SECRET: 'public-api-e2e-secret',
-      REDIS_URL: 'public-api-e2e',
     };
 
     const moduleRef = await Test.createTestingModule({

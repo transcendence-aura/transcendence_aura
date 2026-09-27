@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { X, Sparkles } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 
 export const CallToActionSection = () => {
@@ -10,6 +10,7 @@ export const CallToActionSection = () => {
   const [email, setEmail] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
+  // The newsletter is not connected to an email service yet: nothing is sent or stored.
   const handleSubscribe = (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!email) return;
@@ -70,7 +71,7 @@ export const CallToActionSection = () => {
               type="button"
               onClick={() => setIsOpen(false)}
               aria-label={t('closeModal')}
-              className="absolute top-4 right-4 p-1 text-text-muted hover:text-text-primary cursor-pointer transition-colors"
+              className="absolute top-4 inset-e-4 p-1 text-text-muted hover:text-text-primary cursor-pointer transition-colors"
             >
               <X className="h-5 w-5 stroke-[1.5]" />
             </button>
@@ -79,18 +80,9 @@ export const CallToActionSection = () => {
               {t('modalTitle')}
             </h3>
 
-            <div className="space-y-2 mb-7 text-body-base text-text-secondary max-w-sm mx-auto">
+            <div className="space-y-3 mb-8 text-body-base text-text-secondary max-w-sm mx-auto">
               <p className="font-medium text-text-primary">{t('modalIntro')}</p>
-              <p className="leading-relaxed">{t('modalPromo')}</p>
-            </div>
-
-            <div className="mb-7">
-              <div className="inline-flex items-center gap-2.5 px-6 py-2.5 bg-surface border-2 border-dashed border-stone-400">
-                <Sparkles className="h-4 w-4 text-text-primary" />
-                <span className="font-mono text-base font-semibold tracking-[0.2em] text-text-primary">
-                  {t('modalCode')}
-                </span>
-              </div>
+              <p className="leading-relaxed">{t('modalBody')}</p>
             </div>
 
             <div>

@@ -46,7 +46,6 @@ POSTGRES_PASSWORD="$(read_value "$ENV_FILE" POSTGRES_PASSWORD)"
 POSTGRES_DB="$(read_value "$ENV_FILE" POSTGRES_DB)"
 POSTGRES_PORT="$(read_value "$ENV_FILE" POSTGRES_PORT)"
 POSTGRES_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}"
-REDIS_URL="$(read_value "$ENV_FILE" REDIS_URL)"
 
 existing_jwt_access_secret="$(
   vault_exec_with_token kv get \
@@ -63,7 +62,6 @@ else
 fi
 
 : "${POSTGRES_URL:?POSTGRES_URL is required}"
-: "${REDIS_URL:?REDIS_URL is required}"
 : "${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}"
 
 echo "Configuring Vault..."
@@ -123,14 +121,12 @@ if [[ "$secret_exists" == "true" ]]; then
     -mount=secret \
     "$SECRET_PATH" \
     POSTGRES_URL="$POSTGRES_URL" \
-    REDIS_URL="$REDIS_URL" \
     JWT_ACCESS_SECRET="$JWT_ACCESS_SECRET"
 else
   vault_exec_with_token kv put \
     -mount=secret \
     "$SECRET_PATH" \
     POSTGRES_URL="$POSTGRES_URL" \
-    REDIS_URL="$REDIS_URL" \
     JWT_ACCESS_SECRET="$JWT_ACCESS_SECRET"
 fi
 

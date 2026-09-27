@@ -5,7 +5,7 @@ import { useQuery } from '@apollo/client/react';
 import { CollectionCard } from '@/components/cards/CollectionCard';
 import { Skeleton } from '@/components/ui/feedback/skeleton';
 import { Button } from '@/components/ui/form/button';
-import { GET_COLLECTIONS, type CollectionsQueryResponse } from '@/lib/graphql/queries/collections';
+import { GET_COLLECTIONS } from '@/lib/graphql/queries/collections';
 
 // Always served from /public, never from the backend: heroImageUrl is a wide banner (1500x200),
 // but CollectionCard shows it in a square crop - it'd be zoomed into a thin sliver. No square photo
@@ -32,7 +32,7 @@ const SkeletonCard = () => (
 export const FeaturedCollectionsSection = () => {
   const t = useTranslations('FeaturedCollections');
   const tFilters = useTranslations('CatalogueFilters');
-  const { data, loading, error, refetch } = useQuery<CollectionsQueryResponse>(GET_COLLECTIONS);
+  const { data, loading, error, refetch } = useQuery(GET_COLLECTIONS);
 
   // Only collections with a local image are shown - a newly created one with no entry yet in
   // COLLECTION_IMAGES simply doesn't appear here rather than falling back to a DB image.
