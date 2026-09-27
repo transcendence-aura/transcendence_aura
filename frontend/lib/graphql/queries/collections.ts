@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql, type TypedDocumentNode } from '@apollo/client';
 
 export interface Collection {
   id: string;
@@ -12,7 +12,7 @@ export interface CollectionsQueryResponse {
   collections: Collection[];
 }
 
-export const GET_COLLECTIONS = gql`
+export const GET_COLLECTIONS: TypedDocumentNode<CollectionsQueryResponse> = gql`
   query GetCollections {
     collections {
       id

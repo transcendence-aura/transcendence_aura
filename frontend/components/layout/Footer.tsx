@@ -1,7 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useQuery } from '@apollo/client/react';
 import { Link, usePathname } from '@/i18n/navigation';
+import { GET_COLLECTIONS } from '@/lib/graphql/queries/collections';
 
 interface FooterLinkItem {
   label: string;
@@ -29,7 +31,10 @@ function FooterColumn({ label, links }: { label: string; links: FooterLinkItem[]
 
 export function Footer() {
   const t = useTranslations('Footer');
+  const tFilters = useTranslations('CatalogueFilters');
   const pathname = usePathname();
+  // Same query as the home page collections section: served from the Apollo cache.
+  const { data } = useQuery(GET_COLLECTIONS);
 
   /* Hide Footer on auth routes and inside admin shell */
   const isAuthPage =
@@ -37,9 +42,14 @@ export function Footer() {
   if (isAuthPage) return null;
 
   const shopLinks: FooterLinkItem[] = [
-    { label: t('shopSerums'), href: '/catalogue' },
-    { label: t('shopFaceCare'), href: '/catalogue' },
-    { label: t('shopRitualSets'), href: '/catalogue' },
+    ...(data?.collections ?? []).map((collection) => ({
+      label: tFilters.has(`collections.${collection.slug}`)
+        ? tFilters(`collections.${collection.slug}`)
+        : collection.name,
+      href: `/catalogue?collection=${collection.slug}`,
+    })),
+    // Serums & Oils is a category, not a collection: same static entry as the home page.
+    { label: tFilters('categories.serums-and-oils'), href: '/catalogue?category=serums-and-oils' },
   ];
 
   const legalLinks: FooterLinkItem[] = [

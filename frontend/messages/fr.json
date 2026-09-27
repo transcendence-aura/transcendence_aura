@@ -48,9 +48,6 @@
   "Footer": {
     "tagline": "Des formulations botaniques pures pour des rituels de soin attentifs.",
     "shop": "Boutique",
-    "shopSerums": "Sérums & huiles",
-    "shopFaceCare": "Soin du visage",
-    "shopRitualSets": "Coffrets rituels",
     "about": "À propos",
     "aboutStory": "Notre histoire",
     "copyright": "© 2026 Aura. Tous droits réservés.",
@@ -78,15 +75,14 @@
   "Newsletter": {
     "eyebrow": "Newsletter",
     "title": "Rejoignez le cercle Aura",
-    "subtitle": "Nos nouveautés, nos conseils beauté et -10 % sur votre première commande.",
+    "subtitle": "Nouveautés, conseils de soin et rituels, directement dans votre boîte mail.",
     "placeholder": "votre@email.com",
     "subscribe": "Je m'inscris",
-    "modalTitle": "Bienvenue dans le cercle Aura",
-    "modalCode": "AURA10",
+    "modalTitle": "Newsletter bientôt disponible",
     "modalCta": "Découvrir la boutique",
     "closeModal": "Fermer",
-    "modalIntro": "Votre rituel commence aujourd'hui.",
-    "modalPromo": "Profitez de votre cadeau de bienvenue avec 10 % de réduction sur votre première commande :"
+    "modalIntro": "Merci pour votre intérêt.",
+    "modalBody": "Notre newsletter n'est pas encore disponible, votre adresse email n'a donc pas été enregistrée. Revenez bientôt pour rejoindre le cercle Aura."
   },
   "CollectionCard": {
     "itemCount": "{count, plural, one {# produit} other {# produits}}",
@@ -379,7 +375,7 @@
     "category": "Catégorie",
     "family": "Famille de produits",
     "price": "Prix",
-    "searchPlaceholder": "Rechercher un produit…",
+    "searchPlaceholder": "Rechercher des produits…",
     "searchLabel": "Rechercher un produit",
     "minPrice": "Prix minimum",
     "maxPrice": "Prix maximum",
@@ -550,5 +546,50 @@
     "ctaTitle": "Découvrir la collection",
     "ctaSubtitle": "Des soins pensés pour sublimer vos rituels quotidiens.",
     "ctaButton": "Découvrir la boutique"
+  },
+  "HealthPage": {
+    "eyebrow": "Système",
+    "title": "État du service",
+    "subtitle": "L'état en direct des services qui font fonctionner Aura.",
+    "allUp": "Tous les services sont opérationnels",
+    "someDown": "Certains services sont indisponibles",
+    "up": "Opérationnel",
+    "down": "Indisponible",
+    "latency": "{ms} ms",
+    "checkedAt": "Dernière vérification à {time}",
+    "refresh": "Actualiser",
+    "services": {
+      "nginx": {
+        "name": "Serveur web",
+        "description": "HTTPS et pare-feu ModSecurity"
+      },
+      "frontend": {
+        "name": "Site",
+        "description": "Pages et interface utilisateur"
+      },
+      "backend": {
+        "name": "Backend",
+        "description": "API, comptes et fonctionnalités en temps réel"
+      },
+      "database": {
+        "name": "Base de données",
+        "description": "Produits, listes d'envies, messages et profils"
+      },
+      "vault": {
+        "name": "Coffre de secrets",
+        "description": "Stockage chiffré des clés et identifiants"
+      }
+    }
+  },
+  "AdminSidebar": {
+    "overview": "Vue d'ensemble",
+    "management": "Gestion",
+    "system": "Système",
+    "dashboard": "Tableau de bord",
+    "analytics": "Statistiques",
+    "users": "Utilisateurs et rôles",
+    "products": "Produits",
+    "serviceStatus": "État du service",
+    "notifications": "Notifications"
   }
 }
