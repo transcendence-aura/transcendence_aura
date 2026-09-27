@@ -58,7 +58,17 @@ Node.js 20+ and npm 10+ are only needed to work on the code outside of container
 
    `SEED_MODE=demo` fills the shop with products, demo users, follows and conversations. `SEED_MODE=empty` only creates the catalogue structure and the admin account.
 
-4. Generate the local HTTPS certificate :
+4. Port update. In `.env`, verify :
+
+   - If you have root privileges, and ports are frees, you can leave the example ports as they are.
+
+   - If ports 80 and 443 are not available, you must switch to ports of your choice (for example, 8080 and 8443).
+   ```dotenv
+   HTTP_PORT=8080
+   HTTPS_PORT=8443
+   ```
+
+5. Generate the local HTTPS certificate :
 
    ```bash
    bash scripts/gen-certs.sh
