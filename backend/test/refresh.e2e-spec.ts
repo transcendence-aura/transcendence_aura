@@ -31,7 +31,6 @@ describe('Refresh token flow', () => {
     POSTGRES_URL: process.env.POSTGRES_URL!,
     JWT_ACCESS_SECRET: 'this-is-just-a-refresh-test-secret',
     JWT_REFRESH_SECRET: 'this-is-just-a-refresh-test-secret',
-    REDIS_URL: 'refresh-test',
   };
 
   beforeAll(async () => {

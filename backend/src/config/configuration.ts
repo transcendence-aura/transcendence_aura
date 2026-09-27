@@ -15,9 +15,6 @@ export interface AppConfiguration {
   auth: {
     refreshTokenTtl: number;
   };
-  redis: {
-    url: string;
-  };
 }
 
 export function createAppConfig(secrets: RequiredSecrets): AppConfiguration {
@@ -35,9 +32,6 @@ export function createAppConfig(secrets: RequiredSecrets): AppConfiguration {
     },
     auth: {
       refreshTokenTtl: 7 * 24 * 60 * 60,
-    },
-    redis: {
-      url: secrets.REDIS_URL,
     },
   };
 }

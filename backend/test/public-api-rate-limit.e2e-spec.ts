@@ -49,7 +49,6 @@ describe('Public API rate limiting (AUR-154 acceptance criteria)', () => {
       POSTGRES_URL: process.env.POSTGRES_URL!,
       JWT_ACCESS_SECRET: 'rate-limit-e2e-secret',
       JWT_REFRESH_SECRET: 'rate-limit-e2e-secret',
-      REDIS_URL: 'rate-limit-e2e',
     };
 
     const moduleRef = await Test.createTestingModule({

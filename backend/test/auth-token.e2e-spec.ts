@@ -28,7 +28,6 @@ describe('Access token transport', () => {
     POSTGRES_URL: process.env.POSTGRES_URL!,
     JWT_ACCESS_SECRET: 'this-is-just-a-refresh-test-secret',
     JWT_REFRESH_SECRET: 'this-is-just-a-refresh-test-secret',
-    REDIS_URL: 'access-token-transport-test',
   };
 
   beforeAll(async () => {

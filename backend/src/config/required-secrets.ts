@@ -2,13 +2,11 @@ export interface RequiredSecrets {
   POSTGRES_URL: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
-  REDIS_URL: string;
 }
 
 const REQUIRED_VAULT_SECRETS = [
   'POSTGRES_URL',
   'JWT_ACCESS_SECRET',
-  'REDIS_URL',
 ] as const satisfies readonly (keyof RequiredSecrets)[];
 
 export function validateSecrets(value: unknown): RequiredSecrets {
@@ -29,10 +27,6 @@ export function validateSecrets(value: unknown): RequiredSecrets {
     validateUrl(value.POSTGRES_URL, ['postgresql:', 'postgres:'], 'POSTGRES_URL', errors);
   }
 
-  if (typeof value.REDIS_URL === 'string') {
-    validateUrl(value.REDIS_URL, ['redis:', 'rediss:'], 'REDIS_URL', errors);
-  }
-
   if (typeof value.JWT_ACCESS_SECRET === 'string' && value.JWT_ACCESS_SECRET.length < 32) {
     errors.push('JWT_ACCESS_SECRET must contain at least 32 characters');
   }
@@ -45,7 +39,6 @@ export function validateSecrets(value: unknown): RequiredSecrets {
     POSTGRES_URL: value.POSTGRES_URL as string,
     JWT_ACCESS_SECRET: value.JWT_ACCESS_SECRET as string,
     JWT_REFRESH_SECRET: value.JWT_REFRESH_SECRET as string,
-    REDIS_URL: value.REDIS_URL as string,
   };
 }
 

@@ -66,7 +66,6 @@ describe('GraphQL profileDirectory input validation', () => {
       POSTGRES_URL: process.env.POSTGRES_URL!,
       JWT_ACCESS_SECRET: 'profile-directory-e2e-secret',
       JWT_REFRESH_SECRET: 'profile-directory-e2e-secret',
-      REDIS_URL: 'profile-directory-e2e',
     };
 
     const moduleRef = await Test.createTestingModule({

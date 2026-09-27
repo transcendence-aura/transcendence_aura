@@ -61,8 +61,6 @@ services:
     depends_on:
       postgres:
         condition: service_started
-      redis:
-        condition: service_started
       vault:
         condition: service_healthy
     networks:
@@ -108,15 +106,6 @@ services:
       - '127.0.0.1:${POSTGRES_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - aura
-    restart: unless-stopped
-
-  redis:
-    image: docker.io/library/redis:8-alpine
-    # Host tools only (redis-cli): loopback, not the whole network.
-    ports:
-      - '127.0.0.1:${REDIS_PORT}:6379'
     networks:
       - aura
     restart: unless-stopped
