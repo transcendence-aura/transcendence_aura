@@ -11,6 +11,7 @@ import { LOGIN_MUTATION } from '@/lib/auth/login.mutation';
 import { REGISTER_MUTATION } from '@/lib/auth/register.mutation';
 import { setAccessToken } from '@/lib/auth/token-store';
 import { PasswordStrength } from './PasswordStrength';
+import { Link } from '@/i18n/navigation';
 
 // The backend stores a single `name` (max 100 characters).
 const MAX_NAME_LENGTH = 100;
@@ -218,16 +219,30 @@ export function RegisterForm() {
             onChange={(e) => setAgreedToTerms(e.target.checked)}
             className="accent-brand-dark mt-0.5 h-3.5 w-3.5 cursor-pointer"
           />
+
           <label
             htmlFor="terms"
             className="cursor-pointer text-ui-label leading-relaxed text-text-secondary"
           >
             {t.rich('terms', {
               terms: (chunks) => (
-                <span className="border-b border-border-default text-text-primary">{chunks}</span>
+                <Link
+                  href="/legal/terms-of-service"
+                  className="border-b border-border-default text-text-primary transition-colors hover:border-text-primary"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {chunks}
+                </Link>
               ),
+
               privacy: (chunks) => (
-                <span className="border-b border-border-default text-text-primary">{chunks}</span>
+                <Link
+                  href="/legal/privacy-policy"
+                  className="border-b border-border-default text-text-primary transition-colors hover:border-text-primary"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {chunks}
+                </Link>
               ),
             })}
           </label>
