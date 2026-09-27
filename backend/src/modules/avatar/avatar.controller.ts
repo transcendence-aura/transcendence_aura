@@ -64,6 +64,11 @@ export class AvatarController {
   ): Promise<void> {
     const avatar = await this.avatarService.getAvatar(userId);
     res.set('Cache-Control', 'private, no-store');
+    // 204 rather than 404 so the browser logs no error; the client falls back to initials.
+    if (!avatar) {
+      res.status(204).end();
+      return;
+    }
     res.type(avatar.mimeType).send(avatar.buffer);
   }
 }
