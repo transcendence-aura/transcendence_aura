@@ -181,7 +181,7 @@ seed: check-env check-engine
 		printf "$(YELLOW)Start the stack with: make up$(END)\n"; \
 		exit 1; \
 	}
-	@bash scripts/prompt-seed-admin.sh
+	@HOST_GID='$(HOST_GID)' bash scripts/prompt-seed-admin.sh
 	@printf "$(RED)This will erase all database data (users, orders, products).$(END)\n"
 	@trap 'rm -f local-secrets/seed-admin-email local-secrets/seed-admin-password' EXIT; \
 		printf "$(YELLOW)Resetting database and applying migrations...$(END)\n" && \

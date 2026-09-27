@@ -75,6 +75,8 @@ services:
     profiles:
       - seed
     command: npm run prisma:seed
+    group_add:
+      - '${SECRETS_GID:-1000}'
     volumes:
       - ./backend/prisma:/app/prisma
     environment:
