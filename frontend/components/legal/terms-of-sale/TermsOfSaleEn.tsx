@@ -69,11 +69,6 @@ export default function TermsOfSaleEn() {
             These General Terms and Conditions of Sale are supplemented by the General Terms and
             Conditions of Use of the Website and the “Privacy Policy”.
           </p>
-
-          <p className="mb-4 font-jost text-body-base text-text-secondary">
-            These General Terms and Conditions of Sale are supplemented by the General Terms and
-            Conditions of Use of the Website and the document “Personal Data and Cookies”.
-          </p>
         </section>
 
         <section>
