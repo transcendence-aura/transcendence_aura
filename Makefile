@@ -7,9 +7,16 @@ RED     = \033[1;31m
 END     = \033[0m
 
 # [Compose command & Engine Auto-detection]
-COMPOSE ?= $(shell if command -v docker >/dev/null 2>&1; then echo "docker compose"; elif command -v podman >/dev/null 2>&1; then echo "podman compose"; else echo "docker compose"; fi)
+# A `docker` command that is only the podman-docker shim counts as Podman.
+ENGINE ?= $(shell if command -v docker >/dev/null 2>&1 && ! docker --version 2>/dev/null | grep -qi podman; then echo docker; elif command -v podman >/dev/null 2>&1; then echo podman; else echo docker; fi)
+COMPOSE ?= $(ENGINE) compose
 HOST_GID := $(shell id -g)
-COMPOSE_RUN = HOST_GID=$(HOST_GID) $(COMPOSE)
+# Group that owns local-secrets/vault-secret-id, as seen from inside the
+# containers. Rootless Podman maps the host user's group to GID 0.
+ROOTLESS_PODMAN := $(if $(findstring podman,$(COMPOSE)),$(shell podman info --format '{{.Host.Security.Rootless}}' 2>/dev/null))
+SECRETS_GID := $(if $(filter true,$(ROOTLESS_PODMAN)),0,$(HOST_GID))
+export PODMAN_COMPOSE_WARNING_LOGS = false
+COMPOSE_RUN = HOST_GID=$(HOST_GID) SECRETS_GID=$(SECRETS_GID) $(COMPOSE)
 
 # [Tooling Checks]
 
@@ -70,16 +77,8 @@ setup: check-env
 
 # [Vault Lifecycle]
 
-.PHONY: vault-permissions
-vault-permissions:
-	@printf "$(YELLOW)Preparing Vault storage permissions$(END)\n"
-	@$(COMPOSE_RUN) run --rm --no-deps \
-		--user root \
-		--entrypoint sh \
-		vault -c 'chown -R vault:vault /vault/data 2>/dev/null || true && chmod 750 /vault/data 2>/dev/null || true'
-
 .PHONY: vault-start
-vault-start: vault-permissions
+vault-start:
 	@printf "$(YELLOW)Starting Vault$(END)\n"
 	@$(COMPOSE_RUN) up -d vault
 
@@ -139,20 +138,20 @@ logs:
 .PHONY: front-rebuild
 front-rebuild: check-env check-engine
 	@printf "$(YELLOW)Rebuilding and restarting frontend...$(END)\n"
-	@$(COMPOSE_RUN) up -d --build --no-deps frontend
+	@$(COMPOSE_RUN) up -d --build --force-recreate --no-deps frontend
 	@printf "$(GREEN)Frontend rebuilt.$(END)\n"
 
 .PHONY: back-rebuild
 back-rebuild: check-env check-engine
 	@$(MAKE) --no-print-directory vault-bootstrap
 	@printf "$(YELLOW)Rebuilding and restarting backend...$(END)\n"
-	@$(COMPOSE_RUN) up -d --build --no-deps backend
+	@$(COMPOSE_RUN) up -d --build --force-recreate --no-deps backend
 	@printf "$(GREEN)Backend rebuilt.$(END)\n"
 
 .PHONY: nginx-rebuild
 nginx-rebuild: check-certs check-engine
 	@printf "$(YELLOW)Rebuilding and restarting nginx...$(END)\n"
-	@$(COMPOSE_RUN) up -d --build --no-deps nginx
+	@$(COMPOSE_RUN) up -d --build --force-recreate --no-deps nginx
 	@printf "$(GREEN)Nginx rebuilt.$(END)\n"
 
 .PHONY: backend-restart
@@ -177,7 +176,7 @@ nginx-logs:
 
 .PHONY: seed
 seed: check-env check-engine
-	@$(COMPOSE_RUN) ps --status running --services | grep -qx "backend" || { \
+	@$(COMPOSE_RUN) exec -T backend true >/dev/null 2>&1 || { \
 		printf "$(RED)Error: the backend service is not running.$(END)\n"; \
 		printf "$(YELLOW)Start the stack with: make up$(END)\n"; \
 		exit 1; \
@@ -188,7 +187,7 @@ seed: check-env check-engine
 	@printf "$(YELLOW)Restarting backend on the fresh database...$(END)\n"
 	@$(COMPOSE_RUN) restart backend
 	@printf "$(YELLOW)Executing database seed script...$(END)\n"
-	@$(COMPOSE_RUN) run --rm -T seed
+	@$(COMPOSE_RUN) --profile seed run --rm -T seed
 	@printf "$(GREEN)Database seeded successfully.$(END)\n"
 
 # [Cleanup & Infrastructure Reset]

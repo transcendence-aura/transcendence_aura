@@ -27,7 +27,7 @@ export function refreshAccessToken(): Promise<string | null> {
 
 async function performRefresh(): Promise<string | null> {
   try {
-    const response = await fetch('https://localhost/graphql', {
+    const response = await fetch('/graphql', {
       method: 'POST',
       credentials: 'include',
       headers: {

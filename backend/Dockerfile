@@ -1,6 +1,6 @@
 # --- Stage 1 : Dependencies ---
 
-FROM node:24-alpine AS deps
+FROM docker.io/library/node:24-alpine AS deps
 # Add missing glibc symbols required by some native Node modules
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -12,7 +12,7 @@ COPY prisma.config.ts ./
 RUN npm ci --ignore-scripts
 
 # --- Stage 2 : Builder ---
-FROM node:24-alpine AS build
+FROM docker.io/library/node:24-alpine AS build
 WORKDIR /app
 # devDependencies are required here to run the Nest CLI during build
 COPY --from=deps /app/node_modules ./node_modules
@@ -24,7 +24,7 @@ RUN POSTGRES_URL="postgresql://prisma:prisma@localhost:5432/prisma" \
 RUN npm run build
 
 # --- Stage 3 : Production Dependencies ---
-FROM node:24-alpine AS prod-deps
+FROM docker.io/library/node:24-alpine AS prod-deps
 # Add again glibc compatibility for production native modules
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -39,7 +39,7 @@ RUN POSTGRES_URL="postgresql://prisma:prisma@localhost:5432/prisma" \
   npx prisma generate --schema=./prisma/schema.prisma
 
 # --- Stage 4 : Runner ---
-FROM node:24-alpine AS runner
+FROM docker.io/library/node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 

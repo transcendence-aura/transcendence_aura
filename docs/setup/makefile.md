@@ -11,8 +11,12 @@ This manual provides an overview and detailed breakdown of each target available
 The Makefile automatically detects whether `docker` or `podman` is present on the host system:
 
 - Defaults to `docker compose`.
-- Automatically falls back to `podman compose` if Docker is absent.
+- Automatically falls back to `podman compose` if Docker is absent. A `docker`
+  command that is only the `podman-docker` shim counts as Podman.
 - Can be manually overridden via CLI: `make COMPOSE="podman compose" <target>`.
+- On rootless Podman, `SECRETS_GID` is set to `0` so the backend can read
+  `local-secrets/vault-secret-id` (the host user's group is GID 0 inside the
+  containers). On Docker it is the host user's group (`id -g`).
 
 ### `make check-env`
 
@@ -61,21 +65,14 @@ The Makefile automatically detects whether `docker` or `podman` is present on th
 
 ## 3. Vault Lifecycle
 
-### `make vault-permissions`
-
-**Summary**: Configures storage directory permissions for HashiCorp Vault.
-
-- **Commands & Details**:
-  - Applies `chown -R vault:vault` and `chmod 750` on `/vault/data`.
-  - Safe for rootless Podman user namespaces via non-blocking execution.
-
 ### `make vault-start`
 
 **Summary**: Starts the HashiCorp Vault container in the background.
 
 - **Commands & Details**:
-  - Depends on `vault-permissions`.
   - `$(COMPOSE_RUN) up -d vault` : starts Vault service.
+  - Raft data is stored in `/vault/file`, a directory the Vault image owns, so
+    the `vault_data` volume gets the right ownership on Docker and Podman alike.
 
 ### `make vault-init`
 
@@ -167,21 +164,21 @@ The Makefile automatically detects whether `docker` or `podman` is present on th
 **Summary**: Rebuilds and restarts the Next.js frontend container exclusively.
 
 - **Commands & Details**:
-  - Runs `$(COMPOSE_RUN) up -d --build --no-deps frontend`.
+  - Runs `$(COMPOSE_RUN) up -d --build --force-recreate --no-deps frontend`.
 
 ### `make back-rebuild`
 
 **Summary**: Refreshes Vault credentials and rebuilds the NestJS backend container exclusively.
 
 - **Commands & Details**:
-  - Runs `vault-bootstrap`, then `$(COMPOSE_RUN) up -d --build --no-deps backend`.
+  - Runs `vault-bootstrap`, then `$(COMPOSE_RUN) up -d --build --force-recreate --no-deps backend`.
 
 ### `make nginx-rebuild`
 
 **Summary**: Rebuilds and restarts the Nginx reverse proxy.
 
 - **Commands & Details**:
-  - Runs `$(COMPOSE_RUN) up -d --build --no-deps nginx`.
+  - Runs `$(COMPOSE_RUN) up -d --build --force-recreate --no-deps nginx`.
 
 ### `make backend-restart`
 
