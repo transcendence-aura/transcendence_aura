@@ -55,7 +55,7 @@ export class AvatarService {
     return { id: media.id, updatedAt: media.updatedAt };
   }
 
-  async getAvatar(userId: string): Promise<AvatarFile> {
+  async getAvatar(userId: string): Promise<AvatarFile | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -65,12 +65,12 @@ export class AvatarService {
       },
     });
 
-    // Suspended/deleted accounts have no visible avatar either, same as the public profile.
-    if (!user || user.status !== UserStatus.ACTIVE || user.deletedAt !== null) {
+    if (!user) {
       throw new NotFoundException('USER_NOT_FOUND');
     }
-    if (!user.avatar) {
-      throw new NotFoundException('AVATAR_NOT_FOUND');
+    // Suspended/deleted accounts have no visible avatar, same as the public profile.
+    if (user.status !== UserStatus.ACTIVE || user.deletedAt !== null || !user.avatar) {
+      return null;
     }
 
     try {
@@ -78,7 +78,7 @@ export class AvatarService {
       return { buffer, mimeType: user.avatar.mimeType ?? ALLOWED_IMAGE_MIME_TYPE };
     } catch {
       // File missing/unreadable on disk despite a DB row referencing it.
-      throw new NotFoundException('AVATAR_NOT_FOUND');
+      return null;
     }
   }
 }
