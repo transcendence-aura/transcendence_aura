@@ -147,3 +147,13 @@ nginx/ssl/
 
 # GraphQL schemamake
 backend/src/schema.gql
+
+backend/uploads/
+
+# Secrets
+/local-secrets/
+local-secrets/vault-secret-id
+local-secrets/vault-root-token
+local-secrets/vault-unseal-key
+local-secrets/seed-admin-email
+local-secrets/seed-admin-password

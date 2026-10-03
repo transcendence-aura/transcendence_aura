@@ -1,0 +1,84 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { UserStatus } from '@prisma/client';
+import { PrismaService } from '../../database/prisma.service';
+import { MediaStorageService } from '../../common/media/media-storage.service';
+import { assertValidJpegSquareImage } from '../../common/media/image-validation.util';
+import { ALLOWED_IMAGE_MIME_TYPE } from '../../common/media/media.constants';
+
+export interface AvatarFile {
+  buffer: Buffer;
+  mimeType: string;
+}
+
+@Injectable()
+export class AvatarService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mediaStorage: MediaStorageService,
+  ) {}
+
+  async uploadAvatar(
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<{ id: string; updatedAt: Date }> {
+    assertValidJpegSquareImage(file.buffer);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatar: { select: { id: true, url: true } } },
+    });
+    if (!user) {
+      throw new NotFoundException('USER_NOT_FOUND');
+    }
+
+    const { relativePath } = await this.mediaStorage.save(`avatars/${userId}`, file.buffer, {
+      visibility: 'private',
+    });
+
+    const previousAvatar = user.avatar;
+    const media = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.media.create({
+        data: { url: relativePath, mimeType: ALLOWED_IMAGE_MIME_TYPE, position: 0 },
+      });
+      await tx.user.update({ where: { id: userId }, data: { avatarId: created.id } });
+      if (previousAvatar) {
+        await tx.media.delete({ where: { id: previousAvatar.id } });
+      }
+      return created;
+    });
+
+    // Best-effort: the DB is already consistent regardless of this succeeding.
+    if (previousAvatar) {
+      await this.mediaStorage.removePrivate(previousAvatar.url);
+    }
+
+    return { id: media.id, updatedAt: media.updatedAt };
+  }
+
+  async getAvatar(userId: string): Promise<AvatarFile | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        status: true,
+        deletedAt: true,
+        avatar: { select: { url: true, mimeType: true } },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('USER_NOT_FOUND');
+    }
+    // Suspended/deleted accounts have no visible avatar, same as the public profile.
+    if (user.status !== UserStatus.ACTIVE || user.deletedAt !== null || !user.avatar) {
+      return null;
+    }
+
+    try {
+      const buffer = await this.mediaStorage.readPrivate(user.avatar.url);
+      return { buffer, mimeType: user.avatar.mimeType ?? ALLOWED_IMAGE_MIME_TYPE };
+    } catch {
+      // File missing/unreadable on disk despite a DB row referencing it.
+      return null;
+    }
+  }
+}

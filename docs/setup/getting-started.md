@@ -46,11 +46,7 @@ One command installs dependencies for the root, the frontend and the backend.
 Docker users reach the app at https://localhost. The certificate is
 self-signed, so your browser will warn once - continue past it.
 
-Podman users on the school machines run:
-
-    make COMPOSE="podman-compose" up
-
-and, having set `HTTP_PORT=8080` / `HTTPS_PORT=8443` in `.env`, reach the app at
+Podman users on the school machines run the same `make up` and, having set `HTTP_PORT=8080` / `HTTPS_PORT=8443` in `.env`, reach the app at
 https://localhost:8443. (Ports below 1024 are forbidden without root; see
 prerequisites.md.)
 
