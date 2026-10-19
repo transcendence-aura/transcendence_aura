@@ -137,7 +137,7 @@ Frontend changes: attach a screenshot or short video.
 ### scope: devops
 
 - [ ] Docker build passes locally (`make build`)
-- [ ] Podman build passes if tested (`make COMPOSE="podman-compose" up`)
+- [ ] Podman build passes if tested (`make up` on a Podman machine)
 - [ ] New environment variables added to `.env.example`
 - [ ] CI pipeline passes on the PR branch
 

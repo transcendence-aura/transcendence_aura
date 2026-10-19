@@ -1,0 +1,395 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum NotificationType {
+  FOLLOW
+  MESSAGE
+  WISHLIST
+  SYSTEM
+}
+
+enum ConversationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum TokenRevocationReason {
+  ROTATED
+  REUSE_DETECTED
+  EXPIRED
+  LOGOUT
+  ADMIN_REVOKED
+  INACTIVE_USER
+  PASSWORD_CHANGED
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+
+  name   String  @db.VarChar(100)
+  email  String  @unique @db.VarChar(320)
+  handle String  @unique @db.VarChar(30)
+  bio    String? @db.VarChar(500)
+
+  passwordHash       String    @db.VarChar(255)
+  emailVerifiedAt    DateTime?
+  twoFactorEnabled   Boolean   @default(false)
+  twoFactorEnabledAt DateTime?
+  lastLoginAt        DateTime?
+
+  role   UserRole   @default(USER)
+  status UserStatus @default(ACTIVE)
+
+  avatarId String? @unique @db.Uuid
+  avatar   Media?  @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+
+  refreshTokens RefreshToken[]
+  apiKeys       ApiKey[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  // Marks a soft-deleted account
+  deletedAt DateTime?
+
+  wishlistItems Wishlist[]
+
+  conversationsAsUserOne Conversation[] @relation("ConversationUserOne")
+  conversationsAsUserTwo Conversation[] @relation("ConversationUserTwo")
+  conversationsInitiated Conversation[] @relation("ConversationInitiator")
+  messages               Message[]
+
+  analyticsEvents AnalyticsEvent[] @relation("AnalyticsEventActor")
+
+  notifications        Notification[] @relation("UserNotifications")
+  actedOnNotifications Notification[] @relation("NotificationActor")
+
+  // Rows where this user is being followed
+  followers Follow[] @relation("FollowedUser")
+  // Rows where this user is following other users
+  following Follow[] @relation("FollowingUser")
+
+  @@index([status])
+  @@index([role])
+  @@index([deletedAt])
+}
+
+model RefreshToken {
+  id String @id @default(uuid()) @db.Uuid
+
+  // SHA-256 hash 64 hexadecimal characters.
+  tokenHash String @unique @db.Char(64)
+
+  // Identifies all rotated tokens belonging to one login session.
+  familyId String @db.Uuid
+
+  isRevoked        Boolean                @default(false)
+  revokedAt        DateTime?
+  revocationReason TokenRevocationReason?
+  expiresAt        DateTime
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([familyId])
+  @@index([userId, familyId])
+  @@index([familyId, isRevoked])
+  @@index([expiresAt])
+}
+
+model ApiKey {
+  id String @id @default(uuid()) @db.Uuid
+
+  name String @db.VarChar(100)
+
+  keyHash String @unique @db.Char(64)
+
+  scopes String[] @default([])
+
+  ownerId String @db.Uuid
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  isRevoked Boolean   @default(false)
+  revokedAt DateTime?
+
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([isRevoked])
+  @@index([expiresAt])
+}
+
+model Media {
+  id String @id @default(uuid()) @db.Uuid
+
+  url      String
+  altText  String? @db.VarChar(255)
+  mimeType String? @db.VarChar(100)
+
+  // Product gallery display order
+  position Int @default(0)
+
+  productId String?  @db.Uuid
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  avatarFor User? @relation("UserAvatar")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId, position])
+}
+
+model Collection {
+  id           String  @id @default(uuid()) @db.Uuid
+  name         String  @db.VarChar(160)
+  slug         String  @unique @db.VarChar(160)
+  description  String? @db.VarChar(1000)
+  isActive     Boolean @default(true)
+  heroImageUrl String  @db.VarChar(500)
+
+  products   Product[]
+  categories Category[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("collections")
+}
+
+// e.g. "Skincare", "Haircare"
+model Category {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @db.VarChar(160)
+  slug        String  @unique @db.VarChar(160)
+  description String? @db.VarChar(1000)
+  isActive    Boolean @default(true)
+
+  collectionId String     @db.Uuid
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Restrict)
+
+  productFamilies ProductFamily[]
+  products        Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([collectionId])
+  @@index([isActive])
+  @@map("categories")
+}
+
+// e.g. "Cleanser", "Serum", "Body Lotion"
+model ProductFamily {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @db.VarChar(160)
+  slug        String  @unique @db.VarChar(160)
+  description String? @db.VarChar(1000)
+  isActive    Boolean @default(true)
+
+  categoryId String   @db.Uuid
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@map("product_families")
+}
+
+model Product {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @db.VarChar(160)
+  slug            String   @unique @db.VarChar(160)
+  description     String?  @db.Text
+  isActive        Boolean  @default(true)
+  badges          String[]
+  popularityScore Float    @default(0)
+
+  categories      Category[]
+  productFamilies ProductFamily[]
+
+  collections Collection[]
+  variants    ProductVariant[]
+  media       Media[]
+  wishlists   Wishlist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([popularityScore])
+  @@map("products")
+}
+
+model ProductVariant {
+  id                 String  @id @default(uuid()) @db.Uuid
+  label              String  @db.VarChar(50)
+  isAvailable        Boolean @default(true)
+  price              Decimal @db.Decimal(10, 2)
+  isOnSale           Boolean @default(false)
+  discountPercentage Decimal @default(0) @db.Decimal(5, 2)
+
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Prevent duplicate labels for the same product.
+  @@unique([productId, label])
+  @@index([productId, isAvailable])
+  @@map("product_variants")
+}
+
+model Wishlist {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Prevent duplicate wishlist entries for the same user and product
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+  @@index([productId])
+  @@map("wishlists")
+}
+
+model Follow {
+  followerId  String @db.Uuid
+  followingId String @db.Uuid
+
+  // The User is following other users.
+  follower  User @relation("FollowingUser", fields: [followerId], references: [id], onDelete: Cascade)
+  // The user is being followed.
+  following User @relation("FollowedUser", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followingId, createdAt])
+  @@index([followerId, createdAt])
+  @@map("follows")
+}
+
+model Conversation {
+  id String @id @default(uuid()) @db.Uuid
+
+  userOneId String @db.Uuid
+  userOne   User   @relation("ConversationUserOne", fields: [userOneId], references: [id], onDelete: Restrict)
+
+  userTwoId String @db.Uuid
+  userTwo   User   @relation("ConversationUserTwo", fields: [userTwoId], references: [id], onDelete: Restrict)
+
+  userOneDeletedAt DateTime?
+  userTwoDeletedAt DateTime?
+
+  // The user who opened the conversation - the only one allowed to send a
+  // message while the conversation is PENDING, and never the one who can
+  // accept/decline it.
+  initiatorId String @db.Uuid
+  initiator   User   @relation("ConversationInitiator", fields: [initiatorId], references: [id], onDelete: Restrict)
+
+  status ConversationStatus @default(ACCEPTED)
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([userOneId, userTwoId])
+  @@index([userTwoId])
+  @@index([initiatorId])
+  @@map("conversations")
+}
+
+model Message {
+  id String @id @default(uuid()) @db.Uuid
+
+  // Keep the message if the sender is deleted
+  senderId String? @db.Uuid
+  sender   User?   @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  content String @db.Text
+
+  conversationId String       @db.Uuid
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+
+  type NotificationType
+
+  userId String @db.Uuid
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  actorId String? @db.Uuid
+  actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  title String? @db.VarChar(160)
+  body  String? @db.VarChar(500)
+
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@index([actorId])
+  @@map("notifications")
+}
+
+model AnalyticsEvent {
+  id String @id @default(uuid()) @db.Uuid
+
+  eventType String @db.VarChar(100)
+
+  actorId String @db.Uuid
+  actor   User   @relation("AnalyticsEventActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  targetType String? @db.VarChar(50)
+  targetId   String? @db.Uuid
+
+  occurredAt DateTime @default(now())
+
+  @@index([occurredAt])
+  @@index([eventType, occurredAt])
+  @@index([actorId])
+  @@map("analytics_events")
+}

@@ -1,26 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&family=Noto+Sans+Arabic:wght@300;400;500&display=swap');
+
 @import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Fonts */
+  --font-sans: 'Jost', sans-serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+  --font-jost: 'Jost', sans-serif;
+  --font-noto-arabic: 'Noto Sans Arabic', sans-serif;
+
+  /* Display typography */
+  --text-display-hero: 3.75rem;
+  --text-display-hero--line-height: 1.1;
+  --text-display-hero--font-weight: 300;
+
+  --text-display-title: 2.25rem;
+  --text-display-title--line-height: 1.25;
+  --text-display-title--font-weight: 400;
+
+  --text-display-subtitle: 1.75rem;
+  --text-display-subtitle--line-height: 1.35;
+  --text-display-subtitle--font-weight: 400;
+
+  --text-display-product: 1.375rem;
+  --text-display-product--line-height: 1.4;
+  --text-display-product--font-weight: 400;
+
+  --text-display-stat: 2rem;
+  --text-display-stat--line-height: 1;
+  --text-display-stat--font-weight: 300;
+
+  /* Body typography */
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.7;
+  --text-body-lg--font-weight: 300;
+
+  --text-body-base: 1rem;
+  --text-body-base--line-height: 1.65;
+  --text-body-base--font-weight: 300;
+
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.6;
+  --text-body-sm--font-weight: 300;
+
+  /* UI typography */
+  --text-ui-nav: 0.8125rem;
+  --text-ui-nav--line-height: 1;
+  --text-ui-nav--font-weight: 400;
+  --text-ui-nav--letter-spacing: 0.08em;
+
+  --text-ui-button: 0.8125rem;
+  --text-ui-button--line-height: 1;
+  --text-ui-button--font-weight: 500;
+  --text-ui-button--letter-spacing: 0.1em;
+
+  --text-ui-label: 0.75rem;
+  --text-ui-label--line-height: 1;
+  --text-ui-label--font-weight: 500;
+  --text-ui-label--letter-spacing: 0.12em;
+
+  --text-ui-caption: 0.75rem;
+  --text-ui-caption--line-height: 1.5;
+  --text-ui-caption--font-weight: 300;
+  --text-ui-caption--letter-spacing: 0.04em;
+
+  --text-ui-price: 0.9375rem;
+  --text-ui-price--line-height: 1;
+  --text-ui-price--font-weight: 400;
+
+  --text-ui-badge: 0.6875rem;
+  --text-ui-badge--line-height: 1;
+  --text-ui-badge--font-weight: 500;
+  --text-ui-badge--letter-spacing: 0.06em;
+
+  --text-ui-lang: 0.75rem;
+  --text-ui-lang--line-height: 1;
+  --text-ui-lang--font-weight: 500;
+  --text-ui-lang--letter-spacing: 0.08em;
+
+  /* Colors - Backgrounds */
+  --color-page: #fafaf8;
+  --color-card: #ffffff;
+  --color-surface: #e8f0ec;
+  --color-subtle: #f3f1eb;
+  --color-overlay: rgb(26 20 16 / 0.5);
+
+  /* Colors - Text */
+  --color-text-primary: #2c2420;
+  --color-text-secondary: #4a4540;
+  --color-text-muted: #a09890;
+  --color-text-inverse: #fafaf8;
+
+  /* Colors - Brand */
+  --color-brand-dark: #2c2420;
+  --color-brand-accent: #dc9b9b;
+
+  /* Colors - Borders */
+  --color-border-default: #dedad4;
+  --color-border-focus: #2c2420;
+
+  /* Colors - Footer */
+  --color-footer-bg: #1e1b18;
+  --color-footer-text: #e0dbd4;
+  --color-footer-muted: #c8c0b8;
+  --color-footer-subtle: #786e68;
+
+  /* Colors - Status */
+  --color-status-online: #3d7a5e;
+  --color-status-error: #c0392b;
+
+  /* Spacing */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 28px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+
+  /* Border radius */
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-pill: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-none: none;
+  --shadow-card: 0 1px 4px rgb(44 36 32 / 0.06);
+  --shadow-card-hover: 0 4px 16px rgb(44 36 32 / 0.1);
+  --shadow-modal: 0 8px 32px rgb(44 36 32 / 0.14);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+:lang(ar) {
+  --font-sans: 'Noto Sans Arabic', sans-serif;
+  --font-jost: 'Noto Sans Arabic', sans-serif;
 }

@@ -1,16 +1,25 @@
 services:
   nginx:
-    image: owasp/modsecurity-crs:nginx
+    image: docker.io/owasp/modsecurity-crs:nginx
     ports:
-      - '${HTTP_PORT:-80}:80'
-      - '${HTTPS_PORT:-443}:443'
+      - '${HTTP_PORT:-80}:8080'
+      - '${HTTPS_PORT:-443}:8443'
     environment:
-      MODSEC_RULE_ENGINE: DetectionOnly
+      # Substituted into nginx.conf by the image's envsubst step.
+      NGINX_ENTRYPOINT_LOCAL_RESOLVERS: 'true'
+      HTTPS_PORT: ${HTTPS_PORT:-443}
+
+      MODSEC_RULE_ENGINE: 'On'
       PARANOIA: 2
       BLOCKING_PARANOIA: 2
+
+      MODSEC_AUDIT_ENGINE: RelevantOnly
+      MODSEC_AUDIT_LOG: /dev/stdout
+      MODSEC_AUDIT_LOG_FORMAT: JSON
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/templates/nginx.conf.template:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/modsecurity/exclusions.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:ro
     depends_on:
       - frontend
       - backend
@@ -31,41 +40,123 @@ services:
 
   backend:
     build: ./backend
+    group_add:
+      - '${SECRETS_GID:-1000}'
+    volumes:
+      - ./backend/prisma:/app/prisma
+      - product_uploads:/app/uploads
     environment:
       NODE_ENV: ${NODE_ENV}
       PORT: 3001
+      POSTGRES_URL: ${POSTGRES_URL}
+      VAULT_ADDR: ${VAULT_ADDR}
+      VAULT_ROLE_ID: ${VAULT_ROLE_ID:-}
+      VAULT_SECRET_ID_FILE: /run/secrets/vault_secret_id
+      VAULT_SECRET_PATH: aura-backend/development
+      VAULT_KV_MOUNT: secret
+      VAULT_AUTH_PATH: approle
+      VAULT_REQUEST_TIMEOUT_MS: '10000'
+    secrets:
+      - vault_secret_id
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_started
+      vault:
+        condition: service_healthy
     networks:
       - aura
+      - vault
     restart: unless-stopped
 
+  seed:
+    build: ./backend
+    profiles:
+      - seed
+    command: npm run prisma:seed
+    group_add:
+      - '${SECRETS_GID:-1000}'
+    volumes:
+      - ./backend/prisma:/app/prisma
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL}
+      SEED_GRAPHQL_URL: http://backend:3001/graphql
+      SEED_MODE: ${SEED_MODE:-empty}
+      SEED_ADMIN_EMAIL_FILE: /run/secrets/seed_admin_email
+      SEED_ADMIN_PASSWORD_FILE: /run/secrets/seed_admin_password
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
+    secrets:
+      - seed_admin_email
+      - seed_admin_password
+    depends_on:
+      postgres:
+        condition: service_started
+      backend:
+        condition: service_started
+    networks:
+      - aura
+
   postgres:
-    image: postgres:17-alpine
+    image: docker.io/library/postgres:17-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    # Host tools only (psql, Prisma Studio): loopback, not the whole network.
     ports:
-      - '${POSTGRES_PORT}:5432'
+      - '127.0.0.1:${POSTGRES_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - aura
     restart: unless-stopped
 
-  redis:
-    image: redis:8-alpine
-    ports:
-      - '${REDIS_PORT}:6379'
+  vault:
+    image: docker.io/hashicorp/vault:1.19
+    command:
+      - server
+      - -config=/vault/aura/config/vault.hcl
+    environment:
+      VAULT_ADDR: ${VAULT_ADDR}
+    volumes:
+      - type: bind
+        source: ./vault
+        target: /vault/aura
+        read_only: true
+
+      - type: volume
+        source: vault_data
+        target: /vault/file
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >
+          VAULT_ADDR=http://127.0.0.1:8200
+          vault status >/dev/null 2>&1;
+          code=$$?;
+          [ "$$code" -eq 0 ] || [ "$$code" -eq 2 ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
     networks:
-      - aura
-    restart: unless-stopped
+      - vault
 
 volumes:
   postgres_data:
+  product_uploads:
+  vault_data:
 
 networks:
   aura:
     driver: bridge
+
+  vault:
+    internal: true
+
+secrets:
+  vault_secret_id:
+    file: ./local-secrets/vault-secret-id
+  seed_admin_email:
+    file: ./local-secrets/seed-admin-email
+  seed_admin_password:
+    file: ./local-secrets/seed-admin-password

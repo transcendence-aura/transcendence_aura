@@ -146,9 +146,45 @@ Enforced automatically by ESLint. Must follow this order:
 
 ### Folder structure
 
-_(To be defined in Phase 2 with the backend team.
-The structure will follow NestJS module conventions
-and will be documented here once validated.)_
+Organized by feature.
+Each feature module should own everything related to that business capability.
+
+```
+src/
+├── modules/
+│   ├── auth/
+│   ├── chat/
+│   ├── follows/
+│   ├── health/
+│   ├── notifications/
+│   ├── products/
+│   ├── users/
+│   └── wishlist/
+├── common/
+├── config/
+├── app.module.ts
+└── main.ts
+```
+
+modules/ # Business features
+common/ # Shared utilities and infrastructure (when needed)
+config/ # Application configuration (when needed)
+
+Example:
+
+```
+src/
+└── modules/
+    └── users/
+        ├── dto/
+        │   ├── create-user.dto.ts
+        │   └── update-user.dto.ts
+        ├── users.controller.ts
+        ├── users.service.ts
+        └── users.module.ts
+```
+
+Temporary application-level routes may exist outside of feature modules during initial setup. Once endpoints represent a business capability, they will need to be moved into the corresponding feature module.
 
 ---
 
@@ -195,8 +231,160 @@ Enforced automatically by ESLint. Must follow this order:
 
 ## Database (Prisma)
 
-_(To be defined in Phase 2 — naming conventions for models,
-fields, relations, and migration naming strategy.)_
+```
+backend/
+├── prisma/
+│   ├── migrations/
+│   ├── schema.prisma
+│   └── seed/
+└── src/
+|   └── modules/
+|       ├── database/
+|       |   ├── database.module.ts
+|       |   └── prisma.service.ts
+|       └── ...
+└── ...
+```
+
+`schema.prisma` will be the single source for:
+
+- PostgreSQL datasource configuration
+- Prisma models
+- enums
+- relations
+- indexes
+- generator configuration
+
+**Prisma models** will use singular, PascalCase.
+
+Examples:
+
+```prisma
+model User {}
+
+model Product {}
+
+model Wishlist {}
+```
+
+**Database tables** are mapped using `@@map`.
+
+Example:
+This creates `users` in PostgreSQL.
+
+```prisma
+model User {
+ id String @id @default(uuid())
+
+ @@map("users")
+}
+```
+
+**Field naming** will be camelCase and should follow TypeScript conventions.
+
+Example:
+
+```prisma
+  model User {
+    id          String
+    firstName   String
+    lastName    String
+    email       String
+  }
+```
+
+Database tables use an `id` primary key.
+**Primary keys** should be generated using UUIDs.
+
+**Foreign keys** use the relatedEntityId naming convention.
+Foreign keys reference another model's `id` and describe the relationship they represent.
+
+**Relationship** example:
+
+```prisma
+model Message {
+  id String @id @default(uuid())
+
+  conversationId String
+  senderId String
+
+  conversation Conversation @relation(
+    fields: [conversationId],
+    references: [id]
+  )
+
+  sender User @relation(
+    fields: [senderId]
+    references: [id]
+  )
+
+  createdAt DateTime @default(now())
+
+  @@map("messages")
+}
+```
+
+**Migration naming** should use `verb_description` with lowercase snake_case.
+
+Examples:
+
+```prisma
+  init
+  add_products
+  add_wishlist
+  create_chat_messages
+```
+
+---
+
+## Data Transfer Objects (DTOs) and Validation
+
+```
+src/
+├── modules/
+│   ├── users/
+│   │   ├── dto/
+│   │   │   ├── update-profile.dto.ts
+│   │   │   └── user-response.dto.ts
+│   │   ├── validation/
+│   │   │   └── username.validator.ts
+│   │   └── ...
+│
+├── common/
+│   ├── dto/
+│   ├── validation/
+│   └── ...
+```
+
+Request/response DTOs must live in the module that owns the functionality they represent.
+Request DTOs should be named to describe the command or endpoint they support.
+Response DTOs should be named to describe the data they return.
+
+Example:
+`wishlist/dto/create-wishlist-item.dto.ts`
+
+```typescript
+export class CreateWishlistItemDto {
+  @IsUUID();
+  productId: string;
+}
+```
+
+Shared DTOs should only be introduced when the following criteria are met:
+
+- They represent application-wide behavior or intrastructure concerns.
+- Multiple modules use the exact same contract.
+- Changes to the DTO are intended to affect all modules.
+
+Validation classes are also module specific.
+Shared validation rules that are not tied to a specific domain should be placed in `src/common/validation`.
+
+DTO duplication should be avoided.
+A DTO may exist in multiple modules only when there is a documented reason, such as:
+
+- The DTOs represent different module boundaries.
+- The DTOs have overlapping fields, but serve different purposes.
+- The contracts are expected to evolve independently.
 
 ---
 

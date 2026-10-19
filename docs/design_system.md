@@ -284,10 +284,12 @@ All components organized by purpose.
 
 ### Layout
 
-| Component | Location                       | Description                                                |
-| --------- | ------------------------------ | ---------------------------------------------------------- |
-| `Navbar`  | `components/layout/Navbar.tsx` | Fixed 54px, nav links, search, cart, avatar, lang selector |
-| `Footer`  | `components/layout/Footer.tsx` | Dark bg (footer-bg), 4-col grid, RTL-aware                 |
+| Component      | Location                            | Description                                                                                                                                                                                                                                           |
+| -------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Navbar`       | `components/layout/Navbar.tsx`      | Fixed 54px, nav links, search, cart, avatar, lang selector                                                                                                                                                                                            |
+| `Footer`       | `components/layout/Footer.tsx`      | Dark bg (footer-bg), 4-col grid, RTL-aware                                                                                                                                                                                                            |
+| `AdminLayout`  | `app/admin/layout.tsx`              | Full-bleed shell for every `/admin/*` page — top bar (logo + Admin badge, notifications, avatar) + `AdminSidebar`. Public `Navbar`/`Footer` hide themselves on `/admin/*` instead of being nested inside this layout.                                 |
+| `AdminSidebar` | `components/admin/AdminSidebar.tsx` | Left nav for the admin shell, grouped Overview / Management / System. Only sections with a built page are real links (`Users` today) — the rest render inert until their ticket lands. Add new admin sections here, not as one-off sidebars per page. |
 
 ### Form Primitives
 

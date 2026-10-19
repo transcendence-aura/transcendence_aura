@@ -39,14 +39,14 @@ An OCI (Open Container Initiative)-compatible runtime is required to run the sta
 - **Podman** with `podman-compose`. Runs rootless - the option on machines where
   you have no sudo.
 
-The Makefile defaults to Docker:
+The Makefile picks the engine on its own: Docker when it is installed, Podman
+otherwise (including when `docker` is only the `podman-docker` shim):
 
     make up
 
-Podman users override the compose command:
+The compose command can still be forced:
 
     make COMPOSE="podman-compose" up
-    make COMPOSE="podman compose" up     # recent Podman only
 
 ## Environment file
 
